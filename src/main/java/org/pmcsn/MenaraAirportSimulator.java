@@ -18,6 +18,8 @@ public class MenaraAirportSimulator {
         System.out.println("╩ ╩└─┘┘└┘┴ ┴┴└─┴ ┴╩ ╩┴┴└─┴  └─┘┴└─ ┴   ╚═╝┴┴ ┴└─┘┴─┘┴ ┴ ┴ └─┘┴└─");
     }
 
+    //TODO: refresh menu after selection
+
     private static void showMenu() {
         Scanner scanner = new Scanner(System.in);
         int choice;
