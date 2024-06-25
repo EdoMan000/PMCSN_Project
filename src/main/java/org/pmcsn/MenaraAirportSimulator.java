@@ -10,6 +10,7 @@ public class MenaraAirportSimulator {
         rngs.plantSeeds(123456789L);
         printAsciiArt();
         showMenu();
+        System.out.println("prova merge");
     }
 
     private static void printAsciiArt() {
