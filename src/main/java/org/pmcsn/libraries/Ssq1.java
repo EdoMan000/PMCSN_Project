@@ -16,6 +16,7 @@
  * Program ssq1      : Section 1.2
  * ------------------------------------------------------------------------- 
  */
+package  org.pmcsn.libraries;
 
 import java.io.*;
 import java.util.*;
