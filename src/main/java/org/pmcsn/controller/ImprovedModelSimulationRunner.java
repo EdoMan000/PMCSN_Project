@@ -1,8 +1,5 @@
 package org.pmcsn.controller;
 
-import org.pmcsn.model.MsqEvent;
-import org.pmcsn.model.MsqT;
-
 public class ImprovedModelSimulationRunner {
     // Constants
     private static final int START = 0;

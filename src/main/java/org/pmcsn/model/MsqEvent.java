@@ -1,32 +1,23 @@
 package org.pmcsn.model;
 
 public class MsqEvent {
-    private double t;   //time
-    private int x;  //status
-    private EventType type; //type
-    private int s;  //server (if needed)
+    public double time;   //time
+    public boolean active;  //status
+    public final EventType type; //type
+    public int server;  //server (if needed)
 
 
-    public MsqEvent(double t, int x, EventType type, int s) {
-        this.t = t;
-        this.x = x;
+    public MsqEvent(double time, boolean active, EventType type, int server) {
+        this.time = time;
+        this.active = active;
         this.type = type;
-        this.s = s;
+        this.server = server;
     }
 
-    public double getT() {
-        return t;
+    public MsqEvent(double time, boolean active, EventType type) {
+        this.time = time;
+        this.active = active;
+        this.type = type;
     }
 
-    public int getX() {
-        return x;
-    }
-
-    public EventType getType() {
-        return type;
-    }
-
-    public int getS() {
-        return s;
-    }
 }

@@ -1,6 +1,6 @@
 package org.pmcsn.model;
 
 public class MsqSum {                      /* accumulated sums of                */
-    double service;                   /*   service times                    */
-    long   served;                    /*   number served                    */
+    public double service;                   /*   service times                    */
+    public long served;                    /*   number served                    */
 }
