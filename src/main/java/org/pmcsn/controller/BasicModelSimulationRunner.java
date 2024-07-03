@@ -53,7 +53,7 @@ public class BasicModelSimulationRunner {
             LuggageChecks luggageChecks = new LuggageChecks();
             CheckInDesksTarget checkInDesksTarget = new CheckInDesksTarget();
             CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers();
-            BoardingPassScanners boardingPassScanners = new BoardingPassScanners();
+            BoardingPassScanners boardingPassScanners = new BoardingPassScanners(rngs);
             SecurityChecks securityChecks = new SecurityChecks();
             PassportChecks passportChecks = new PassportChecks();
             StampsCheck stampsCheck = new StampsCheck();

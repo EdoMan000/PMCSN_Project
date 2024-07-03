@@ -20,4 +20,7 @@ public class MsqEvent {
         this.type = type;
     }
 
+    public double getTime(){
+        return time;
+    }
 }
