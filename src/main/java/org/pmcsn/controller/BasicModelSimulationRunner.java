@@ -49,12 +49,13 @@ public class BasicModelSimulationRunner {
             double time = getArrival(rngs);
             events.add(new MsqEvent(time, true, EventType.ARRIVAL_LUGGAGE_CHECK));
 
+            //TODO DEFINE CENTER_INDEX VARIABLES IN ALL CENTERS SO THAT WE HAVE NO COLLISIONS
             //creation of centers
             LuggageChecks luggageChecks = new LuggageChecks();
             CheckInDesksTarget checkInDesksTarget = new CheckInDesksTarget();
             CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers();
             BoardingPassScanners boardingPassScanners = new BoardingPassScanners(rngs);
-            SecurityChecks securityChecks = new SecurityChecks();
+            SecurityChecks securityChecks = new SecurityChecks(rngs);
             PassportChecks passportChecks = new PassportChecks();
             StampsCheck stampsCheck = new StampsCheck();
             Boarding boardingTarget = new Boarding();
@@ -62,12 +63,34 @@ public class BasicModelSimulationRunner {
 
             while(!stopArrivals && number != 0) {
 
+
+
                 //TODO: aggiungere i vari processamenti
 
                 //TODO: aggiornare la variabile number come la somma dei number dei vari centri
             }
 
         }
+
+    }
+
+    private MsqEvent getNextEvent(List<MsqEvent> events){
+
+        if (events == null || events.isEmpty()) {
+            return null; // or throw an exception depending on your use case
+        }
+
+        MsqEvent minEvent = events.get(0);
+
+        for (MsqEvent event : events) {
+            if (event.getTime() > minEvent.getTime()) {
+                break; // Since the list is sorted by time, no need to check further
+            } else if (event.getTime() == minEvent.getTime() && event.type.ordinal() < minEvent.type.ordinal()) {
+                minEvent = event;
+            }
+        }
+
+        return minEvent;
 
     }
 
