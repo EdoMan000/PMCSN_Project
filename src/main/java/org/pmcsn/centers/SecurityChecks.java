@@ -25,7 +25,7 @@ public class SecurityChecks {
     long numberOfJobsInNode =0;                     /* number in the node */
     static int    SERVERS = 4;                      /* number of servers */
     long processedJobs = 0;                         /* number of processed jobs */
-    static int CENTER_INDEX = 5;                    /* index of center to select stream*/
+    static int CENTER_INDEX = 0;//TODO                    /* index of center to select stream*/
     double area   = 0.0;
     double service;
 
@@ -70,19 +70,22 @@ public class SecurityChecks {
         processedJobs++;
         numberOfJobsInNode--;
 
+        //remove the event since I'm processing it
+        events.remove(completion);
+
         //obtaining the server which is processing the job
         int s = completion.server;
 
         if(getCitizen(0.2)){
             if(getTargetFlight(0.0159)){
                 /* generate an arrival at boarding*/
-                MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_BOARDING, s);
+                MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_BOARDING, 0);
                 events.add(event);
                 events.sort(Comparator.comparing(MsqEvent::getTime));
             }
         }else{
             /* generate an arrival at passport check*/
-            MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_PASSPORT_CHECK, s);
+            MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_PASSPORT_CHECK, 0);
             events.add(event);
             events.sort(Comparator.comparing(MsqEvent::getTime));
         }
@@ -106,14 +109,12 @@ public class SecurityChecks {
 
     private boolean getTargetFlight(double beta) {
         rngs.selectStream(CENTER_INDEX+2);
-        if(rngs.random() < beta) return true;
-        else return false;
+        return rngs.random() < beta;
     }
 
     private boolean getCitizen(double beta) {
         rngs.selectStream(CENTER_INDEX+3);
-        if(rngs.random() < beta) return true;
-        else return false;
+        return rngs.random() < beta;
     }
 
     int findOne() {

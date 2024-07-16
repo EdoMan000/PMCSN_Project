@@ -51,18 +51,17 @@ public class BasicModelSimulationRunner {
 
             //TODO DEFINE CENTER_INDEX VARIABLES IN ALL CENTERS SO THAT WE HAVE NO COLLISIONS
             //creation of centers
-            LuggageChecks luggageChecks = new LuggageChecks();
-            CheckInDesksTarget checkInDesksTarget = new CheckInDesksTarget();
-            CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers();
+            LuggageChecks luggageChecks = new LuggageChecks(rngs);
+            CheckInDesksTarget checkInDesksTarget = new CheckInDesksTarget(rngs);
+            CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers(rngs);
             BoardingPassScanners boardingPassScanners = new BoardingPassScanners(rngs);
             SecurityChecks securityChecks = new SecurityChecks(rngs);
-            PassportChecks passportChecks = new PassportChecks();
-            StampsCheck stampsCheck = new StampsCheck();
-            Boarding boardingTarget = new Boarding();
+            PassportChecks passportChecks = new PassportChecks(rngs);
+            StampsCheck stampsCheck = new StampsCheck(rngs);
+            Boarding boardingTarget = new Boarding(rngs);
 
 
             while(!stopArrivals && number != 0) {
-
 
 
                 //TODO: aggiungere i vari processamenti
@@ -84,6 +83,11 @@ public class BasicModelSimulationRunner {
 
         for (MsqEvent event : events) {
             if (event.getTime() > minEvent.getTime()) {
+                if (event.type.ordinal() == minEvent.type.ordinal()) {
+                    if (event.hasPriority && !minEvent.hasPriority) {
+                        minEvent = event;
+                    }
+                }
                 break; // Since the list is sorted by time, no need to check further
             } else if (event.getTime() == minEvent.getTime() && event.type.ordinal() < minEvent.type.ordinal()) {
                 minEvent = event;
@@ -93,6 +97,56 @@ public class BasicModelSimulationRunner {
         return minEvent;
 
     }
+
+    private MsqEvent getNextEvent(List<MsqEvent> events) {
+        if (events == null || events.isEmpty()) {
+            return null; // or throw an exception depending on your use case
+        }
+
+        //take the event with nearest deadline
+        MsqEvent minEvent = events.get(0);
+
+        for (MsqEvent event : events) {
+            if (event.time <= minEvent.time && event.type.ordinal() < minEvent.type.ordinal()) {
+                minEvent = event;
+            } else if (event.type.ordinal() == minEvent.type.ordinal()) {
+                if (event.time <= minEvent.time && event.hasPriority && !minEvent.hasPriority) {
+                    minEvent = event;
+                } else if (event.hasPriority == minEvent.hasPriority) {
+                    if (event.getTime() < minEvent.getTime()) {
+                        minEvent = event;
+                    }
+                }
+            }
+        }
+
+        return minEvent;
+    }
+
+
+    private MsqEvent getNextEvent(List<MsqEvent> events){
+
+        if (events == null || events.isEmpty()) {
+            return null; // or throw an exception depending on your use case
+        }
+
+        MsqEvent minEvent = events.get(0);
+
+        for (MsqEvent event : events) {
+            if (event.getTime() > minEvent.getTime()) {
+                break; // Since the list is sorted by time, no need to check further
+            } else if (event.getTime() == minEvent.getTime() && event.type.ordinal() < minEvent.type.ordinal()) {
+                minEvent = event;
+            } else if (event.type.ordinal() == minEvent.type.ordinal() && event.getTime() == minEvent.getTime()
+                    && event.hasPriority && !minEvent.hasPriority) {
+                minEvent = event;
+            }
+        }
+
+        return minEvent;
+
+    }
+
 
 
     double exponential(double m, Rngs r) {

@@ -24,6 +24,7 @@ public class BoardingPassScanners {
     long numberOfJobsInNode =0;                     /*number in the node*/
     static int    SERVERS = 3;                      /* number of servers*/
     long processedJobs = 0;                         /* number of processed jobs*/
+    static int CENTER_INDEX = 0;//TODO                    /* index of center to select stream*/
     double area   = 0.0;
     double service;
 
@@ -49,12 +50,8 @@ public class BoardingPassScanners {
         events.remove(arrival);
 
         if (numberOfJobsInNode <= SERVERS) {
-
-            //TODO: per il momento sto usando lo stream 1 ma ricorda di cambiare
-            // (ad ogni centro due streamIndex uno per l'arrivo e uno per il completamento)
-
             //generating service time
-            service         = getService(1);
+            service         = getService(CENTER_INDEX);
             // finding one idle server and updating server status
             s               = findOne();
             servers[s].running = true;
@@ -76,18 +73,26 @@ public class BoardingPassScanners {
         processedJobs++;
         numberOfJobsInNode--;
 
+        //remove the event since I'm processing it
+        events.remove(completion);
+
+        // generating arrival for the next center
+        MsqEvent next_center_event = new MsqEvent(time.current, true, EventType.ARRIVAL_SECURITY_CHECK, 0);
+        events.add(next_center_event);
+        events.sort(Comparator.comparing(MsqEvent::getTime));
+
         //obtaining the server which is processing the job
         int s = completion.server;
 
         //checking if there are jobs in queue, if so the server starts processing one
         if (numberOfJobsInNode >= SERVERS) {
-            service = getService(1);
+            service = getService(CENTER_INDEX+1);
             sum[s].service += service;
             sum[s].served++;
 
             //generate a new completion event
-            MsqEvent event = new MsqEvent(time.current + service, true, EventType.BOARDING_PASS_DONE, s);
-            events.add(event);
+            MsqEvent completion_event = new MsqEvent(time.current + service, true, EventType.BOARDING_PASS_DONE, s);
+            events.add(completion_event);
             events.sort(Comparator.comparing(MsqEvent::getTime));
         } else {
             //if there are no jobs in queue the server returns idle and updates the last completion time
@@ -126,7 +131,7 @@ public class BoardingPassScanners {
         rngs.selectStream(streamIndex);
 
         //TODO: cambiare i parametri
-        return (erlang(5, 0.3));
+        return (exponential(5));
     }
 
     public double exponential(double m)
@@ -137,21 +142,6 @@ public class BoardingPassScanners {
          */
     {
         return (-m * Math.log(1.0 - rngs.random()));
-    }
-
-    public double erlang(long n, double b)
-        /* ==================================================
-         * Returns an Erlang distributed positive real number.
-         * NOTE: use n > 0 and b > 0.0
-         * ==================================================
-         */
-    {
-        long   i;
-        double x = 0.0;
-
-        for (i = 0; i < n; i++)
-            x += exponential(b);
-        return (x);
     }
 
 }
