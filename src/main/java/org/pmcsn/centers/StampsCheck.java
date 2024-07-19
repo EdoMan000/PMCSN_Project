@@ -23,6 +23,8 @@ public class StampsCheck {
      *  * Queue population
      */
 
+    Statistics statistics;
+
     //Constants and Variables
     public static long  arrivalsCounter = 0;        /* number of arrivals */
     long numberOfJobsInNode =0;                     /* number in the node */
@@ -43,6 +45,10 @@ public class StampsCheck {
 
     public long getNumberOfJobsInNode() {
         return numberOfJobsInNode;
+    }
+
+    public void setArea(MsqTime time){
+        area += (time.next - time.current) * numberOfJobsInNode;
     }
 
     public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events){

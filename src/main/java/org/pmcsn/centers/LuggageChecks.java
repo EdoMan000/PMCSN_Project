@@ -2,10 +2,7 @@ package org.pmcsn.centers;
 
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.libraries.Rvgs;
-import org.pmcsn.model.EventType;
-import org.pmcsn.model.MsqEvent;
-import org.pmcsn.model.MsqSum;
-import org.pmcsn.model.MsqTime;
+import org.pmcsn.model.*;
 
 import java.util.Comparator;
 import java.util.List;
@@ -85,13 +82,19 @@ public class LuggageChecks {
     public long getNumberOfJobsInNode() {
 
         int numberOfJobsInNode = 0;
-        int centerID = 0;
 
-        for(centerID=0; centerID<3; centerID++){
-            numberOfJobsInNode += entrances[centerID - 1].numberOfJobsInNode;
+        for(int centerID=1; centerID<3; centerID++){
+            numberOfJobsInNode += entrances[centerID-1].numberOfJobsInNode;
         }
 
         return numberOfJobsInNode;
+    }
+
+    public void setArea(MsqTime time){
+
+        for(int centerID=1; centerID<3; centerID++){
+            entrances[centerID-1].area += (time.next - time.current) * entrances[centerID-1].numberOfJobsInNode;
+        }
     }
 
     private class LuggageChecksSingleEntrance {
@@ -105,6 +108,8 @@ public class LuggageChecks {
          *  * Utilizations
          *  * Queue population
          */
+
+        Statistics statistics;
 
         //Constants and Variables
         public static long  arrivalsCounter = 0;        /* number of arrivals */

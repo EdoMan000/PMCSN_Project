@@ -20,9 +20,11 @@ public class BoardingPassScanners {
      *  * Queue population
      */
 
+    Statistics statistics;
+
     //Constants and Variables
     public static long  arrivalsCounter = 0;        /*number of arrivals*/
-    public long numberOfJobsInNode =0;                     /*number in the node*/
+    long numberOfJobsInNode =0;                     /*number in the node*/
     static int    SERVERS = 3;                      /* number of servers*/
     long processedJobs = 0;                         /* number of processed jobs*/
     static int CENTER_INDEX = 0;//TODO                    /* index of center to select stream*/
@@ -42,6 +44,10 @@ public class BoardingPassScanners {
 
     public long getNumberOfJobsInNode() {
         return numberOfJobsInNode;
+    }
+
+    public void setArea(MsqTime time){
+        area += (time.next - time.current) * numberOfJobsInNode;
     }
 
 

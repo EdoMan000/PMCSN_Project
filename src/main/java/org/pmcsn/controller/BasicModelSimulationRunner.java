@@ -67,11 +67,20 @@ public class BasicModelSimulationRunner {
                 event = getNextEvent(events);
                 msqTime.next = event.time;
 
-                // TODO calcolare integrali INTERNAMENTE AD OGNI CENTRO
+                // Updating the areas
+                luggageChecks.setArea(msqTime);
+                checkInDesksTarget.setArea(msqTime);
+                checkInDesksOthers.setArea(msqTime);
+                boardingPassScanners.setArea(msqTime);
+                securityChecks.setArea(msqTime);
+                passportChecks.setArea(msqTime);
+                stampsCheck.setArea(msqTime);
+                boardingTarget.setArea(msqTime);
 
                 // Advancing the clock
                 msqTime.current = msqTime.next;
 
+                // Processing the event based on its type
                 switch (event.type) {
                     case ARRIVAL_LUGGAGE_CHECK:
                         luggageChecks.processArrival(event, msqTime, events);
@@ -92,7 +101,7 @@ public class BasicModelSimulationRunner {
                         checkInDesksOthers.processCompletion(event, msqTime, events);
                         break;
                     case ARRIVAL_BOARDING_PASS:
-                        boardingTarget.processArrival(event, msqTime, events);
+                        boardingPassScanners.processArrival(event, msqTime, events);
                         break;
                     case BOARDING_PASS_DONE:
                         boardingPassScanners.processCompletion(event, msqTime, events);
@@ -119,7 +128,7 @@ public class BasicModelSimulationRunner {
                         boardingTarget.processArrival(event, msqTime, events);
                         break;
                     case BOARDING_DONE:
-                        boardingTarget.processArrival(event, msqTime, events);
+                        boardingTarget.processCompletion(event, msqTime, events);
                         break;
                 }
 
@@ -128,7 +137,12 @@ public class BasicModelSimulationRunner {
 
             }
 
+            // Generating next seed
+            rngs.selectStream(255);
+            seeds[i+1] = rngs.getSeed();
+
         }
+
 
     }
 

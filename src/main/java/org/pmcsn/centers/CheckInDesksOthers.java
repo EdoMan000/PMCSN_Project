@@ -42,13 +42,19 @@ public class CheckInDesksOthers {
     public long getNumberOfJobsInNode() {
 
         int numberOfJobsInNode = 0;
-        int centerID = 0;
 
-        for(centerID=0; centerID<19; centerID++){
-            numberOfJobsInNode += checkInDesksSingleFlights[centerID - 1].numberOfJobsInNode;
+        for(int centerID=1; centerID<19; centerID++){
+            numberOfJobsInNode += checkInDesksSingleFlights[centerID-1].numberOfJobsInNode;
         }
 
         return numberOfJobsInNode;
+    }
+
+    public void setArea(MsqTime time){
+
+        for(int centerID=1; centerID<19; centerID++){
+            checkInDesksSingleFlights[centerID-1].area += (time.next - time.current) * checkInDesksSingleFlights[centerID-1].numberOfJobsInNode;
+        }
     }
 
         private class CheckInDesksSingleFlight {
@@ -62,6 +68,8 @@ public class CheckInDesksOthers {
          *  * Utilizations
          *  * Queue population
          */
+
+        Statistics statistics;
 
         //Constants and Variables
         public static long  arrivalsCounter = 0;        /*number of arrivals*/
