@@ -5,7 +5,8 @@ public class MsqEvent {
     public boolean active;  //status
     public final EventType type; //type
     public int server;  //server (if needed)
-    public boolean hasPriority; //if the event has priority
+    public boolean hasPriority = false;     //if the event has priority
+    public int centerID;
 
 
     public MsqEvent(double time, boolean active, EventType type, int server) {
@@ -13,6 +14,14 @@ public class MsqEvent {
         this.active = active;
         this.type = type;
         this.server = server;
+    }
+
+    public MsqEvent(double time, boolean active, EventType type, int server, int centerID) {
+        this.time = time;
+        this.active = active;
+        this.type = type;
+        this.server = server;
+        this.centerID = centerID;
     }
 
     public MsqEvent(double time, boolean active, EventType type) {

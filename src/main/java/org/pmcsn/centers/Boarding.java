@@ -6,7 +6,8 @@ import org.pmcsn.model.*;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Random;
+
+import static org.pmcsn.utils.Distributions.erlang;
 
 public class Boarding {
 
@@ -40,6 +41,10 @@ public class Boarding {
         this.rvgs = new Rvgs(rngs);
     }
 
+    public long getNumberOfJobsInNode() {
+        return numberOfJobsInNode;
+    }
+
     public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events){
         int s;
 
@@ -59,7 +64,7 @@ public class Boarding {
             sum[s].service += service;
             sum[s].served++;
             //generate a new completion event
-            MsqEvent event = new MsqEvent(time.current + service, true, EventType.SECURITY_CHECK_DONE, s);
+            MsqEvent event = new MsqEvent(time.current + service, true, EventType.BOARDING_DONE, s);
             events.add(event);
             events.sort(Comparator.comparing(MsqEvent::getTime));
         }
@@ -76,20 +81,6 @@ public class Boarding {
         //obtaining the server which is processing the job
         int s = completion.server;
 
-        if(getCitizen(0.2)){
-            if(getTargetFlight(0.0159)){
-                /* generate an arrival at boarding*/
-                MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_BOARDING, 0);
-                events.add(event);
-                events.sort(Comparator.comparing(MsqEvent::getTime));
-            }
-        }else{
-            /* generate an arrival at passport check*/
-            MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_PASSPORT_CHECK, 0);
-            events.add(event);
-            events.sort(Comparator.comparing(MsqEvent::getTime));
-        }
-
         //checking if there are jobs in queue, if so the server starts processing one
         if (numberOfJobsInNode >= SERVERS) {
             service = getService(CENTER_INDEX+1);
@@ -97,7 +88,7 @@ public class Boarding {
             sum[s].served++;
 
             //generate a new completion event
-            MsqEvent event = new MsqEvent(time.current + service, true, EventType.SECURITY_CHECK_DONE, s);
+            MsqEvent event = new MsqEvent(time.current + service, true, EventType.BOARDING_DONE, s);
             events.add(event);
             events.sort(Comparator.comparing(MsqEvent::getTime));
         } else {
@@ -141,31 +132,6 @@ public class Boarding {
         rngs.selectStream(streamIndex);
 
         //TODO parametri? erlang con k=2
-        return (erlang(2, 0.3));
-    }
-
-    public double erlang(long n, double b)
-        /* ==================================================
-         * Returns an Erlang distributed positive real number.
-         * NOTE: use n > 0 and b > 0.0
-         * ==================================================
-         */
-    {
-        long   i;
-        double x = 0.0;
-
-        for (i = 0; i < n; i++)
-            x += exponential(b);
-        return (x);
-    }
-
-    public double exponential(double m)
-        /* =========================================================
-         * Returns an exponentially distributed positive real number.
-         * NOTE: use m > 0.0
-         * =========================================================
-         */
-    {
-        return (-m * Math.log(1.0 - rngs.random()));
+        return (erlang(2, 0.3, rngs));
     }
 }

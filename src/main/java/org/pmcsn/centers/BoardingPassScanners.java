@@ -3,6 +3,7 @@ package org.pmcsn.centers;
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
+import org.pmcsn.utils.Distributions;
 
 import java.util.Comparator;
 import java.util.List;
@@ -21,7 +22,7 @@ public class BoardingPassScanners {
 
     //Constants and Variables
     public static long  arrivalsCounter = 0;        /*number of arrivals*/
-    long numberOfJobsInNode =0;                     /*number in the node*/
+    public long numberOfJobsInNode =0;                     /*number in the node*/
     static int    SERVERS = 3;                      /* number of servers*/
     long processedJobs = 0;                         /* number of processed jobs*/
     static int CENTER_INDEX = 0;//TODO                    /* index of center to select stream*/
@@ -37,6 +38,10 @@ public class BoardingPassScanners {
     public BoardingPassScanners(Rngs rngs) {
         this.rngs = rngs;
         this.rvgs = new Rvgs(rngs);
+    }
+
+    public long getNumberOfJobsInNode() {
+        return numberOfJobsInNode;
     }
 
 
@@ -131,17 +136,7 @@ public class BoardingPassScanners {
         rngs.selectStream(streamIndex);
 
         //TODO: cambiare i parametri
-        return (exponential(5));
-    }
-
-    public double exponential(double m)
-        /* =========================================================
-         * Returns an exponentially distributed positive real number.
-         * NOTE: use m > 0.0
-         * =========================================================
-         */
-    {
-        return (-m * Math.log(1.0 - rngs.random()));
+        return (Distributions.exponential(5, rngs));
     }
 
 }

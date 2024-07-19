@@ -6,7 +6,9 @@ import org.pmcsn.model.*;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Random;
+
+import static org.pmcsn.utils.Distributions.erlang;
+import static org.pmcsn.utils.Probabilities.*;
 
 public class SecurityChecks {
 
@@ -38,6 +40,10 @@ public class SecurityChecks {
     public SecurityChecks(Rngs rngs) {
         this.rngs = rngs;
         this.rvgs = new Rvgs(rngs);
+    }
+
+    public long getNumberOfJobsInNode() {
+        return numberOfJobsInNode;
     }
 
     public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events){
@@ -76,12 +82,19 @@ public class SecurityChecks {
         //obtaining the server which is processing the job
         int s = completion.server;
 
-        if(getCitizen(0.2)){
-            if(getTargetFlight(0.0159)){
-                /* generate an arrival at boarding*/
-                MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_BOARDING, 0);
-                events.add(event);
-                events.sort(Comparator.comparing(MsqEvent::getTime));
+        if(isCitizen(rngs,CENTER_INDEX+2)){
+            if(isTargetFlight(rngs, CENTER_INDEX+3)){
+                if(isPriority(rngs, CENTER_INDEX+4)){
+                    /* generate an arrival at boarding with priority*/
+                    MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_BOARDING, 0, true);
+                    events.add(event);
+                    events.sort(Comparator.comparing(MsqEvent::getTime));
+                } else {
+                    /* generate an arrival at boarding without priority*/
+                    MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_BOARDING, 0);
+                    events.add(event);
+                    events.sort(Comparator.comparing(MsqEvent::getTime));
+                }
             }
         }else{
             /* generate an arrival at passport check*/
@@ -105,16 +118,6 @@ public class SecurityChecks {
             servers[s].lastCompletionTime = completion.time;
             servers[s].running = false;
         }
-    }
-
-    private boolean getTargetFlight(double beta) {
-        rngs.selectStream(CENTER_INDEX+2);
-        return rngs.random() < beta;
-    }
-
-    private boolean getCitizen(double beta) {
-        rngs.selectStream(CENTER_INDEX+3);
-        return rngs.random() < beta;
     }
 
     int findOne() {
@@ -141,31 +144,6 @@ public class SecurityChecks {
         rngs.selectStream(streamIndex);
 
         //TODO parametri? erlang con k=2
-        return (erlang(2, 0.3));
-    }
-
-    public double erlang(long n, double b)
-        /* ==================================================
-         * Returns an Erlang distributed positive real number.
-         * NOTE: use n > 0 and b > 0.0
-         * ==================================================
-         */
-    {
-        long   i;
-        double x = 0.0;
-
-        for (i = 0; i < n; i++)
-            x += exponential(b);
-        return (x);
-    }
-
-    public double exponential(double m)
-        /* =========================================================
-         * Returns an exponentially distributed positive real number.
-         * NOTE: use m > 0.0
-         * =========================================================
-         */
-    {
-        return (-m * Math.log(1.0 - rngs.random()));
+        return (erlang(2, 0.3, rngs));
     }
 }

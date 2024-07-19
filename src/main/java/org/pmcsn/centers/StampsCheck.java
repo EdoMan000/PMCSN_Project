@@ -7,6 +7,10 @@ import org.pmcsn.model.*;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.pmcsn.utils.Distributions.uniform;
+import static org.pmcsn.utils.Probabilities.isPriority;
+import static org.pmcsn.utils.Probabilities.isTargetFlight;
+
 public class StampsCheck {
 
     /*  STATISTICS OF INTEREST :
@@ -35,6 +39,10 @@ public class StampsCheck {
     public StampsCheck(Rngs rngs) {
         this.rngs = rngs;
         this.rvgs = new Rvgs(rngs);
+    }
+
+    public long getNumberOfJobsInNode() {
+        return numberOfJobsInNode;
     }
 
     public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events){
@@ -68,9 +76,19 @@ public class StampsCheck {
         events.remove(completion);
 
         // generating arrival for the next center
-        MsqEvent next_center_event = new MsqEvent(time.current, true, EventType.ARRIVAL_BOARDING, 0);
-        events.add(next_center_event);
-        events.sort(Comparator.comparing(MsqEvent::getTime));
+        if(isTargetFlight(rngs, CENTER_INDEX+2)){
+            if(isPriority(rngs, CENTER_INDEX+3)){
+                /* generate an arrival at boarding with priority*/
+                MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_BOARDING, 0, true);
+                events.add(event);
+                events.sort(Comparator.comparing(MsqEvent::getTime));
+            } else {
+                /* generate an arrival at boarding without priority*/
+                MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_BOARDING, 0);
+                events.add(event);
+                events.sort(Comparator.comparing(MsqEvent::getTime));
+            }
+        }
 
         //checking if there are jobs in queue, if so the server starts processing one
         if (numberOfJobsInNode > 0) {
@@ -91,14 +109,6 @@ public class StampsCheck {
 
         //TODO parametri? erlang con k=10
         return (uniform(0, 10, rngs));
-    }
-
-    double uniform(double a, double b, Rngs r) {
-        /* --------------------------------------------
-         * generate a Uniform random variate, use a < b
-         * --------------------------------------------
-         */
-        return (a + (b - a) * r.random());
     }
 
 }

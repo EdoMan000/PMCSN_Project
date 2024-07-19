@@ -7,6 +7,8 @@ import org.pmcsn.model.*;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.pmcsn.utils.Distributions.erlang;
+
 public class CheckInDesksTarget {
 
     /*  STATISTICS OF INTEREST :
@@ -37,6 +39,10 @@ public class CheckInDesksTarget {
     public CheckInDesksTarget(Rngs rngs) {
         this.rngs = rngs;
         this.rvgs = new Rvgs(rngs);
+    }
+
+    public long getNumberOfJobsInNode() {
+        return numberOfJobsInNode;
     }
 
 
@@ -130,32 +136,7 @@ public class CheckInDesksTarget {
         rngs.selectStream(streamIndex);
 
         //TODO: cambiare i parametri
-        return (erlang(5, 0.3));
-    }
-
-    public double exponential(double m)
-        /* =========================================================
-         * Returns an exponentially distributed positive real number.
-         * NOTE: use m > 0.0
-         * =========================================================
-         */
-    {
-        return (-m * Math.log(1.0 - rngs.random()));
-    }
-
-    public double erlang(long n, double b)
-        /* ==================================================
-         * Returns an Erlang distributed positive real number.
-         * NOTE: use n > 0 and b > 0.0
-         * ==================================================
-         */
-    {
-        long   i;
-        double x = 0.0;
-
-        for (i = 0; i < n; i++)
-            x += exponential(b);
-        return (x);
+        return (erlang(5, 0.3, rngs));
     }
 
 }
