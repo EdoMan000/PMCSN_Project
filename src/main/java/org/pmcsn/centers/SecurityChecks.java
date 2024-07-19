@@ -4,9 +4,11 @@ import org.pmcsn.libraries.Rngs;
 import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.pmcsn.model.Statistics.printStats;
 import static org.pmcsn.utils.Distributions.erlang;
 import static org.pmcsn.utils.Probabilities.*;
 
@@ -28,7 +30,7 @@ public class SecurityChecks {
     public static long  arrivalsCounter = 0;        /* number of arrivals */
     long numberOfJobsInNode =0;                     /* number in the node */
     static int    SERVERS = 4;                      /* number of servers */
-    long processedJobs = 0;                         /* number of processed jobs */
+    long numberOfJobsServed = 0;                         /* number of processed jobs */
     static int CENTER_INDEX = 0;//TODO                    /* index of center to select stream*/
     double area   = 0.0;
     double service;
@@ -79,7 +81,7 @@ public class SecurityChecks {
 
     public void processCompletion(MsqEvent completion, MsqTime time, List<MsqEvent> events) {
         //updating counters
-        processedJobs++;
+        numberOfJobsServed++;
         numberOfJobsInNode--;
 
         //remove the event since I'm processing it
@@ -151,5 +153,11 @@ public class SecurityChecks {
 
         //TODO parametri? erlang con k=2
         return (erlang(2, 0.3, rngs));
+    }
+
+    public void computeAndPrintStats(int replicationIndex, MsqTime time, List<MsqEvent> events) {
+        List<MsqEvent> securityChecksEvents = new ArrayList<>(events);
+        securityChecksEvents.removeIf(event -> !(event.type==EventType.ARRIVAL_SECURITY_CHECK || event.type==EventType.SECURITY_CHECK_DONE));
+        printStats("SECURITY_CHECKS", SERVERS, numberOfJobsServed, this.area, this.sum, time, securityChecksEvents, replicationIndex);
     }
 }

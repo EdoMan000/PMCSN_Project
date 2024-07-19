@@ -5,8 +5,11 @@ import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
 import org.pmcsn.utils.Distributions;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+
+import static org.pmcsn.model.Statistics.printStats;
 
 public class BoardingPassScanners {
 
@@ -26,7 +29,7 @@ public class BoardingPassScanners {
     public static long  arrivalsCounter = 0;        /*number of arrivals*/
     long numberOfJobsInNode =0;                     /*number in the node*/
     static int    SERVERS = 3;                      /* number of servers*/
-    long processedJobs = 0;                         /* number of processed jobs*/
+    long numberOfJobsServed = 0;                         /* number of processed jobs*/
     static int CENTER_INDEX = 0;//TODO                    /* index of center to select stream*/
     double area   = 0.0;
     double service;
@@ -70,7 +73,7 @@ public class BoardingPassScanners {
             sum[s].service += service;
             sum[s].served++;
             //generate a new completion event
-            MsqEvent event = new MsqEvent(time.current + service, true, EventType.BOARDING_PASS_DONE, s);
+            MsqEvent event = new MsqEvent(time.current + service, true, EventType.BOARDING_PASS_SCANNERS_DONE, s);
             events.add(event);
             events.sort(Comparator.comparing(MsqEvent::getTime));
         }
@@ -81,7 +84,7 @@ public class BoardingPassScanners {
 
     public void processCompletion(MsqEvent completion, MsqTime time, List<MsqEvent> events) {
         //updating counters
-        processedJobs++;
+        numberOfJobsServed++;
         numberOfJobsInNode--;
 
         //remove the event since I'm processing it
@@ -102,7 +105,7 @@ public class BoardingPassScanners {
             sum[s].served++;
 
             //generate a new completion event
-            MsqEvent completion_event = new MsqEvent(time.current + service, true, EventType.BOARDING_PASS_DONE, s);
+            MsqEvent completion_event = new MsqEvent(time.current + service, true, EventType.BOARDING_PASS_SCANNERS_DONE, s);
             events.add(completion_event);
             events.sort(Comparator.comparing(MsqEvent::getTime));
         } else {
@@ -143,6 +146,12 @@ public class BoardingPassScanners {
 
         //TODO: cambiare i parametri
         return (Distributions.exponential(5, rngs));
+    }
+
+    public void computeAndPrintStats(int replicationIndex, MsqTime time, List<MsqEvent> events) {
+        List<MsqEvent> boardingPassScannersEvents = new ArrayList<>(events);
+        boardingPassScannersEvents.removeIf(event -> !(event.type==EventType.ARRIVAL_BOARDING_PASS_SCANNERS || event.type==EventType.BOARDING_PASS_SCANNERS_DONE));
+        printStats("BOARDING_PASS_SCANNERS", SERVERS, numberOfJobsServed, this.area, this.sum, time, boardingPassScannersEvents, replicationIndex);
     }
 
 }

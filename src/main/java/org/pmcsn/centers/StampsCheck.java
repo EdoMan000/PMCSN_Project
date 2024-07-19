@@ -4,9 +4,11 @@ import org.pmcsn.libraries.Rngs;
 import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.pmcsn.model.Statistics.printStats;
 import static org.pmcsn.utils.Distributions.uniform;
 import static org.pmcsn.utils.Probabilities.isPriority;
 import static org.pmcsn.utils.Probabilities.isTargetFlight;
@@ -28,7 +30,7 @@ public class StampsCheck {
     //Constants and Variables
     public static long  arrivalsCounter = 0;        /* number of arrivals */
     long numberOfJobsInNode =0;                     /* number in the node */
-    long processedJobs = 0;                         /* number of processed jobs */
+    long numberOfJobsServed = 0;                         /* number of processed jobs */
     static int CENTER_INDEX = 0;//TODO                    /* index of center to select stream*/
     double area   = 0.0;
     double service;
@@ -75,7 +77,7 @@ public class StampsCheck {
 
     public void processCompletion(MsqEvent completion, MsqTime time, List<MsqEvent> events) {
         //updating counters
-        processedJobs++;
+        numberOfJobsServed++;
         numberOfJobsInNode--;
 
         //remove the event since I'm processing it
@@ -115,6 +117,14 @@ public class StampsCheck {
 
         //TODO parametri? erlang con k=10
         return (uniform(0, 10, rngs));
+    }
+
+    public void computeAndPrintStats(int replicationIndex, MsqTime time, List<MsqEvent> events) {
+        List<MsqEvent> stampCheckEvents = new ArrayList<>(events);
+        stampCheckEvents.removeIf(event -> !(event.type==EventType.ARRIVAL_STAMP_CHECK || event.type==EventType.STAMP_CHECK_DONE));
+        MsqSum[] sums = new MsqSum[1];
+        sums[0] = this.sum;
+        printStats("STAMP_CHECK", 1, numberOfJobsServed, this.area, sums, time, stampCheckEvents, replicationIndex);
     }
 
 }

@@ -30,6 +30,19 @@ public class BasicModelSimulationRunner {
         seeds[0] = SEED;
         Rngs rngs = new Rngs();
 
+        // Create lists to store events for statistics
+        List<MsqEvent> allEvents = new ArrayList<>();
+        MsqTime finalMsqTime = new MsqTime();
+
+        // Declare variables for centers
+        LuggageChecks luggageChecks = null;
+        CheckInDesksTarget checkInDesksTarget = null;
+        CheckInDesksOthers checkInDesksOthers = null;
+        BoardingPassScanners boardingPassScanners = null;
+        SecurityChecks securityChecks = null;
+        PassportChecks passportChecks = null;
+        StampsCheck stampsCheck = null;
+        Boarding boardingTarget = null;
 
         for (int i = 0; i < 150; i++) {
 
@@ -44,25 +57,26 @@ public class BasicModelSimulationRunner {
             msqTime.current = START;
             List<MsqEvent> events = new ArrayList<>();
 
-            LuggageChecks luggageChecks = new LuggageChecks(rngs, sarrival);
+            // Initialize LuggageChecks
+            luggageChecks = new LuggageChecks(rngs, sarrival);
 
             //generating first arrival
             double time = luggageChecks.getArrival();
             events.add(new MsqEvent(time, true, EventType.ARRIVAL_LUGGAGE_CHECK));
 
-            //TODO DEFINE CENTER_INDEX VARIABLES IN ALL CENTERS SO THAT WE HAVE NO COLLISIONS
-            //creation of centers
-            CheckInDesksTarget checkInDesksTarget = new CheckInDesksTarget(rngs);
-            CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers(rngs);
-            BoardingPassScanners boardingPassScanners = new BoardingPassScanners(rngs);
-            SecurityChecks securityChecks = new SecurityChecks(rngs);
-            PassportChecks passportChecks = new PassportChecks(rngs);
-            StampsCheck stampsCheck = new StampsCheck(rngs);
-            Boarding boardingTarget = new Boarding(rngs);
+            // TODO: Define CENTER_INDEX variables in all centers so that we have no collisions
+            // Initialize other centers
+            checkInDesksTarget = new CheckInDesksTarget(rngs);
+            checkInDesksOthers = new CheckInDesksOthers(rngs);
+            boardingPassScanners = new BoardingPassScanners(rngs);
+            securityChecks = new SecurityChecks(rngs);
+            passportChecks = new PassportChecks(rngs);
+            stampsCheck = new StampsCheck(rngs);
+            boardingTarget = new Boarding(rngs);
 
             MsqEvent event;
 
-            while(!luggageChecks.isEndOfArrivals() && number != 0) {
+            while (!luggageChecks.isEndOfArrivals() && number != 0) {
 
                 event = getNextEvent(events);
                 msqTime.next = event.time;
@@ -100,10 +114,10 @@ public class BasicModelSimulationRunner {
                     case CHECK_IN_OTHERS_DONE:
                         checkInDesksOthers.processCompletion(event, msqTime, events);
                         break;
-                    case ARRIVAL_BOARDING_PASS:
+                    case ARRIVAL_BOARDING_PASS_SCANNERS:
                         boardingPassScanners.processArrival(event, msqTime, events);
                         break;
-                    case BOARDING_PASS_DONE:
+                    case BOARDING_PASS_SCANNERS_DONE:
                         boardingPassScanners.processCompletion(event, msqTime, events);
                         break;
                     case ARRIVAL_SECURITY_CHECK:
@@ -133,17 +147,28 @@ public class BasicModelSimulationRunner {
                 }
 
                 number = luggageChecks.getNumberOfJobsInNode() + checkInDesksTarget.getNumberOfJobsInNode() + checkInDesksOthers.getNumberOfJobsInNode() + boardingTarget.getNumberOfJobsInNode()
-                + boardingPassScanners.getNumberOfJobsInNode() + securityChecks.getNumberOfJobsInNode() + passportChecks.getNumberOfJobsInNode() + stampsCheck.getNumberOfJobsInNode() + boardingTarget.getNumberOfJobsInNode();
+                        + boardingPassScanners.getNumberOfJobsInNode() + securityChecks.getNumberOfJobsInNode() + passportChecks.getNumberOfJobsInNode() + stampsCheck.getNumberOfJobsInNode() + boardingTarget.getNumberOfJobsInNode();
 
             }
 
+            // Collect all events for statistics
+            allEvents.addAll(events);
+            finalMsqTime = msqTime;
+
             // Generating next seed
             rngs.selectStream(255);
-            seeds[i+1] = rngs.getSeed();
-
+            seeds[i + 1] = rngs.getSeed();
         }
 
-
+        //TODO understand what replicationIndex parameter is used for
+        luggageChecks.computeAndPrintStats(0, finalMsqTime, allEvents);
+        checkInDesksTarget.computeAndPrintStats(0, finalMsqTime, allEvents);
+        checkInDesksOthers.computeAndPrintStats(0, finalMsqTime, allEvents);
+        boardingPassScanners.computeAndPrintStats(0, finalMsqTime, allEvents);
+        securityChecks.computeAndPrintStats(0, finalMsqTime, allEvents);
+        passportChecks.computeAndPrintStats(0, finalMsqTime, allEvents);
+        stampsCheck.computeAndPrintStats(0, finalMsqTime, allEvents);
+        boardingTarget.computeAndPrintStats(0, finalMsqTime, allEvents);
     }
 
     private MsqEvent getNextEvent(List<MsqEvent> events) {

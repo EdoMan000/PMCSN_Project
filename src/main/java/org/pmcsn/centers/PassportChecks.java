@@ -4,9 +4,11 @@ import org.pmcsn.libraries.Rngs;
 import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.pmcsn.model.Statistics.printStats;
 import static org.pmcsn.utils.Distributions.erlang;
 
 public class PassportChecks {
@@ -27,7 +29,7 @@ public class PassportChecks {
     public static long  arrivalsCounter = 0;        /* number of arrivals */
     long numberOfJobsInNode =0;                     /* number in the node */
     static int    SERVERS = 24;                      /* number of servers */
-    long processedJobs = 0;                         /* number of processed jobs */
+    long numberOfJobsServed = 0;                         /* number of processed jobs */
     static int CENTER_INDEX = 0;//TODO                    /* index of center to select stream*/
     double area   = 0.0;
     double service;
@@ -78,7 +80,7 @@ public class PassportChecks {
 
     public void processCompletion(MsqEvent completion, MsqTime time, List<MsqEvent> events) {
         //updating counters
-        processedJobs++;
+        numberOfJobsServed++;
         numberOfJobsInNode--;
 
         //remove the event since I'm processing it
@@ -134,5 +136,11 @@ public class PassportChecks {
 
         //TODO parametri? erlang con k=10
         return (erlang(10, 0.3, rngs));
+    }
+
+    public void computeAndPrintStats(int replicationIndex, MsqTime time, List<MsqEvent> events) {
+        List<MsqEvent> passportChecksEvents = new ArrayList<>(events);
+        passportChecksEvents.removeIf(event -> !(event.type==EventType.ARRIVAL_PASSPORT_CHECK || event.type==EventType.PASSPORT_CHECK_DONE));
+        printStats("PASSPORT_CHECK", SERVERS, numberOfJobsServed, this.area, this.sum, time, passportChecksEvents, replicationIndex);
     }
 }

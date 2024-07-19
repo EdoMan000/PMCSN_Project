@@ -4,9 +4,11 @@ import org.pmcsn.libraries.Rngs;
 import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.pmcsn.model.Statistics.printStats;
 import static org.pmcsn.utils.Distributions.erlang;
 
 public class Boarding {
@@ -27,7 +29,7 @@ public class Boarding {
     public static long  arrivalsCounter = 0;        /* number of arrivals */
     long numberOfJobsInNode =0;                     /* number in the node */
     static int    SERVERS = 2;                      /* number of servers */
-    long processedJobs = 0;                         /* number of processed jobs */
+    long numberOfJobsServed = 0;                         /* number of processed jobs */
     static int CENTER_INDEX = 0;//TODO                    /* index of center to select stream*/
     double area   = 0.0;
     double service;
@@ -78,7 +80,7 @@ public class Boarding {
 
     public void processCompletion(MsqEvent completion, MsqTime time, List<MsqEvent> events) {
         //updating counters
-        processedJobs++;
+        numberOfJobsServed++;
         numberOfJobsInNode--;
 
         //remove the event since I'm processing it
@@ -139,5 +141,11 @@ public class Boarding {
 
         //TODO parametri? erlang con k=2
         return (erlang(2, 0.3, rngs));
+    }
+
+    public void computeAndPrintStats(int replicationIndex, MsqTime time, List<MsqEvent> events) {
+        List<MsqEvent> boardingEvents = new ArrayList<>(events);
+        boardingEvents.removeIf(event -> !(event.type==EventType.ARRIVAL_BOARDING || event.type==EventType.BOARDING_DONE));
+        printStats("BOARDING", SERVERS, numberOfJobsServed, this.area, this.sum, time, boardingEvents, replicationIndex);
     }
 }
