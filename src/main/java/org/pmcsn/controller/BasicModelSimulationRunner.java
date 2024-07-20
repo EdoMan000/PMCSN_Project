@@ -30,10 +30,6 @@ public class BasicModelSimulationRunner {
         seeds[0] = SEED;
         Rngs rngs = new Rngs();
 
-        // Create lists to store events for statistics
-        List<MsqEvent> allEvents = new ArrayList<>();
-        MsqTime finalMsqTime = new MsqTime();
-
         // Declare variables for centers
         LuggageChecks luggageChecks = null;
         CheckInDesksTarget checkInDesksTarget = null;
@@ -64,7 +60,6 @@ public class BasicModelSimulationRunner {
             double time = luggageChecks.getArrival();
             events.add(new MsqEvent(time, true, EventType.ARRIVAL_LUGGAGE_CHECK));
 
-            // TODO: Define CENTER_INDEX variables in all centers so that we have no collisions
             // Initialize other centers
             checkInDesksTarget = new CheckInDesksTarget(rngs);
             checkInDesksOthers = new CheckInDesksOthers(rngs);
@@ -151,24 +146,31 @@ public class BasicModelSimulationRunner {
 
             }
 
-            // Collect all events for statistics
-            allEvents.addAll(events);
-            finalMsqTime = msqTime;
+            // Saving statistics for current run
+            luggageChecks.saveStats();
+            checkInDesksTarget.saveStats();
+            checkInDesksOthers.saveStats();
+            boardingPassScanners.saveStats();
+            securityChecks.saveStats();
+            passportChecks.saveStats();
+            stampsCheck.saveStats();
+            boardingTarget.saveStats();
 
             // Generating next seed
             rngs.selectStream(255);
             seeds[i + 1] = rngs.getSeed();
         }
 
-        //TODO understand what replicationIndex parameter is used for
-        luggageChecks.computeAndPrintStats(0, finalMsqTime, allEvents);
-        checkInDesksTarget.computeAndPrintStats(0, finalMsqTime, allEvents);
-        checkInDesksOthers.computeAndPrintStats(0, finalMsqTime, allEvents);
-        boardingPassScanners.computeAndPrintStats(0, finalMsqTime, allEvents);
-        securityChecks.computeAndPrintStats(0, finalMsqTime, allEvents);
-        passportChecks.computeAndPrintStats(0, finalMsqTime, allEvents);
-        stampsCheck.computeAndPrintStats(0, finalMsqTime, allEvents);
-        boardingTarget.computeAndPrintStats(0, finalMsqTime, allEvents);
+        // Writing statistics csv with data from all runs
+        String simulationType = "BASIC_MODEL";
+        luggageChecks.writeStats(simulationType);
+        checkInDesksTarget.writeStats(simulationType);
+        checkInDesksOthers.writeStats(simulationType);
+        boardingPassScanners.writeStats(simulationType);
+        securityChecks.writeStats(simulationType);
+        passportChecks.writeStats(simulationType);
+        stampsCheck.writeStats(simulationType);
+        boardingTarget.writeStats(simulationType);
     }
 
     private MsqEvent getNextEvent(List<MsqEvent> events) {

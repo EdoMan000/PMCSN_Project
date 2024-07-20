@@ -4,11 +4,9 @@ import org.pmcsn.libraries.Rngs;
 import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static org.pmcsn.model.Statistics.printStats;
 import static org.pmcsn.utils.Distributions.erlang;
 import static org.pmcsn.utils.Probabilities.*;
 
@@ -18,22 +16,25 @@ public class SecurityChecks {
      *  * Response times
      *  * Service times
      *  * Queue times
-     *  * Interarrival times
+     *  * Inter-arrival times
      *  * Population
-     *  * Utilizations
+     *  * Utilization
      *  * Queue population
      */
 
-    Statistics statistics;
+    Statistics statistics = new Statistics("SECURITY_CHECKS");
 
     //Constants and Variables
     public static long  arrivalsCounter = 0;        /* number of arrivals */
     long numberOfJobsInNode =0;                     /* number in the node */
     static int    SERVERS = 4;                      /* number of servers */
-    long numberOfJobsServed = 0;                         /* number of processed jobs */
-    static int CENTER_INDEX = 0;//TODO                    /* index of center to select stream*/
+    long numberOfJobsServed = 0;                    /* number of processed jobs */
+    static int CENTER_INDEX = 52;                   /* index of center to select stream*/
     double area   = 0.0;
     double service;
+    double firstArrivalTime = Double.NEGATIVE_INFINITY;
+    double lastArrivalTime = 0;
+    double lastCompletionTime = 0;
 
     Rngs rngs;
     Rvgs rvgs;
@@ -60,6 +61,13 @@ public class SecurityChecks {
         // increment the number of jobs in the node
         numberOfJobsInNode++;
 
+        // Updating the first arrival time (we will use it in the statistics)
+        if(firstArrivalTime == Double.NEGATIVE_INFINITY){
+            firstArrivalTime = arrival.time;
+        }
+        lastArrivalTime = arrival.time;
+
+
         //remove the event since I'm processing it
         events.remove(arrival);
 
@@ -83,6 +91,8 @@ public class SecurityChecks {
         //updating counters
         numberOfJobsServed++;
         numberOfJobsInNode--;
+
+        lastCompletionTime = completion.time;
 
         //remove the event since I'm processing it
         events.remove(completion);
@@ -155,9 +165,10 @@ public class SecurityChecks {
         return (erlang(2, 0.3, rngs));
     }
 
-    public void computeAndPrintStats(int replicationIndex, MsqTime time, List<MsqEvent> events) {
-        List<MsqEvent> securityChecksEvents = new ArrayList<>(events);
-        securityChecksEvents.removeIf(event -> !(event.type==EventType.ARRIVAL_SECURITY_CHECK || event.type==EventType.SECURITY_CHECK_DONE));
-        printStats("SECURITY_CHECKS", SERVERS, numberOfJobsServed, this.area, this.sum, time, securityChecksEvents, replicationIndex);
+    public void saveStats() {
+        statistics.saveStats(SERVERS, numberOfJobsServed, area, sum, firstArrivalTime, lastArrivalTime, lastCompletionTime);
+    }
+    public void writeStats(String simulationType){
+        statistics.writeStats(simulationType);
     }
 }

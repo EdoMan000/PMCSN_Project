@@ -1,5 +1,8 @@
 package org.pmcsn.model;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,53 +12,98 @@ public class Statistics {
      *  * Response times
      *  * Service times
      *  * Queue times
-     *  * Interarrival times
+     *  * Inter-arrival times
      *  * Population
-     *  * Utilizations
+     *  * Utilization
      *  * Queue population
      */
 
-    public double meanResponseTime;
-    public double meanServiceTime;
-    public double meanQueueTime;
-    public double meanInterarrivalTime;
-    public int meanSystemPopulation;
-    public double meanUtilization;
-    public int meanQueuePopulation;
+    public String centerName;
+    public List<Double> meanResponseTimeList = new ArrayList<Double>();
+    public List<Double> meanServiceTimeList = new ArrayList<Double>();
+    public List<Double> meanQueueTimeList = new ArrayList<Double>();
+    public List<Double> meanInterarrivalTimeList = new ArrayList<Double>();
+    public List<Double> meanSystemPopulationList = new ArrayList<Double>();
+    public List<Double> meanUtilizationList = new ArrayList<Double>();
+    public List<Double> meanQueuePopulationList = new ArrayList<Double>();
 
-    public static void printStats(String centerName, int numberOfServers, long numberOfJobsServed, double area, MsqSum[] sum, MsqTime time, List<MsqEvent> centerSpecificEvents, int replicationIndex) {
-        double utilizzazione=0;
-        System.out.println(centerName + " STATISTICS \n\n");
-        System.out.println("for " + numberOfJobsServed + " jobs the service node statistics are:\n\n");
-        System.out.println("  avg interarrivals .. = " + centerSpecificEvents.getFirst().getTime() / numberOfJobsServed);
+    public Statistics(String centerName) {
+        this.centerName = centerName.toLowerCase();
+    }
+
+    public void saveStats(int numberOfServers, long numberOfJobsServed, double area, MsqSum[] sum, double firstArrivalTime, double lastArrivalTime, double lastCompletionTime){
+        double time = lastCompletionTime - firstArrivalTime;
+        double utilization = 0;
+        double totalServiceTime = 0;
+
+        // inter-arrival
+        meanInterarrivalTimeList.add((lastArrivalTime - firstArrivalTime) / numberOfJobsServed);
+
+        // mean response time (E[Ts])
         double Ets = area / numberOfJobsServed;
-        System.out.println("  avg wait ........... = " + Ets);
-        double Ens = area / time.current;
-        System.out.println("  avg # in node ...... = " + Ens);
+        meanResponseTimeList.add(Ets);
+
+        // mean population (E[Tn])
+        double Ens = area / time;
+        meanSystemPopulationList.add(Ens);
 
         for(int i = 1; i <= numberOfServers; i++) {
             area -= sum[i].service;
         }
         double Etq = area / numberOfJobsServed;
-        System.out.println("  avg delay .......... = " + Etq );
-        double Enq = area / time.current;
-        System.out.println("  avg # in queue ..... = " + Enq);
-        System.out.println("\nthe server statistics are:\n\n");
-        System.out.println("    server     utilization     avg service        share\n");
-        for(int i = 1; i <= numberOfServers; i++) {
-            System.out.println(i + "\t" + sum[i].service / time.current + "\t" + sum[i].service / sum[i].served + "\t" + ((double)sum[i].served / numberOfJobsServed));
-            utilizzazione+=sum[i].service / (numberOfServers*time.current);
-            System.out.println("\n");
 
+        // mean wait time (E[Tq])
+        meanQueueTimeList.add(Etq);
+
+        // mean queue population (E[Nq])
+        double Enq = area / time;
+        meanQueuePopulationList.add(Enq);
+
+        for(int i = 1; i <= numberOfServers; i++) {
+            utilization+= sum[i].service  / (numberOfServers*time);
+            totalServiceTime += sum[i].service;
         }
-        //TODO ???????????????????????????????????????????????????????????????????????????????
-//        DataExtractor.writeReplicationStat(replicationINSERT_CENTER_NAME_HERE,Ets, Ens, Etq, Enq);
-//        replicationStatisticsINSERT_CENTER_NAME_HERE.setBatchTempoCoda(Etq, replicationIndex);
-//        replicationStatisticsINSERT_CENTER_NAME_HERE.setBatchPopolazioneSistema(Ens, replicationIndex);
-//        replicationStatisticsINSERT_CENTER_NAME_HERE.setBatchTempoSistema(Ets, replicationIndex);
-//        replicationStatisticsINSERT_CENTER_NAME_HERE.setBatchPopolazioneCodaArray(Enq, replicationIndex);
-//        replicationStatisticsINSERT_CENTER_NAME_HERE.setBatchUtilizzazione(utilizzazione, replicationIndex);
-        System.out.println("\n");
+
+        // mean utilization (ρ)
+        meanUtilizationList.add(utilization);
+
+        // mean service time (E[s])
+        meanServiceTimeList.add(totalServiceTime/numberOfJobsServed);
+
     }
+
+    public void writeStats(String simulationType) {
+        File file = new File("csvFiles/" + simulationType +"/");
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+
+        file = new File("csvFiles/" + simulationType +"/" + centerName+ ".csv");
+        try(FileWriter fileWriter = new FileWriter(file)) {
+
+            String DELIMITER = "\n";
+            String COMMA = ",";
+            int run;
+
+
+            fileWriter.append("#Run, E[Ts], E[Tq], E[s], E[Ns], E[Nq], ρ, λ").append(DELIMITER);
+            for (run = 0; run < 150; run++){
+
+                fileWriter.append(String.valueOf(run)).append(COMMA)
+                        .append(String.valueOf(meanResponseTimeList.get(run))).append(COMMA)
+                        .append(String.valueOf(meanQueueTimeList.get(run))).append(COMMA)
+                        .append(String.valueOf(meanServiceTimeList.get(run))).append(COMMA)
+                        .append(String.valueOf(meanSystemPopulationList.get(run))).append(COMMA)
+                        .append(String.valueOf(meanQueueTimeList.get(run))).append(COMMA)
+                        .append(String.valueOf(meanUtilizationList.get(run))).append(COMMA)
+                        .append(String.valueOf(meanInterarrivalTimeList.get(run))).append(DELIMITER);
+            }
+
+            fileWriter.flush();
+        } catch (IOException e) {
+            //ignore
+        }
+    }
+
 
 }

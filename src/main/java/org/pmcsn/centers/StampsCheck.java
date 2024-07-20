@@ -4,11 +4,9 @@ import org.pmcsn.libraries.Rngs;
 import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static org.pmcsn.model.Statistics.printStats;
 import static org.pmcsn.utils.Distributions.uniform;
 import static org.pmcsn.utils.Probabilities.isPriority;
 import static org.pmcsn.utils.Probabilities.isTargetFlight;
@@ -19,21 +17,24 @@ public class StampsCheck {
      *  * Response times
      *  * Service times
      *  * Queue times
-     *  * Interarrival times
+     *  * Inter-arrival times
      *  * Population
-     *  * Utilizations
+     *  * Utilization
      *  * Queue population
      */
 
-    Statistics statistics;
+    Statistics statistics = new Statistics("");
 
     //Constants and Variables
     public static long  arrivalsCounter = 0;        /* number of arrivals */
     long numberOfJobsInNode =0;                     /* number in the node */
-    long numberOfJobsServed = 0;                         /* number of processed jobs */
-    static int CENTER_INDEX = 0;//TODO                    /* index of center to select stream*/
+    long numberOfJobsServed = 0;                    /* number of processed jobs */
+    static int CENTER_INDEX = 59;                   /* index of center to select stream*/
     double area   = 0.0;
     double service;
+    double firstArrivalTime = Double.NEGATIVE_INFINITY;
+    double lastArrivalTime = 0;
+    double lastCompletionTime = 0;
 
     Rngs rngs;
     Rvgs rvgs;
@@ -58,6 +59,12 @@ public class StampsCheck {
         // increment the number of jobs in the node
         numberOfJobsInNode++;
 
+        // Updating the first arrival time (we will use it in the statistics)
+        if(firstArrivalTime == Double.NEGATIVE_INFINITY){
+            firstArrivalTime = arrival.time;
+        }
+        lastArrivalTime = arrival.time;
+
         //remove the event since I'm processing it
         events.remove(arrival);
 
@@ -79,6 +86,8 @@ public class StampsCheck {
         //updating counters
         numberOfJobsServed++;
         numberOfJobsInNode--;
+
+        lastCompletionTime = completion.time;
 
         //remove the event since I'm processing it
         events.remove(completion);
@@ -119,12 +128,13 @@ public class StampsCheck {
         return (uniform(0, 10, rngs));
     }
 
-    public void computeAndPrintStats(int replicationIndex, MsqTime time, List<MsqEvent> events) {
-        List<MsqEvent> stampCheckEvents = new ArrayList<>(events);
-        stampCheckEvents.removeIf(event -> !(event.type==EventType.ARRIVAL_STAMP_CHECK || event.type==EventType.STAMP_CHECK_DONE));
+    public void saveStats() {
         MsqSum[] sums = new MsqSum[1];
         sums[0] = this.sum;
-        printStats("STAMP_CHECK", 1, numberOfJobsServed, this.area, sums, time, stampCheckEvents, replicationIndex);
+        statistics.saveStats(1, numberOfJobsServed, area, sums, firstArrivalTime, lastArrivalTime, lastCompletionTime);
+    }
+    public void writeStats(String simulationType){
+        statistics.writeStats(simulationType);
     }
 
 }

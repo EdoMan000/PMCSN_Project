@@ -4,13 +4,11 @@ import org.pmcsn.libraries.Rngs;
 import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static org.pmcsn.model.Statistics.printStats;
 import static org.pmcsn.utils.Distributions.erlang;
-import static org.pmcsn.utils.Probabilities.getEntrance;
+import static org.pmcsn.utils.Probabilities.getCheckInDesks;
 
 public class CheckInDesksOthers {
 
@@ -22,31 +20,35 @@ public class CheckInDesksOthers {
         this.rngs = rngs;
         this.rvgs = new Rvgs(rngs);
         this.checkInDesksSingleFlights = new CheckInDesksSingleFlight[19];
+        for (int i = 0; i < checkInDesksSingleFlights.length; i++) {
+            checkInDesksSingleFlights[i] = new CheckInDesksSingleFlight(rngs, i + 1);
+            checkInDesksSingleFlights[i].CENTER_INDEX = 12 + (2 * i);
+        }
     }
 
     public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events) {
-        int centerID = getEntrance(rngs, 11);
-        if (centerID < 1 || centerID > 19) {
-            throw new IllegalArgumentException("Invalid centerID: " + centerID);
+        int index = getCheckInDesks(rngs, 11); //TODO sameStreamIndex here???
+        if (index < 1 || index > 19) {
+            throw new IllegalArgumentException("Invalid centerID: " + index);
         }
-        checkInDesksSingleFlights[centerID - 1].processArrival(arrival, time, events);
+        checkInDesksSingleFlights[index - 1].processArrival(arrival, time, events);
     }
 
 
-    public void processCompletion(MsqEvent arrival, MsqTime time, List<MsqEvent> events) {
-        int centerID = arrival.centerID;
-        if (centerID < 1 || centerID > 19) {
-            throw new IllegalArgumentException("Invalid centerID: " + centerID);
+    public void processCompletion(MsqEvent completion, MsqTime time, List<MsqEvent> events) {
+        int index = completion.centerID;
+        if (index < 1 || index > 19) {
+            throw new IllegalArgumentException("Invalid centerID: " + index);
         }
-        checkInDesksSingleFlights[centerID - 1].processCompletion(arrival, time, events);
+        checkInDesksSingleFlights[index - 1].processCompletion(completion, time, events);
     }
 
     public long getNumberOfJobsInNode() {
 
         int numberOfJobsInNode = 0;
 
-        for(int centerID=1; centerID<19; centerID++){
-            numberOfJobsInNode += checkInDesksSingleFlights[centerID-1].numberOfJobsInNode;
+        for(int index=1; index<19; index++){
+            numberOfJobsInNode += checkInDesksSingleFlights[index-1].numberOfJobsInNode;
         }
 
         return numberOfJobsInNode;
@@ -54,14 +56,20 @@ public class CheckInDesksOthers {
 
     public void setArea(MsqTime time){
 
-        for(int centerID=1; centerID<19; centerID++){
-            checkInDesksSingleFlights[centerID-1].area += (time.next - time.current) * checkInDesksSingleFlights[centerID-1].numberOfJobsInNode;
+        for(int index=1; index<19; index++){
+            checkInDesksSingleFlights[index-1].area += (time.next - time.current) * checkInDesksSingleFlights[index-1].numberOfJobsInNode;
         }
     }
 
-    public void computeAndPrintStats(int replicationIndex, MsqTime time, List<MsqEvent> events) {
-        for(int centerID=1; centerID<3; centerID++){
-            checkInDesksSingleFlights[centerID-1].computeAndPrintStats(replicationIndex, time, events);
+    public void saveStats() {
+        for(int index=1; index<3; index++){
+            checkInDesksSingleFlights[index-1].saveStats();
+        }
+    }
+
+    public void writeStats(String simulationType){
+        for(int index=1; index<3; index++){
+            checkInDesksSingleFlights[index-1].writeStats(simulationType);
         }
     }
 
@@ -71,22 +79,26 @@ public class CheckInDesksOthers {
          *  * Response times
          *  * Service times
          *  * Queue times
-         *  * Interarrival times
+         *  * Inter-arrival times
          *  * Population
-         *  * Utilizations
+         *  * Utilization
          *  * Queue population
          */
 
-        Statistics statistics;
+            Statistics statistics;
 
         //Constants and Variables
         public static long  arrivalsCounter = 0;        /*number of arrivals*/
         long numberOfJobsInNode =0;                     /*number in the node*/
         static int    SERVERS = 3;                      /* number of servers*/
-        long numberOfJobsServed = 0;                         /* number of processed jobs*/
-        static int CENTER_INDEX = 0;//TODO                    /* index of center to select stream*/
+        long numberOfJobsServed = 0;                    /* number of processed jobs*/
+        int CENTER_INDEX;                               /* index of center to select stream*/
+        int centerID;
         double area   = 0.0;
         double service;
+        double firstArrivalTime = Double.NEGATIVE_INFINITY;
+        double lastArrivalTime = 0;
+        double lastCompletionTime = 0;
 
         Rngs rngs;
         Rvgs rvgs;
@@ -94,9 +106,11 @@ public class CheckInDesksOthers {
         MsqSum[] sum = new MsqSum [SERVERS + 1];
         MsqServer[] servers = new MsqServer [SERVERS + 1];
 
-        public CheckInDesksSingleFlight(Rngs rngs) {
+        public CheckInDesksSingleFlight(Rngs rngs, int centerID) {
             this.rngs = rngs;
             this.rvgs = new Rvgs(rngs);
+            this.centerID = centerID;
+            this.statistics = new Statistics("CHECK_IN_OTHERS_" + this.centerID);
         }
 
         public long getNumberOfJobsInNode() {
@@ -109,6 +123,12 @@ public class CheckInDesksOthers {
 
             // increment the number of jobs in the node
             numberOfJobsInNode++;
+
+            // Updating the first arrival time (we will use it in the statistics)
+            if(firstArrivalTime == Double.NEGATIVE_INFINITY){
+                firstArrivalTime = arrival.time;
+            }
+            lastArrivalTime = arrival.time;
 
             //remove the event since I'm processing it
             events.remove(arrival);
@@ -123,7 +143,7 @@ public class CheckInDesksOthers {
                 sum[s].service += service;
                 sum[s].served++;
                 //generate a new completion event
-                MsqEvent event = new MsqEvent(time.current + service, true, EventType.CHECK_IN_OTHERS_DONE, s);
+                MsqEvent event = new MsqEvent(time.current + service, true, EventType.CHECK_IN_OTHERS_DONE, s, centerID);
                 events.add(event);
                 events.sort(Comparator.comparing(MsqEvent::getTime));
             }
@@ -133,6 +153,8 @@ public class CheckInDesksOthers {
             //updating counters
             numberOfJobsServed++;
             numberOfJobsInNode--;
+
+            lastCompletionTime = completion.time;
 
             //remove the event since I'm processing it
             events.remove(completion);
@@ -152,7 +174,7 @@ public class CheckInDesksOthers {
                 sum[s].served++;
 
                 //generate a new completion event
-                MsqEvent completion_event = new MsqEvent(time.current + service, true, EventType.CHECK_IN_OTHERS_DONE, s);
+                MsqEvent completion_event = new MsqEvent(time.current + service, true, EventType.CHECK_IN_OTHERS_DONE, s, centerID);
                 events.add(completion_event);
                 events.sort(Comparator.comparing(MsqEvent::getTime));
             } else {
@@ -197,10 +219,11 @@ public class CheckInDesksOthers {
             return (erlang(5, 0.3, rngs));
         }
 
-        public void computeAndPrintStats(int replicationIndex, MsqTime time, List<MsqEvent> events) {
-            List<MsqEvent> checkInDesksOthersEvents = new ArrayList<>(events);
-            checkInDesksOthersEvents.removeIf(event -> !(event.type==EventType.ARRIVAL_CHECK_IN_OTHERS || event.type==EventType.CHECK_IN_OTHERS_DONE));
-            printStats("CHECK_IN_OTHERS", SERVERS, numberOfJobsServed, this.area, this.sum, time, checkInDesksOthersEvents, replicationIndex);
+        public void saveStats() {
+            statistics.saveStats(SERVERS, numberOfJobsServed, area, sum, firstArrivalTime, lastArrivalTime, lastCompletionTime);
+        }
+        public void writeStats(String simulationType){
+            statistics.writeStats(simulationType);
         }
 
     }

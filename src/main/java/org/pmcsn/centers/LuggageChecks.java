@@ -4,11 +4,9 @@ import org.pmcsn.libraries.Rngs;
 import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static org.pmcsn.model.Statistics.printStats;
 import static org.pmcsn.utils.Distributions.exponential;
 import static org.pmcsn.utils.Distributions.uniform;
 import static org.pmcsn.utils.Probabilities.getEntrance;
@@ -27,6 +25,10 @@ public class LuggageChecks {
         this.rngs = rngs;
         this.rvgs = new Rvgs(rngs);
         this.luggageChecksSingleEntrances = new LuggageChecksSingleEntrance[3];
+        for (int i = 0; i < luggageChecksSingleEntrances.length; i++) {
+            luggageChecksSingleEntrances[i] = new LuggageChecksSingleEntrance(rngs, i + 1);
+            luggageChecksSingleEntrances[i].CENTER_INDEX = 1 + (3 * i);
+        }
         this.sarrival = sarrival;
     }
 
@@ -40,11 +42,11 @@ public class LuggageChecks {
 
     public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events) {
 
-        int centerID = getEntrance(rngs, 11);
-        if (centerID < 1 || centerID > 3) {
-            throw new IllegalArgumentException("Invalid centerID: " + centerID);
+        int index = getEntrance(rngs, 67);
+        if (index < 1 || index > 3) {
+            throw new IllegalArgumentException("Invalid centerID: " + index);
         }
-        luggageChecksSingleEntrances[centerID - 1].processArrival(arrival, time, events);
+        luggageChecksSingleEntrances[index - 1].processArrival(arrival, time, events);
 
         // Generating a new arrival
         double nextArrival = getArrival();
@@ -61,11 +63,11 @@ public class LuggageChecks {
     }
 
     public void processCompletion(MsqEvent arrival, MsqTime time, List<MsqEvent> events){
-        int centerID = arrival.centerID;
-        if (centerID < 1 || centerID > 19) {
-            throw new IllegalArgumentException("Invalid centerID: " + centerID);
+        int index = arrival.centerID;
+        if (index < 1 || index > 19) {
+            throw new IllegalArgumentException("Invalid centerID: " + index);
         }
-        luggageChecksSingleEntrances[centerID - 1].processCompletion(arrival, time, events);
+        luggageChecksSingleEntrances[index - 1].processCompletion(arrival, time, events);
     }
 
 
@@ -75,7 +77,7 @@ public class LuggageChecks {
          * generate the next arrival time, with rate 1/2
          * --------------------------------------------------------------
          */
-        rngs.selectStream(0);
+        rngs.selectStream(68);
         sarrival += exponential(2.0, rngs);
         return (sarrival);
     }
@@ -85,8 +87,8 @@ public class LuggageChecks {
 
         int numberOfJobsInNode = 0;
 
-        for(int centerID=1; centerID<3; centerID++){
-            numberOfJobsInNode += luggageChecksSingleEntrances[centerID-1].numberOfJobsInNode;
+        for(int index=1; index<3; index++){
+            numberOfJobsInNode += luggageChecksSingleEntrances[index-1].numberOfJobsInNode;
         }
 
         return numberOfJobsInNode;
@@ -94,15 +96,21 @@ public class LuggageChecks {
 
     public void setArea(MsqTime time){
 
-        for(int centerID=1; centerID<3; centerID++){
-            luggageChecksSingleEntrances[centerID-1].area += (time.next - time.current) * luggageChecksSingleEntrances[centerID-1].numberOfJobsInNode;
+        for(int index=1; index<3; index++){
+            luggageChecksSingleEntrances[index-1].area += (time.next - time.current) * luggageChecksSingleEntrances[index-1].numberOfJobsInNode;
         }
     }
 
 
-    public void computeAndPrintStats(int replicationIndex, MsqTime time, List<MsqEvent> events) {
-        for(int centerID=1; centerID<3; centerID++){
-            luggageChecksSingleEntrances[centerID-1].computeAndPrintStats(replicationIndex, time, events);
+    public void saveStats() {
+        for(int index=1; index<3; index++){
+            luggageChecksSingleEntrances[index-1].saveStats();
+        }
+    }
+
+    public void writeStats(String simulationType){
+        for(int index=1; index<3; index++){
+            luggageChecksSingleEntrances[index-1].writeStats(simulationType);
         }
     }
 
@@ -112,9 +120,9 @@ public class LuggageChecks {
          *  * Response times
          *  * Service times
          *  * Queue times
-         *  * Interarrival times
+         *  * Inter-arrival times
          *  * Population
-         *  * Utilizations
+         *  * Utilization
          *  * Queue population
          */
 
@@ -123,11 +131,14 @@ public class LuggageChecks {
         //Constants and Variables
         public static long  arrivalsCounter = 0;        /* number of arrivals */
         long numberOfJobsInNode =0;                     /* number in the node */
-        long numberOfJobsServed = 0;                         /* number of processed jobs */
-        static int CENTER_INDEX;//TODO                    /* index of center to select stream*/
+        long numberOfJobsServed = 0;                    /* number of processed jobs */
+        int CENTER_INDEX;                               /* index of center to select stream*/
         int centerID;
         double area   = 0.0;
         double service;
+        double firstArrivalTime = Double.NEGATIVE_INFINITY;
+        double lastArrivalTime = 0;
+        double lastCompletionTime = 0;
 
         Rngs rngs;
         Rvgs rvgs;
@@ -138,12 +149,19 @@ public class LuggageChecks {
             this.rngs = rngs;
             this.centerID = centerID;
             this.rvgs = new Rvgs(rngs);
+            this.statistics = new Statistics("LUGGAGE_CHECK_" + this.centerID);
         }
 
         public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events){
 
             // increment the number of jobs in the node
             numberOfJobsInNode++;
+
+            // Updating the first arrival time (we will use it in the statistics)
+            if(firstArrivalTime == Double.NEGATIVE_INFINITY){
+                firstArrivalTime = arrival.time;
+            }
+            lastArrivalTime = arrival.time;
 
             //remove the event since I'm processing it
             events.remove(arrival);
@@ -166,6 +184,8 @@ public class LuggageChecks {
             //updating counters
             numberOfJobsServed++;
             numberOfJobsInNode--;
+
+            lastCompletionTime = completion.time;
 
             //remove the event since I'm processing it
             events.remove(completion);
@@ -202,12 +222,13 @@ public class LuggageChecks {
             return (uniform(0, 10, rngs));
         }
 
-        public void computeAndPrintStats(int replicationIndex, MsqTime time, List<MsqEvent> events) {
-            List<MsqEvent> luggageCheckEvents = new ArrayList<>(events);
-            luggageCheckEvents.removeIf(event -> !(event.type==EventType.ARRIVAL_LUGGAGE_CHECK || event.type==EventType.LUGGAGE_CHECK_DONE));
+        public void saveStats() {
             MsqSum[] sums = new MsqSum[1];
             sums[0] = this.sum;
-            printStats("LUGGAGE_CHECK", 1, numberOfJobsServed, this.area, sums, time, luggageCheckEvents, replicationIndex);
+            statistics.saveStats(1, numberOfJobsServed, area, sums, firstArrivalTime, lastArrivalTime, lastCompletionTime);
+        }
+        public void writeStats(String simulationType){
+            statistics.writeStats(simulationType);
         }
     }
 }
