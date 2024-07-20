@@ -216,7 +216,7 @@ public class CheckInDesksOthers {
             rngs.selectStream(streamIndex);
 
             //TODO: cambiare i parametri
-            return (erlang(5, 0.3, rngs));
+            return (erlang(10, 0.3, rngs));
         }
 
         public void saveStats() {

@@ -149,7 +149,7 @@ public class Boarding {
         rngs.selectStream(streamIndex);
 
         //TODO parametri? erlang con k=2
-        return (erlang(2, 0.3, rngs));
+        return (erlang(10, 0.3, rngs));
     }
 
     public void saveStats() {
