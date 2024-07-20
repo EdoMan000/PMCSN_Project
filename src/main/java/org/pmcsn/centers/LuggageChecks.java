@@ -15,22 +15,30 @@ import static org.pmcsn.utils.Probabilities.isTargetFlight;
 public class LuggageChecks {
 
     Rngs rngs;
-    Rvgs rvgs;
     LuggageChecksSingleEntrance[] luggageChecksSingleEntrances;
     double sarrival;
     int STOP = 86400;
     boolean endOfArrivals = false;
 
-    public LuggageChecks(Rngs rngs, double sarrival) {
-        this.rngs = rngs;
-        this.rvgs = new Rvgs(rngs);
+    public LuggageChecks() {
         this.luggageChecksSingleEntrances = new LuggageChecksSingleEntrance[3];
         for (int i = 0; i < luggageChecksSingleEntrances.length; i++) {
-            luggageChecksSingleEntrances[i] = new LuggageChecksSingleEntrance(rngs, i + 1);
+            luggageChecksSingleEntrances[i] = new LuggageChecksSingleEntrance(i + 1);
             luggageChecksSingleEntrances[i].CENTER_INDEX = 1 + (3 * i);
         }
-        this.sarrival = sarrival;
     }
+
+    public void reset(Rngs rngs, double sarrival) {
+        this.rngs = rngs;
+        this.sarrival = sarrival;
+        this.endOfArrivals = false;
+
+        for (int i = 0; i < luggageChecksSingleEntrances.length; i++) {
+            luggageChecksSingleEntrances[i].reset(rngs);
+        }
+
+    }
+
 
     public double getSarrival(){
         return sarrival;
@@ -141,16 +149,30 @@ public class LuggageChecks {
         double lastCompletionTime = 0;
 
         Rngs rngs;
-        Rvgs rvgs;
 
         MsqSum sum = new MsqSum();
 
-        public LuggageChecksSingleEntrance(Rngs rngs, int centerID) {
-            this.rngs = rngs;
+        public LuggageChecksSingleEntrance(int centerID) {
             this.centerID = centerID;
-            this.rvgs = new Rvgs(rngs);
             this.statistics = new Statistics("LUGGAGE_CHECK_" + this.centerID);
         }
+
+        public void reset(Rngs rngs) {
+            this.rngs = rngs;
+
+            // resetting variables
+            this.numberOfJobsInNode =0;
+            this.numberOfJobsServed = 0;
+            this.area   = 0.0;
+            this.service = 0;
+            this.firstArrivalTime = Double.NEGATIVE_INFINITY;
+            this.lastArrivalTime = 0;
+            this.lastCompletionTime = 0;
+
+            sum.served = 0;
+            sum.service = 0;
+        }
+
 
         public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events){
 

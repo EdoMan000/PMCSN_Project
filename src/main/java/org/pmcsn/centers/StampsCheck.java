@@ -23,7 +23,7 @@ public class StampsCheck {
      *  * Queue population
      */
 
-    Statistics statistics = new Statistics("");
+    Statistics statistics = new Statistics("STAMP_CHECK");
 
     //Constants and Variables
     public static long  arrivalsCounter = 0;        /* number of arrivals */
@@ -37,14 +37,25 @@ public class StampsCheck {
     double lastCompletionTime = 0;
 
     Rngs rngs;
-    Rvgs rvgs;
 
     MsqSum sum = new MsqSum();
 
-    public StampsCheck(Rngs rngs) {
+    public void reset(Rngs rngs) {
         this.rngs = rngs;
-        this.rvgs = new Rvgs(rngs);
+
+        // resetting variables
+        this.numberOfJobsInNode =0;
+        this.numberOfJobsServed = 0;
+        this.area   = 0.0;
+        this.service = 0;
+        this.firstArrivalTime = Double.NEGATIVE_INFINITY;
+        this.lastArrivalTime = 0;
+        this.lastCompletionTime = 0;
+
+        sum.served = 0;
+        sum.service = 0;
     }
+
 
     public long getNumberOfJobsInNode() {
         return numberOfJobsInNode;

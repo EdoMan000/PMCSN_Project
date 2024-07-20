@@ -31,14 +31,15 @@ public class BasicModelSimulationRunner {
         Rngs rngs = new Rngs();
 
         // Declare variables for centers
-        LuggageChecks luggageChecks = null;
-        CheckInDesksTarget checkInDesksTarget = null;
-        CheckInDesksOthers checkInDesksOthers = null;
-        BoardingPassScanners boardingPassScanners = null;
-        SecurityChecks securityChecks = null;
-        PassportChecks passportChecks = null;
-        StampsCheck stampsCheck = null;
-        Boarding boardingTarget = null;
+        LuggageChecks luggageChecks = new LuggageChecks();
+        CheckInDesksTarget checkInDesksTarget = new CheckInDesksTarget();
+        CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers();
+        BoardingPassScanners boardingPassScanners = new BoardingPassScanners();
+        SecurityChecks securityChecks = new SecurityChecks();
+        PassportChecks passportChecks = new PassportChecks();
+        StampsCheck stampsCheck = new StampsCheck();
+        Boarding boardingTarget = new Boarding();
+
 
         for (int i = 0; i < 150; i++) {
 
@@ -54,24 +55,25 @@ public class BasicModelSimulationRunner {
             List<MsqEvent> events = new ArrayList<>();
 
             // Initialize LuggageChecks
-            luggageChecks = new LuggageChecks(rngs, sarrival);
+            luggageChecks.reset(rngs, sarrival);
 
             //generating first arrival
             double time = luggageChecks.getArrival();
             events.add(new MsqEvent(time, true, EventType.ARRIVAL_LUGGAGE_CHECK));
 
             // Initialize other centers
-            checkInDesksTarget = new CheckInDesksTarget(rngs);
-            checkInDesksOthers = new CheckInDesksOthers(rngs);
-            boardingPassScanners = new BoardingPassScanners(rngs);
-            securityChecks = new SecurityChecks(rngs);
-            passportChecks = new PassportChecks(rngs);
-            stampsCheck = new StampsCheck(rngs);
-            boardingTarget = new Boarding(rngs);
+            checkInDesksTarget.reset(rngs);
+            checkInDesksOthers.reset(rngs);
+            boardingPassScanners.reset(rngs);
+            securityChecks.reset(rngs);
+            passportChecks.reset(rngs);
+            stampsCheck.reset(rngs);
+            boardingTarget.reset(rngs);
 
             MsqEvent event;
 
-            while (!luggageChecks.isEndOfArrivals() && number != 0) {
+            // need to use OR because both the conditions should be false
+            while (!luggageChecks.isEndOfArrivals() || number != 0) {
 
                 event = getNextEvent(events);
                 msqTime.next = event.time;
@@ -143,6 +145,7 @@ public class BasicModelSimulationRunner {
 
                 number = luggageChecks.getNumberOfJobsInNode() + checkInDesksTarget.getNumberOfJobsInNode() + checkInDesksOthers.getNumberOfJobsInNode() + boardingTarget.getNumberOfJobsInNode()
                         + boardingPassScanners.getNumberOfJobsInNode() + securityChecks.getNumberOfJobsInNode() + passportChecks.getNumberOfJobsInNode() + stampsCheck.getNumberOfJobsInNode() + boardingTarget.getNumberOfJobsInNode();
+
 
             }
 

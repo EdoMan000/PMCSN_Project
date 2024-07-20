@@ -17,13 +17,18 @@ public class CheckInDesksOthers {
     Rvgs rvgs;
     CheckInDesksSingleFlight[] checkInDesksSingleFlights;
 
-    public CheckInDesksOthers(Rngs rngs) {
-        this.rngs = rngs;
-        this.rvgs = new Rvgs(rngs);
+    public CheckInDesksOthers() {
         this.checkInDesksSingleFlights = new CheckInDesksSingleFlight[19];
         for (int i = 0; i < checkInDesksSingleFlights.length; i++) {
-            checkInDesksSingleFlights[i] = new CheckInDesksSingleFlight(rngs, i + 1);
+            checkInDesksSingleFlights[i] = new CheckInDesksSingleFlight(i + 1);
             checkInDesksSingleFlights[i].CENTER_INDEX = 12 + (2 * i);
+        }
+    }
+
+    public void reset(Rngs rngs) {
+        this.rngs = rngs;
+        for (int i = 0; i < checkInDesksSingleFlights.length; i++) {
+            checkInDesksSingleFlights[i].reset(rngs);
         }
     }
 
@@ -102,17 +107,40 @@ public class CheckInDesksOthers {
         double lastCompletionTime = 0;
 
         Rngs rngs;
-        Rvgs rvgs;
 
-        MsqSum[] sum = new MsqSum [SERVERS + 1];
-        MsqServer[] servers = new MsqServer [SERVERS + 1];
+        MsqSum[] sum = new MsqSum[SERVERS];
+        MsqServer[] servers = new MsqServer[SERVERS];
 
-        public CheckInDesksSingleFlight(Rngs rngs, int centerID) {
-            this.rngs = rngs;
-            this.rvgs = new Rvgs(rngs);
+        public CheckInDesksSingleFlight(int centerID) {
+
             this.centerID = centerID;
             this.statistics = new Statistics("CHECK_IN_OTHERS_" + this.centerID);
+
+            for(int i=0; i<SERVERS ; i++){
+                sum[i] = new MsqSum();
+                servers[i] = new MsqServer();
+            }
         }
+
+            public void reset(Rngs rngs) {
+                this.rngs = rngs;
+
+                // resetting variables
+                this.numberOfJobsInNode =0;
+                this.numberOfJobsServed = 0;
+                this.area   = 0.0;
+                this.service = 0;
+                this.firstArrivalTime = Double.NEGATIVE_INFINITY;
+                this.lastArrivalTime = 0;
+                this.lastCompletionTime = 0;
+
+                for(int i=0; i<SERVERS ; i++){
+                    sum[i].served = 0;
+                    sum[i].service = 0;
+                    servers[i].running = false;
+                    servers[i].lastCompletionTime = 0;
+                }
+            }
 
         public long getNumberOfJobsInNode() {
                 return numberOfJobsInNode;
@@ -188,19 +216,25 @@ public class CheckInDesksOthers {
 
         // The following stuff is copied from the library with some modifications ----------------------------------------
 
-        int findOne() {
+        public int findOne() {
             /* -----------------------------------------------------
              * return the index of the available server idle longest
              * -----------------------------------------------------
              */
+
             int s;
             int i = 0;
 
             while (servers[i].running)       /* find the index of the first available */
                 i++;                        /* (idle) server                         */
             s = i;
-            while (i < SERVERS) {         /* now, check the others to find which   */
+
+            // if it's the last server then simply return
+            if(s == SERVERS) return s;
+
+            while (i < SERVERS-1) {         /* now, check the others to find which   */
                 i++;                        /* has been idle longest                 */
+
                 if (!servers[i].running && (servers[i].lastCompletionTime < servers[s].lastCompletionTime))
                     s = i;
             }

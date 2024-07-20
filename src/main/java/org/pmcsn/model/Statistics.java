@@ -34,6 +34,7 @@ public class Statistics {
 
     public void saveStats(int numberOfServers, long numberOfJobsServed, double area, MsqSum[] sum, double firstArrivalTime, double lastArrivalTime, double lastCompletionTime) {
         // Print the parameters
+        /*
         System.out.println("***************************************");
         System.out.println(this.centerName.toUpperCase());
         System.out.println("Number of Servers: " + numberOfServers);
@@ -44,6 +45,7 @@ public class Statistics {
         System.out.println("Last Arrival Time: " + lastArrivalTime);
         System.out.println("Last Completion Time: " + lastCompletionTime);
         System.out.println("***************************************");
+         */
 
         double time = lastCompletionTime - firstArrivalTime;
         double utilization = 0;
