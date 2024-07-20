@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Statistics {
@@ -31,7 +32,19 @@ public class Statistics {
         this.centerName = centerName.toLowerCase();
     }
 
-    public void saveStats(int numberOfServers, long numberOfJobsServed, double area, MsqSum[] sum, double firstArrivalTime, double lastArrivalTime, double lastCompletionTime){
+    public void saveStats(int numberOfServers, long numberOfJobsServed, double area, MsqSum[] sum, double firstArrivalTime, double lastArrivalTime, double lastCompletionTime) {
+        // Print the parameters
+        System.out.println("***************************************");
+        System.out.println(this.centerName.toUpperCase());
+        System.out.println("Number of Servers: " + numberOfServers);
+        System.out.println("Number of Jobs Served: " + numberOfJobsServed);
+        System.out.println("Area: " + area);
+        System.out.println("Sum: " + Arrays.toString(sum));
+        System.out.println("First Arrival Time: " + firstArrivalTime);
+        System.out.println("Last Arrival Time: " + lastArrivalTime);
+        System.out.println("Last Completion Time: " + lastCompletionTime);
+        System.out.println("***************************************");
+
         double time = lastCompletionTime - firstArrivalTime;
         double utilization = 0;
         double totalServiceTime = 0;
@@ -47,7 +60,7 @@ public class Statistics {
         double Ens = area / time;
         meanSystemPopulationList.add(Ens);
 
-        for(int i = 1; i <= numberOfServers; i++) {
+        for(int i = 0; i < numberOfServers; i++) {
             area -= sum[i].service;
         }
         double Etq = area / numberOfJobsServed;
@@ -59,7 +72,7 @@ public class Statistics {
         double Enq = area / time;
         meanQueuePopulationList.add(Enq);
 
-        for(int i = 1; i <= numberOfServers; i++) {
+        for(int i = 0; i < numberOfServers; i++) {
             utilization+= sum[i].service  / (numberOfServers*time);
             totalServiceTime += sum[i].service;
         }

@@ -87,7 +87,7 @@ public class LuggageChecks {
 
         int numberOfJobsInNode = 0;
 
-        for(int index=1; index<3; index++){
+        for(int index=1; index<=3; index++){
             numberOfJobsInNode += luggageChecksSingleEntrances[index-1].numberOfJobsInNode;
         }
 
@@ -96,20 +96,20 @@ public class LuggageChecks {
 
     public void setArea(MsqTime time){
 
-        for(int index=1; index<3; index++){
+        for(int index=1; index<=3; index++){
             luggageChecksSingleEntrances[index-1].area += (time.next - time.current) * luggageChecksSingleEntrances[index-1].numberOfJobsInNode;
         }
     }
 
 
     public void saveStats() {
-        for(int index=1; index<3; index++){
+        for(int index=1; index<=3; index++){
             luggageChecksSingleEntrances[index-1].saveStats();
         }
     }
 
     public void writeStats(String simulationType){
-        for(int index=1; index<3; index++){
+        for(int index=1; index<=3; index++){
             luggageChecksSingleEntrances[index-1].writeStats(simulationType);
         }
     }
@@ -218,8 +218,8 @@ public class LuggageChecks {
         {
             rngs.selectStream(streamIndex);
 
-            //TODO parametri? erlang con k=10
-            return (uniform(0, 10, rngs));
+            // 5 min as mean service time
+            return (exponential(0.2, rngs));
         }
 
         public void saveStats() {

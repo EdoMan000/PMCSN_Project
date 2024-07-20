@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static org.pmcsn.utils.Distributions.erlang;
+import static org.pmcsn.utils.Distributions.logNormal;
 
 public class CheckInDesksTarget {
 
@@ -79,6 +80,7 @@ public class CheckInDesksTarget {
             //update statistics
             sum[s].service += service;
             sum[s].served++;
+            System.out.println("service arrival: "+ sum[s].service +" server " + s);
             //generate a new completion event
             MsqEvent event = new MsqEvent(time.current + service, true, EventType.CHECK_IN_TARGET_DONE, s);
             events.add(event);
@@ -109,6 +111,8 @@ public class CheckInDesksTarget {
             service = getService(CENTER_INDEX+1);
             sum[s].service += service;
             sum[s].served++;
+
+            System.out.println("service completion: "+ sum[s].service + " server "+ s);
 
             //generate a new completion event
             MsqEvent completion_event = new MsqEvent(time.current + service, true, EventType.CHECK_IN_TARGET_DONE, s);
@@ -151,9 +155,9 @@ public class CheckInDesksTarget {
          */
     {
         rngs.selectStream(streamIndex);
-
-        //TODO: cambiare i parametri
-        return (erlang(10, 0.3, rngs));
+        // mean time 10 min
+        // std dev 2 min (20% since it has low variability)
+        return (logNormal(10, 2, rngs));
     }
 
     public void saveStats() {

@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static org.pmcsn.utils.Distributions.erlang;
+import static org.pmcsn.utils.Distributions.logNormal;
 import static org.pmcsn.utils.Probabilities.getCheckInDesks;
 
 public class CheckInDesksOthers {
@@ -47,7 +48,7 @@ public class CheckInDesksOthers {
 
         int numberOfJobsInNode = 0;
 
-        for(int index=1; index<19; index++){
+        for(int index=1; index<=19; index++){
             numberOfJobsInNode += checkInDesksSingleFlights[index-1].numberOfJobsInNode;
         }
 
@@ -56,19 +57,19 @@ public class CheckInDesksOthers {
 
     public void setArea(MsqTime time){
 
-        for(int index=1; index<19; index++){
+        for(int index=1; index<=19; index++){
             checkInDesksSingleFlights[index-1].area += (time.next - time.current) * checkInDesksSingleFlights[index-1].numberOfJobsInNode;
         }
     }
 
     public void saveStats() {
-        for(int index=1; index<3; index++){
+        for(int index=1; index<=19; index++){
             checkInDesksSingleFlights[index-1].saveStats();
         }
     }
 
     public void writeStats(String simulationType){
-        for(int index=1; index<3; index++){
+        for(int index=1; index<=19; index++){
             checkInDesksSingleFlights[index-1].writeStats(simulationType);
         }
     }
@@ -215,8 +216,10 @@ public class CheckInDesksOthers {
         {
             rngs.selectStream(streamIndex);
 
-            //TODO: cambiare i parametri
-            return (erlang(10, 0.3, rngs));
+            rngs.selectStream(streamIndex);
+            // mean time 10 min
+            // std dev 2 min (20% since it has low variability)
+            return (logNormal(10, 2, rngs));
         }
 
         public void saveStats() {

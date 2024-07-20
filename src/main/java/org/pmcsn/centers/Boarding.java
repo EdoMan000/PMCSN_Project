@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static org.pmcsn.utils.Distributions.erlang;
+import static org.pmcsn.utils.Distributions.logNormal;
 
 public class Boarding {
 
@@ -147,9 +148,9 @@ public class Boarding {
     public double getService(int streamIndex)
     {
         rngs.selectStream(streamIndex);
-
-        //TODO parametri? erlang con k=2
-        return (erlang(10, 0.3, rngs));
+        // 2 min as mean time
+        // 0,4 min as std dev
+        return (logNormal(2, 0.4, rngs));
     }
 
     public void saveStats() {

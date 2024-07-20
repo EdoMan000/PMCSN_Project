@@ -8,6 +8,8 @@ import org.pmcsn.utils.Distributions;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.pmcsn.utils.Distributions.exponential;
+
 public class BoardingPassScanners {
 
     /*  STATISTICS OF INTEREST :
@@ -151,9 +153,8 @@ public class BoardingPassScanners {
          */
     {
         rngs.selectStream(streamIndex);
-
-        //TODO: cambiare i parametri
-        return (Distributions.exponential(5, rngs));
+        // 1 min mean time
+        return (exponential(1, rngs));
     }
 
     public void saveStats() {

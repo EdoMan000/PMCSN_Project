@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static org.pmcsn.utils.Distributions.erlang;
+import static org.pmcsn.utils.Distributions.exponential;
 
 public class PassportChecks {
 
@@ -142,9 +143,8 @@ public class PassportChecks {
     public double getService(int streamIndex)
     {
         rngs.selectStream(streamIndex);
-
-        //TODO parametri? erlang con k=10
-        return (erlang(10, 0.3, rngs));
+        // 5 min as mean time
+        return (exponential(0.2,  rngs));
     }
 
     public void saveStats() {

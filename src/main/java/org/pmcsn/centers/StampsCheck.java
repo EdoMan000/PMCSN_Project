@@ -123,9 +123,8 @@ public class StampsCheck {
     public double getService(int streamIndex)
     {
         rngs.selectStream(streamIndex);
-
-        //TODO parametri? erlang con k=10
-        return (uniform(0, 10, rngs));
+        // between 1 and 2 minutes
+        return (uniform(1 , 2, rngs));
     }
 
     public void saveStats() {

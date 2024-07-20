@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static org.pmcsn.utils.Distributions.erlang;
+import static org.pmcsn.utils.Distributions.logNormal;
 import static org.pmcsn.utils.Probabilities.*;
 
 public class SecurityChecks {
@@ -161,8 +162,9 @@ public class SecurityChecks {
     {
         rngs.selectStream(streamIndex);
 
-        //TODO parametri? erlang con k=2
-        return (erlang(2, 0.3, rngs));
+        // 5 min as mean service time
+        // 1 min as standard deviation
+        return (logNormal(5, 1, rngs));
     }
 
     public void saveStats() {
