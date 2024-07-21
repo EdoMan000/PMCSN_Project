@@ -1,14 +1,12 @@
 package org.pmcsn.centers;
 
 import org.pmcsn.libraries.Rngs;
-import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
 
 import java.util.Comparator;
 import java.util.List;
 
 import static org.pmcsn.utils.Distributions.exponential;
-import static org.pmcsn.utils.Distributions.uniform;
 import static org.pmcsn.utils.Probabilities.getEntrance;
 import static org.pmcsn.utils.Probabilities.isTargetFlight;
 
@@ -17,7 +15,8 @@ public class LuggageChecks {
     Rngs rngs;
     LuggageChecksSingleEntrance[] luggageChecksSingleEntrances;
     double sarrival;
-    int STOP = 86400;
+    // all the times are measured in min
+    int STOP = 1440;
     boolean endOfArrivals = false;
 
     public LuggageChecks() {
@@ -82,11 +81,12 @@ public class LuggageChecks {
 
     public double getArrival() {
         /* --------------------------------------------------------------
-         * generate the next arrival time, with rate 1/2
+         * generate the next arrival time
          * --------------------------------------------------------------
          */
         rngs.selectStream(68);
-        sarrival += exponential(2.0, rngs);
+        // 1/2 min inter-arrival time
+        sarrival += exponential( 0.5, rngs);
         return (sarrival);
     }
 
@@ -241,7 +241,7 @@ public class LuggageChecks {
             rngs.selectStream(streamIndex);
 
             // 5 min as mean service time
-            return (exponential(0.2, rngs));
+            return (exponential(5, rngs));
         }
 
         public void saveStats() {

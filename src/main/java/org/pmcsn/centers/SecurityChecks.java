@@ -1,14 +1,12 @@
 package org.pmcsn.centers;
 
 import org.pmcsn.libraries.Rngs;
-import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
 
 import java.util.Comparator;
 import java.util.List;
 
-import static org.pmcsn.utils.Distributions.erlang;
-import static org.pmcsn.utils.Distributions.logNormal;
+import static org.pmcsn.utils.Distributions.exponential;
 import static org.pmcsn.utils.Probabilities.*;
 
 public class SecurityChecks {
@@ -192,7 +190,8 @@ public class SecurityChecks {
 
         // 5 min as mean service time
         // 1 min as standard deviation
-        return (logNormal(5, 1, rngs));
+        //return (logNormal(5, 1, rngs));
+        return (exponential(5, rngs));
     }
 
     public void saveStats() {

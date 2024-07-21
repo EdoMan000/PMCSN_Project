@@ -172,7 +172,7 @@ public class PassportChecks {
     {
         rngs.selectStream(streamIndex);
         // 5 min as mean time
-        return (exponential(0.2,  rngs));
+        return (exponential(5,  rngs));
     }
 
     public void saveStats() {

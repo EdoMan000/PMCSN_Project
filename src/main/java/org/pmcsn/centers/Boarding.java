@@ -6,7 +6,7 @@ import org.pmcsn.model.*;
 import java.util.Comparator;
 import java.util.List;
 
-import static org.pmcsn.utils.Distributions.logNormal;
+import static org.pmcsn.utils.Distributions.exponential;
 
 public class Boarding {
 
@@ -136,16 +136,6 @@ public class Boarding {
         }
     }
 
-    private boolean getTargetFlight(double beta) {
-        rngs.selectStream(CENTER_INDEX+2);
-        return rngs.random() < beta;
-    }
-
-    private boolean getCitizen(double beta) {
-        rngs.selectStream(CENTER_INDEX+3);
-        return rngs.random() < beta;
-    }
-
     public int findOne() {
         /* -----------------------------------------------------
          * return the index of the available server idle longest
@@ -176,7 +166,8 @@ public class Boarding {
         rngs.selectStream(streamIndex);
         // 2 min as mean time
         // 0,4 min as std dev
-        return (logNormal(2, 0.4, rngs));
+        //return (logNormal(2, 0.4, rngs));
+        return exponential(2, rngs);
     }
 
     public void saveStats() {

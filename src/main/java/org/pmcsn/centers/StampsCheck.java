@@ -1,13 +1,12 @@
 package org.pmcsn.centers;
 
 import org.pmcsn.libraries.Rngs;
-import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
 
 import java.util.Comparator;
 import java.util.List;
 
-import static org.pmcsn.utils.Distributions.uniform;
+import static org.pmcsn.utils.Distributions.exponential;
 import static org.pmcsn.utils.Probabilities.isPriority;
 import static org.pmcsn.utils.Probabilities.isTargetFlight;
 
@@ -135,7 +134,8 @@ public class StampsCheck {
     {
         rngs.selectStream(streamIndex);
         // between 1 and 2 minutes
-        return (uniform(1 , 2, rngs));
+        //return (uniform(1 , 2, rngs));
+        return (exponential(1, rngs));
     }
 
     public void saveStats() {

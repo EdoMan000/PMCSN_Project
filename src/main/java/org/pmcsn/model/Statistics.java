@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.pmcsn.MenaraAirportSimulator.RESET;
+import static org.pmcsn.MenaraAirportSimulator.YELLOW;
+
 public class Statistics {
 
     /*  STATISTICS OF INTEREST :
@@ -33,10 +36,10 @@ public class Statistics {
     }
 
     public void saveStats(int numberOfServers, long numberOfJobsServed, double area, MsqSum[] sum, double firstArrivalTime, double lastArrivalTime, double lastCompletionTime) {
+        System.out.println(YELLOW + "\n\n***************************************");
+        System.out.println("Saving stats for " + this.centerName.toUpperCase());
+        System.out.println("***************************************" + RESET);
         // Print the parameters
-        /*
-        System.out.println("***************************************");
-        System.out.println(this.centerName.toUpperCase());
         System.out.println("Number of Servers: " + numberOfServers);
         System.out.println("Number of Jobs Served: " + numberOfJobsServed);
         System.out.println("Area: " + area);
@@ -44,12 +47,16 @@ public class Statistics {
         System.out.println("First Arrival Time: " + firstArrivalTime);
         System.out.println("Last Arrival Time: " + lastArrivalTime);
         System.out.println("Last Completion Time: " + lastCompletionTime);
-        System.out.println("***************************************");
-         */
+        System.out.println(YELLOW + "***************************************" + RESET);
 
-        double time = lastCompletionTime - firstArrivalTime;
+        double totalResponseTime = lastCompletionTime - firstArrivalTime;
+        //double time = lastCompletionTime;
         double utilization = 0;
         double totalServiceTime = 0;
+
+        for(int i = 0; i < numberOfServers; i++) {
+            totalServiceTime += sum[i].service;
+        }
 
         // inter-arrival
         meanInterarrivalTimeList.add((lastArrivalTime - firstArrivalTime) / numberOfJobsServed);
@@ -59,41 +66,38 @@ public class Statistics {
         meanResponseTimeList.add(Ets);
 
         // mean population (E[Tn])
-        double Ens = area / time;
+        double Ens = area / totalResponseTime;
         meanSystemPopulationList.add(Ens);
 
-        for(int i = 0; i < numberOfServers; i++) {
-            area -= sum[i].service;
-        }
-        double Etq = area / numberOfJobsServed;
-
         // mean wait time (E[Tq])
+        double totalQueueTime = totalResponseTime - totalServiceTime;
+        double Etq = totalQueueTime / numberOfJobsServed;
         meanQueueTimeList.add(Etq);
 
         // mean queue population (E[Nq])
-        double Enq = area / time;
+        double Enq = totalQueueTime / totalResponseTime;
         meanQueuePopulationList.add(Enq);
 
         for(int i = 0; i < numberOfServers; i++) {
-            utilization+= sum[i].service  / (numberOfServers*time);
-            totalServiceTime += sum[i].service;
+            utilization += sum[i].service / totalResponseTime;
         }
+        //utilization = totalServiceTime / (numberOfServers * totalResponseTime);
 
         // mean utilization (ρ)
-        meanUtilizationList.add(utilization);
+        meanUtilizationList.add(utilization/numberOfServers);
 
         // mean service time (E[s])
-        meanServiceTimeList.add(totalServiceTime/numberOfJobsServed);
+        meanServiceTimeList.add(totalServiceTime / numberOfJobsServed);
 
     }
 
     public void writeStats(String simulationType) {
-        File file = new File("csvFiles/" + simulationType +"/");
+        File file = new File("csvFiles/results/" + simulationType +"/");
         if (!file.exists()) {
             file.mkdirs();
         }
 
-        file = new File("csvFiles/" + simulationType +"/" + centerName+ ".csv");
+        file = new File("csvFiles/results/" + simulationType +"/" + centerName+ ".csv");
         try(FileWriter fileWriter = new FileWriter(file)) {
 
             String DELIMITER = "\n";

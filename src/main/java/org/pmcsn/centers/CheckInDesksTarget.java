@@ -1,13 +1,12 @@
 package org.pmcsn.centers;
 
 import org.pmcsn.libraries.Rngs;
-import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
 
 import java.util.Comparator;
 import java.util.List;
 
-import static org.pmcsn.utils.Distributions.erlang;
+import static org.pmcsn.utils.Distributions.exponential;
 import static org.pmcsn.utils.Distributions.logNormal;
 
 public class CheckInDesksTarget {
@@ -134,8 +133,6 @@ public class CheckInDesksTarget {
             sum[s].service += service;
             sum[s].served++;
 
-            System.out.println("service completion: "+ sum[s].service + " server "+ s);
-
             //generate a new completion event
             MsqEvent completion_event = new MsqEvent(time.current + service, true, EventType.CHECK_IN_TARGET_DONE, s);
             events.add(completion_event);
@@ -185,7 +182,8 @@ public class CheckInDesksTarget {
         rngs.selectStream(streamIndex);
         // mean time 10 min
         // std dev 2 min (20% since it has low variability)
-        return (logNormal(10, 2, rngs));
+        //return (logNormal(10, 2, rngs));
+        return exponential(10, rngs);
     }
 
     public void saveStats() {
