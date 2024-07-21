@@ -16,7 +16,7 @@ public class LuggageChecks {
     LuggageChecksSingleEntrance[] luggageChecksSingleEntrances;
     double sarrival;
     // all the times are measured in min
-    int STOP = 1440;
+    int STOP = 180;
     boolean endOfArrivals = false;
 
     public LuggageChecks() {
