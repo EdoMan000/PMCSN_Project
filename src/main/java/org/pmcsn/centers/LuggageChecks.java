@@ -2,6 +2,7 @@ package org.pmcsn.centers;
 
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.*;
+import org.pmcsn.model.Statistics.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -122,11 +123,38 @@ public class LuggageChecks {
         }
     }
 
-    public Statistics.MeanStatistics getMeanStatistics(){
-        List<Statistics.MeanStatistics> meanStatisticsList = new ArrayList<>();
+    public MeanStatistics getMeanStatistics(){
+        List<Double> meanResponseTimeList = new ArrayList<>();
+        List<Double> meanServiceTimeList = new ArrayList<Double>();
+        List<Double> meanQueueTimeList = new ArrayList<Double>();
+        List<Double> lambdaList = new ArrayList<Double>();
+        List<Double> meanSystemPopulationList = new ArrayList<Double>();
+        List<Double> meanUtilizationList = new ArrayList<Double>();
+        List<Double> meanQueuePopulationList = new ArrayList<Double>();
+        MeanStatistics ms;
+
+        // obtaining the mean for all centers
         for(int index=1; index<=luggageChecksSingleEntrances.length; index++){
-            meanStatisticsList.add(luggageChecksSingleEntrances[index-1].getMeanStatistics());
+            ms = luggageChecksSingleEntrances[index-1].getMeanStatistics();
+            meanResponseTimeList.add(ms.meanResponseTime);
+            meanServiceTimeList.add(ms.meanServiceTime);
+            meanQueueTimeList.add(ms.meanQueueTime);
+            lambdaList.add(ms.lambda);
+            meanSystemPopulationList.add(ms.meanSystemPopulation);
+            meanUtilizationList.add(ms.meanUtilization);
+            meanQueuePopulationList.add(ms.meanQueuePopulation);
         }
+
+        double meanResponseTime = MeanStatistics.computeMean(meanResponseTimeList);
+        double meanServiceTime = MeanStatistics.computeMean(meanServiceTimeList);
+        double meanQueueTime = MeanStatistics.computeMean(meanQueueTimeList);
+        double lambda = MeanStatistics.computeMean(lambdaList);
+        double meanSystemPopulation = MeanStatistics.computeMean(meanSystemPopulationList);
+        double meanUtilization = MeanStatistics.computeMean(meanUtilizationList);
+        double meanQueuePopulation = MeanStatistics.computeMean(meanQueuePopulationList);
+
+        return new MeanStatistics("LUGGAGE CHECK", meanResponseTime, meanServiceTime, meanQueueTime, lambda, meanSystemPopulation, meanUtilization, meanQueuePopulation);
+
     }
 
     private static class LuggageChecksSingleEntrance {
@@ -261,7 +289,7 @@ public class LuggageChecks {
             statistics.writeStats(simulationType);
         }
 
-        public Statistics.MeanStatistics getMeanStatistics() {
+        public MeanStatistics getMeanStatistics() {
             return statistics.getMeanStatistics();
         }
     }

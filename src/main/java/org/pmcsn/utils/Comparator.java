@@ -52,7 +52,7 @@ public class Comparator {
 
         for (Result result : verificationResults) {
             for (MeanStatistics meanStatistics : meanStatisticsList) {
-                if (result.name.equals(meanStatistics.centerName)) {
+                if (result.name.equals(meanStatistics.centerName.toUpperCase())) {
                     double responseTimeDiff = Math.abs(result.Ets - meanStatistics.meanResponseTime);
                     double serviceTimeDiff = Math.abs(result.Es - meanStatistics.meanServiceTime);
                     double queueTimeDiff = Math.abs(result.Etq - meanStatistics.meanQueueTime);

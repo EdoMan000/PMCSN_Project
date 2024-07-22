@@ -93,7 +93,7 @@ public class Verification {
         }
 
         Result result = new Result(lambda, rho, Etq, Enq, Ets, Ens, centerName, Es);
-        printResult(result);
+        //printResult(result);
         return result;
     }
 
@@ -117,7 +117,7 @@ public class Verification {
         }
 
         Result result = new Result(lambda, rho, Etq, Enq, Ets, Ens, centerName, Es);
-        printResult(result);
+        //printResult(result);
         return result;
     }
 
@@ -130,17 +130,17 @@ public class Verification {
 
         double pTarget = 0.0159;
         double lambda_checkin_others = lambda * (1 - pTarget);
-        results.add(multiServer("CHECK-IN TARGET", lambda * pTarget, 10, 3));
+        results.add(multiServer("CHECK_IN_TARGET", lambda * pTarget, 10, 3));
         results.add(multiServer("CHECK-IN OTHERS", lambda_checkin_others / 19, 10, 3));
 
-        results.add(multiServer("SCAN BOARDING PASS", lambda, 0.30, 3));
+        results.add(multiServer("SCAN_BOARDING_PASS", lambda, 0.30, 3));
 
-        results.add(multiServer("SECURITY CHECKS", lambda, 1.8, 8));
+        results.add(multiServer("SECURITY_CHECKS", lambda, 1.8, 8));
 
         double pCitizen = 0.2;
-        results.add(multiServer("PASSPORT CHECKS", lambda * (1 - pCitizen), 5, 24));
+        results.add(multiServer("PASSPORT_CHECK", lambda * (1 - pCitizen), 5, 24));
 
-        results.add(singleServer("STAMP CHECK", lambda * (1 - pCitizen), 0.10));
+        results.add(singleServer("STAMP_CHECK", lambda * (1 - pCitizen), 0.10));
 
         results.add(multiServer("BOARDING", (lambda * (1 - pCitizen) * pTarget) + (lambda * pCitizen * pTarget), 2, 2));
 

@@ -52,8 +52,24 @@ public class Statistics {
             this.meanQueuePopulation = computeMean(stats.meanQueuePopulationList);
         }
 
+        public MeanStatistics(String centerName, double  meanResponseTime, double meanServiceTime, double meanQueueTime
+        , double lambda, double meanSystemPopulation, double meanUtilization, double meanQueuePopulation) {
+            this.centerName = centerName;
+            this.meanResponseTime = meanResponseTime;
+            this.meanServiceTime = meanServiceTime;
+            this.meanQueueTime = meanQueueTime;
+            this.lambda = lambda;
+            this.meanSystemPopulation = meanSystemPopulation;
+            this.meanUtilization = meanUtilization;
+            this.meanQueuePopulation = meanQueuePopulation;
+        }
+
         public static double computeMean(List<Double> values) {
             return values.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+        }
+
+        public void setCenterName(String centerName) {
+            this.centerName = centerName;
         }
     }
 
@@ -66,6 +82,7 @@ public class Statistics {
     }
 
     public void saveStats(int numberOfServers, long numberOfJobsServed, double area, MsqSum[] sum, double firstArrivalTime, double lastArrivalTime, double lastCompletionTime) {
+        /*
         System.out.println(YELLOW + "\n\n***************************************");
         System.out.println("Saving stats for " + this.centerName.toUpperCase());
         System.out.println("***************************************" + RESET);
@@ -81,6 +98,8 @@ public class Statistics {
             System.out.println(s);
         }
         System.out.println(YELLOW + "***************************************" + RESET);
+
+         */
 
         double totalResponseTime = lastCompletionTime - firstArrivalTime;
         //double time = lastCompletionTime;

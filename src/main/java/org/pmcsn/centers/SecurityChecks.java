@@ -200,4 +200,8 @@ public class SecurityChecks {
     public void writeStats(String simulationType){
         statistics.writeStats(simulationType);
     }
+
+    public Statistics.MeanStatistics getMeanStatistics() {
+        return statistics.getMeanStatistics();
+    }
 }

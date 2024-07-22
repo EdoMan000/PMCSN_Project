@@ -178,12 +178,22 @@ public class BasicModelSimulationRunner {
         passportChecks.writeStats(simulationType);
         stampsCheck.writeStats(simulationType);
         boardingTarget.writeStats(simulationType);
+
         // Computing and writing verifications stats csv
         List<Result> verificationResults = basicModelVerification();
+
         // Compare results and verifications and save comparison result
         List<MeanStatistics> meanStatisticsList = new ArrayList<MeanStatistics>();
+        meanStatisticsList.add(luggageChecks.getMeanStatistics());
+        meanStatisticsList.add(checkInDesksTarget.getMeanStatistics());
+        meanStatisticsList.add(checkInDesksOthers.getMeanStatistics());
+        meanStatisticsList.add(boardingPassScanners.getMeanStatistics());
+        meanStatisticsList.add(securityChecks.getMeanStatistics());
+        meanStatisticsList.add(passportChecks.getMeanStatistics());
+        meanStatisticsList.add(stampsCheck.getMeanStatistics());
+        meanStatisticsList.add(boardingTarget.getMeanStatistics());
 
-        compareResults(verificationResults, )
+        compareResults(verificationResults, meanStatisticsList);
 
     }
 

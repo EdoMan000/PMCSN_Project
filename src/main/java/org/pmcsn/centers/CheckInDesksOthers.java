@@ -4,6 +4,7 @@ import org.pmcsn.libraries.Rngs;
 import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -77,6 +78,42 @@ public class CheckInDesksOthers {
             checkInDesksSingleFlights[index-1].writeStats(simulationType);
         }
     }
+
+
+    public Statistics.MeanStatistics getMeanStatistics(){
+        List<Double> meanResponseTimeList = new ArrayList<>();
+        List<Double> meanServiceTimeList = new ArrayList<Double>();
+        List<Double> meanQueueTimeList = new ArrayList<Double>();
+        List<Double> lambdaList = new ArrayList<Double>();
+        List<Double> meanSystemPopulationList = new ArrayList<Double>();
+        List<Double> meanUtilizationList = new ArrayList<Double>();
+        List<Double> meanQueuePopulationList = new ArrayList<Double>();
+        Statistics.MeanStatistics ms;
+
+        // obtaining the mean for all centers
+        for(int index=1; index<=checkInDesksSingleFlights.length; index++){
+            ms = checkInDesksSingleFlights[index-1].getMeanStatistics();
+            meanResponseTimeList.add(ms.meanResponseTime);
+            meanServiceTimeList.add(ms.meanServiceTime);
+            meanQueueTimeList.add(ms.meanQueueTime);
+            lambdaList.add(ms.lambda);
+            meanSystemPopulationList.add(ms.meanSystemPopulation);
+            meanUtilizationList.add(ms.meanUtilization);
+            meanQueuePopulationList.add(ms.meanQueuePopulation);
+        }
+
+        double meanResponseTime = Statistics.MeanStatistics.computeMean(meanResponseTimeList);
+        double meanServiceTime = Statistics.MeanStatistics.computeMean(meanServiceTimeList);
+        double meanQueueTime = Statistics.MeanStatistics.computeMean(meanQueueTimeList);
+        double lambda = Statistics.MeanStatistics.computeMean(lambdaList);
+        double meanSystemPopulation = Statistics.MeanStatistics.computeMean(meanSystemPopulationList);
+        double meanUtilization = Statistics.MeanStatistics.computeMean(meanUtilizationList);
+        double meanQueuePopulation = Statistics.MeanStatistics.computeMean(meanQueuePopulationList);
+
+        return new Statistics.MeanStatistics("CHECK-IN OTHERS", meanResponseTime, meanServiceTime, meanQueueTime, lambda, meanSystemPopulation, meanUtilization, meanQueuePopulation);
+
+    }
+
 
         private class CheckInDesksSingleFlight {
 
@@ -262,6 +299,10 @@ public class CheckInDesksOthers {
         public void writeStats(String simulationType){
             statistics.writeStats(simulationType);
         }
+
+        public Statistics.MeanStatistics getMeanStatistics() {
+                return statistics.getMeanStatistics();
+            }
 
     }
 }

@@ -193,4 +193,8 @@ public class CheckInDesksTarget {
         statistics.writeStats(simulationType);
     }
 
+    public Statistics.MeanStatistics getMeanStatistics() {
+        return statistics.getMeanStatistics();
+    }
+
 }

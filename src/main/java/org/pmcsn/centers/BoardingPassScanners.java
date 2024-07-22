@@ -20,7 +20,7 @@ public class BoardingPassScanners {
      *  * Queue population
      */
 
-    Statistics statistics = new Statistics("BOARDING_PASS_SCANNERS");
+    Statistics statistics = new Statistics("SCAN_BOARDING_PASS");
 
     //Constants and Variables
     public static long  arrivalsCounter = 0;        /*number of arrivals*/
@@ -188,6 +188,10 @@ public class BoardingPassScanners {
     }
     public void writeStats(String simulationType){
         statistics.writeStats(simulationType);
+    }
+
+    public Statistics.MeanStatistics getMeanStatistics() {
+        return statistics.getMeanStatistics();
     }
 
 }

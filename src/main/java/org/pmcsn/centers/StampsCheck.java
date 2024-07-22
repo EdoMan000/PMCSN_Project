@@ -147,4 +147,8 @@ public class StampsCheck {
         statistics.writeStats(simulationType);
     }
 
+    public Statistics.MeanStatistics getMeanStatistics() {
+        return statistics.getMeanStatistics();
+    }
+
 }
