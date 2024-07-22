@@ -6,10 +6,15 @@ import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.EventType;
 import org.pmcsn.model.MsqEvent;
 import org.pmcsn.model.MsqTime;
+import org.pmcsn.controller.Verification.Result;
+import org.pmcsn.model.Statistics.MeanStatistics;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+
+import static org.pmcsn.controller.Verification.basicModelVerification;
+import static org.pmcsn.utils.Comparator.compareResults;
 
 public class BasicModelSimulationRunner {
     /*  STATISTICS OF INTEREST :
@@ -43,7 +48,6 @@ public class BasicModelSimulationRunner {
 
         for (int i = 0; i < 150; i++) {
 
-            boolean stopArrivals = false;
             double sarrival = START;
             long number = 1;
 
@@ -174,6 +178,13 @@ public class BasicModelSimulationRunner {
         passportChecks.writeStats(simulationType);
         stampsCheck.writeStats(simulationType);
         boardingTarget.writeStats(simulationType);
+        // Computing and writing verifications stats csv
+        List<Result> verificationResults = basicModelVerification();
+        // Compare results and verifications and save comparison result
+        List<MeanStatistics> meanStatisticsList = new ArrayList<MeanStatistics>();
+
+        compareResults(verificationResults, )
+
     }
 
     private MsqEvent getNextEvent(List<MsqEvent> events) {

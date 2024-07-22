@@ -135,7 +135,7 @@ public class StampsCheck {
         rngs.selectStream(streamIndex);
         // between 1 and 2 minutes
         //return (uniform(1 , 2, rngs));
-        return (exponential(1, rngs));
+        return (exponential(0.1, rngs));
     }
 
     public void saveStats() {

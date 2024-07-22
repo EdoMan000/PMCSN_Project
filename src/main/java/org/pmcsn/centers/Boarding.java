@@ -176,4 +176,7 @@ public class Boarding {
     public void writeStats(String simulationType){
         statistics.writeStats(simulationType);
     }
+    public void getMeanStats(){
+
+    }
 }

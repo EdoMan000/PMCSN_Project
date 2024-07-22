@@ -3,6 +3,7 @@ package org.pmcsn.centers;
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.*;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -16,11 +17,11 @@ public class LuggageChecks {
     LuggageChecksSingleEntrance[] luggageChecksSingleEntrances;
     double sarrival;
     // all the times are measured in min
-    int STOP = 180;
+    int STOP = 1440;
     boolean endOfArrivals = false;
 
     public LuggageChecks() {
-        this.luggageChecksSingleEntrances = new LuggageChecksSingleEntrance[3];
+        this.luggageChecksSingleEntrances = new LuggageChecksSingleEntrance[6]; //TODO risistemare CENTER_INDEX
         for (int i = 0; i < luggageChecksSingleEntrances.length; i++) {
             luggageChecksSingleEntrances[i] = new LuggageChecksSingleEntrance(i + 1);
             luggageChecksSingleEntrances[i].CENTER_INDEX = 1 + (3 * i);
@@ -38,7 +39,6 @@ public class LuggageChecks {
 
     }
 
-
     public double getSarrival(){
         return sarrival;
     }
@@ -50,7 +50,7 @@ public class LuggageChecks {
     public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events) {
 
         int index = getEntrance(rngs, 67);
-        if (index < 1 || index > 3) {
+        if (index < 1 || index > luggageChecksSingleEntrances.length) {
             throw new IllegalArgumentException("Invalid centerID: " + index);
         }
         luggageChecksSingleEntrances[index - 1].processArrival(arrival, time, events);
@@ -59,8 +59,8 @@ public class LuggageChecks {
         double nextArrival = getArrival();
 
         // Checking if the next arrival exceeds time limit
-        if(nextArrival <= STOP){
-            MsqEvent event = new MsqEvent(nextArrival, true, EventType.ARRIVAL_LUGGAGE_CHECK, 0);
+        if(nextArrival < STOP){
+            MsqEvent event = new MsqEvent(nextArrival, true, EventType.ARRIVAL_LUGGAGE_CHECK);
             events.add(event);
             events.sort(Comparator.comparing(MsqEvent::getTime));
         } else {
@@ -71,12 +71,11 @@ public class LuggageChecks {
 
     public void processCompletion(MsqEvent arrival, MsqTime time, List<MsqEvent> events){
         int index = arrival.centerID;
-        if (index < 1 || index > 19) {
+        if (index < 1 || index > luggageChecksSingleEntrances.length) {
             throw new IllegalArgumentException("Invalid centerID: " + index);
         }
         luggageChecksSingleEntrances[index - 1].processCompletion(arrival, time, events);
     }
-
 
 
     public double getArrival() {
@@ -86,7 +85,8 @@ public class LuggageChecks {
          */
         rngs.selectStream(68);
         // 1/2 min inter-arrival time
-        sarrival += exponential( 0.5, rngs);
+        double inter_arrival = (double) (24 * 60) /6300;
+        sarrival += exponential( inter_arrival, rngs);
         return (sarrival);
     }
 
@@ -95,8 +95,8 @@ public class LuggageChecks {
 
         int numberOfJobsInNode = 0;
 
-        for(int index=1; index<=3; index++){
-            numberOfJobsInNode += luggageChecksSingleEntrances[index-1].numberOfJobsInNode;
+        for(int index=1; index<=luggageChecksSingleEntrances.length; index++){
+            numberOfJobsInNode += (int) luggageChecksSingleEntrances[index-1].numberOfJobsInNode;
         }
 
         return numberOfJobsInNode;
@@ -104,25 +104,32 @@ public class LuggageChecks {
 
     public void setArea(MsqTime time){
 
-        for(int index=1; index<=3; index++){
+        for(int index=1; index<=luggageChecksSingleEntrances.length; index++){
             luggageChecksSingleEntrances[index-1].area += (time.next - time.current) * luggageChecksSingleEntrances[index-1].numberOfJobsInNode;
         }
     }
 
 
     public void saveStats() {
-        for(int index=1; index<=3; index++){
+        for(int index=1; index<=luggageChecksSingleEntrances.length; index++){
             luggageChecksSingleEntrances[index-1].saveStats();
         }
     }
 
     public void writeStats(String simulationType){
-        for(int index=1; index<=3; index++){
+        for(int index=1; index<=luggageChecksSingleEntrances.length; index++){
             luggageChecksSingleEntrances[index-1].writeStats(simulationType);
         }
     }
 
-    private class LuggageChecksSingleEntrance {
+    public Statistics.MeanStatistics getMeanStatistics(){
+        List<Statistics.MeanStatistics> meanStatisticsList = new ArrayList<>();
+        for(int index=1; index<=luggageChecksSingleEntrances.length; index++){
+            meanStatisticsList.add(luggageChecksSingleEntrances[index-1].getMeanStatistics());
+        }
+    }
+
+    private static class LuggageChecksSingleEntrance {
 
         /*  STATISTICS OF INTEREST :
          *  * Response times
@@ -188,6 +195,7 @@ public class LuggageChecks {
             //remove the event since I'm processing it
             events.remove(arrival);
 
+            // Server can process one job at a time
             if (numberOfJobsInNode == 1) {
                 //generating service time
                 service         = getService(CENTER_INDEX);
@@ -214,11 +222,11 @@ public class LuggageChecks {
 
             // generating arrival for the next center
             if(isTargetFlight(rngs, CENTER_INDEX+2)){
-                MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_CHECK_IN_TARGET, 0);
+                MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_CHECK_IN_TARGET);
                 events.add(event);
                 events.sort(Comparator.comparing(MsqEvent::getTime));
             }else{
-                MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_CHECK_IN_OTHERS, 0);
+                MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_CHECK_IN_OTHERS);
                 events.add(event);
                 events.sort(Comparator.comparing(MsqEvent::getTime));
             }
@@ -240,8 +248,8 @@ public class LuggageChecks {
         {
             rngs.selectStream(streamIndex);
 
-            // 5 min as mean service time
-            return (exponential(5, rngs));
+            // 1.4 min as mean service time
+            return (exponential(1.4, rngs));
         }
 
         public void saveStats() {
@@ -251,6 +259,10 @@ public class LuggageChecks {
         }
         public void writeStats(String simulationType){
             statistics.writeStats(simulationType);
+        }
+
+        public Statistics.MeanStatistics getMeanStatistics() {
+            return statistics.getMeanStatistics();
         }
     }
 }

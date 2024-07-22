@@ -16,19 +16,20 @@ public class Probabilities {
         return generateProbability(0.4, rngs, streamIndex);
     }
 
-    public static int getEntrance(Rngs rngs, int streamIndex){
-        double prob = 1.0 / 3.0;
+    public static int getEntrance(Rngs rngs, int streamIndex) {
+        double prob = 1.0 / 6.0;
         rngs.selectStream(streamIndex);
         double random = rngs.random();
 
-        // Mappa il valore casuale a un numero intero tra 1 e 3
-        if (random < prob) {
-            return 1;
-        } else if (random < 2 * prob) {
-            return 2;
-        } else {
-            return 3;
+        // Mappa il valore casuale a un numero intero tra 1 e 6
+        for (int i = 1; i <= 6; i++) {
+            if (random < i * prob) {
+                return i;
+            }
         }
+
+        // Questo punto non dovrebbe mai essere raggiunto, ma è qui come fallback
+        return 6;
     }
 
     public static int getCheckInDesks(Rngs rngs, int streamIndex) {

@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.pmcsn.MenaraAirportSimulator.RESET;
@@ -22,14 +21,45 @@ public class Statistics {
      *  * Queue population
      */
 
+
     public String centerName;
     public List<Double> meanResponseTimeList = new ArrayList<Double>();
     public List<Double> meanServiceTimeList = new ArrayList<Double>();
     public List<Double> meanQueueTimeList = new ArrayList<Double>();
-    public List<Double> meanInterarrivalTimeList = new ArrayList<Double>();
+    public List<Double> lambdaList = new ArrayList<Double>();
     public List<Double> meanSystemPopulationList = new ArrayList<Double>();
     public List<Double> meanUtilizationList = new ArrayList<Double>();
     public List<Double> meanQueuePopulationList = new ArrayList<Double>();
+
+    public static class MeanStatistics {
+        public String centerName;
+        public double meanResponseTime;
+        public double meanServiceTime;
+        public double meanQueueTime;
+        public double lambda;
+        public double meanSystemPopulation;
+        public double meanUtilization;
+        public double meanQueuePopulation;
+
+        public MeanStatistics(Statistics stats) {
+            this.centerName = stats.centerName;
+            this.meanResponseTime = computeMean(stats.meanResponseTimeList);
+            this.meanServiceTime = computeMean(stats.meanServiceTimeList);
+            this.meanQueueTime = computeMean(stats.meanQueueTimeList);
+            this.lambda = computeMean(stats.lambdaList);
+            this.meanSystemPopulation = computeMean(stats.meanSystemPopulationList);
+            this.meanUtilization = computeMean(stats.meanUtilizationList);
+            this.meanQueuePopulation = computeMean(stats.meanQueuePopulationList);
+        }
+
+        public static double computeMean(List<Double> values) {
+            return values.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+        }
+    }
+
+    public MeanStatistics getMeanStatistics() {
+        return new MeanStatistics(this);
+    }
 
     public Statistics(String centerName) {
         this.centerName = centerName.toLowerCase();
@@ -43,10 +73,13 @@ public class Statistics {
         System.out.println("Number of Servers: " + numberOfServers);
         System.out.println("Number of Jobs Served: " + numberOfJobsServed);
         System.out.println("Area: " + area);
-        System.out.println("Sum: " + Arrays.toString(sum));
         System.out.println("First Arrival Time: " + firstArrivalTime);
         System.out.println("Last Arrival Time: " + lastArrivalTime);
         System.out.println("Last Completion Time: " + lastCompletionTime);
+        System.out.println("Sum:");
+        for (MsqSum s : sum) {
+            System.out.println(s);
+        }
         System.out.println(YELLOW + "***************************************" + RESET);
 
         double totalResponseTime = lastCompletionTime - firstArrivalTime;
@@ -59,7 +92,7 @@ public class Statistics {
         }
 
         // inter-arrival
-        meanInterarrivalTimeList.add((lastArrivalTime - firstArrivalTime) / numberOfJobsServed);
+        lambdaList.add( numberOfJobsServed / lastArrivalTime );
 
         // mean response time (E[Ts])
         double Ets = area / numberOfJobsServed;
@@ -91,13 +124,14 @@ public class Statistics {
 
     }
 
+
     public void writeStats(String simulationType) {
-        File file = new File("csvFiles/results/" + simulationType +"/");
+        File file = new File("csvFiles/"+simulationType+"/results/" );
         if (!file.exists()) {
             file.mkdirs();
         }
 
-        file = new File("csvFiles/results/" + simulationType +"/" + centerName+ ".csv");
+        file = new File("csvFiles/"+simulationType+"/results/" + centerName+ ".csv");
         try(FileWriter fileWriter = new FileWriter(file)) {
 
             String DELIMITER = "\n";
@@ -115,7 +149,7 @@ public class Statistics {
                         .append(String.valueOf(meanSystemPopulationList.get(run))).append(COMMA)
                         .append(String.valueOf(meanQueueTimeList.get(run))).append(COMMA)
                         .append(String.valueOf(meanUtilizationList.get(run))).append(COMMA)
-                        .append(String.valueOf(meanInterarrivalTimeList.get(run))).append(DELIMITER);
+                        .append(String.valueOf(lambdaList.get(run))).append(DELIMITER);
             }
 
             fileWriter.flush();

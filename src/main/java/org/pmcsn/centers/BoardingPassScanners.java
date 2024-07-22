@@ -1,9 +1,7 @@
 package org.pmcsn.centers;
 
 import org.pmcsn.libraries.Rngs;
-import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
-import org.pmcsn.utils.Distributions;
 
 import java.util.Comparator;
 import java.util.List;
@@ -182,7 +180,7 @@ public class BoardingPassScanners {
     {
         rngs.selectStream(streamIndex);
         // 1 min mean time
-        return (exponential(1, rngs));
+        return (exponential(0.3, rngs));
     }
 
     public void saveStats() {

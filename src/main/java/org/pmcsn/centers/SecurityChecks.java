@@ -26,7 +26,7 @@ public class SecurityChecks {
     //Constants and Variables
     public static long  arrivalsCounter = 0;        /* number of arrivals */
     long numberOfJobsInNode =0;                     /* number in the node */
-    static int    SERVERS = 4;                      /* number of servers */
+    static int    SERVERS = 8;                      /* number of servers */
     long numberOfJobsServed = 0;                    /* number of processed jobs */
     static int CENTER_INDEX = 52;                   /* index of center to select stream*/
     double area   = 0.0;
@@ -191,7 +191,7 @@ public class SecurityChecks {
         // 5 min as mean service time
         // 1 min as standard deviation
         //return (logNormal(5, 1, rngs));
-        return (exponential(5, rngs));
+        return (exponential(1.8, rngs));
     }
 
     public void saveStats() {
