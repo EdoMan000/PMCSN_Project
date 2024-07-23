@@ -6,9 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.pmcsn.MenaraAirportSimulator.RESET;
-import static org.pmcsn.MenaraAirportSimulator.YELLOW;
-
 public class Statistics {
 
     /*  STATISTICS OF INTEREST :
@@ -81,11 +78,13 @@ public class Statistics {
         this.centerName = centerName.toLowerCase();
     }
 
-    public void saveStats(int numberOfServers, long numberOfJobsServed, double area, MsqSum[] sum, double firstArrivalTime, double lastArrivalTime, double lastCompletionTime) {
-        /*
-        System.out.println(YELLOW + "\n\n***************************************");
+    public static final String RESET = "\033[0m";
+    public static final String YELLOW = "\033[0;33m";
+
+    private void printStats(int numberOfServers, long numberOfJobsServed, double area, MsqSum[] sum, double firstArrivalTime, double lastArrivalTime, double lastCompletionTime) {
+        System.out.println(YELLOW + "\n\n*************************************************");
         System.out.println("Saving stats for " + this.centerName.toUpperCase());
-        System.out.println("***************************************" + RESET);
+        System.out.println("*************************************************" + RESET);
         // Print the parameters
         System.out.println("Number of Servers: " + numberOfServers);
         System.out.println("Number of Jobs Served: " + numberOfJobsServed);
@@ -97,18 +96,16 @@ public class Statistics {
         for (MsqSum s : sum) {
             System.out.println(s);
         }
-        System.out.println(YELLOW + "***************************************" + RESET);
+        System.out.println(YELLOW + "*************************************************" + RESET);
+    }
 
-         */
+    public void saveStats(int numberOfServers, long numberOfJobsServed, double area, MsqSum[] sum, double firstArrivalTime, double lastArrivalTime, double lastCompletionTime) {
+
+        //printStats(numberOfServers, numberOfJobsServed, area, sum, firstArrivalTime, lastArrivalTime, lastCompletionTime);
 
         double totalResponseTime = lastCompletionTime - firstArrivalTime;
         //double time = lastCompletionTime;
         double utilization = 0;
-        double totalServiceTime = 0;
-
-        for(int i = 0; i < numberOfServers; i++) {
-            totalServiceTime += sum[i].service;
-        }
 
         // inter-arrival
         lambdaList.add( numberOfJobsServed / lastArrivalTime );
@@ -117,10 +114,15 @@ public class Statistics {
         double Ets = area / numberOfJobsServed;
         meanResponseTimeList.add(Ets);
 
-        // mean population (E[Tn])
+        // mean system population (E[Ns])
         double Ens = area / totalResponseTime;
         meanSystemPopulationList.add(Ens);
 
+        double totalServiceTime = 0;
+
+        for(int i = 0; i < numberOfServers; i++) {
+            totalServiceTime += sum[i].service;
+        }
         // mean wait time (E[Tq])
         double totalQueueTime = totalResponseTime - totalServiceTime;
         double Etq = totalQueueTime / numberOfJobsServed;
@@ -139,7 +141,7 @@ public class Statistics {
         meanUtilizationList.add(utilization/numberOfServers);
 
         // mean service time (E[s])
-        meanServiceTimeList.add(totalServiceTime / numberOfJobsServed);
+        meanServiceTimeList.add((totalServiceTime / numberOfJobsServed)/numberOfServers);
 
     }
 

@@ -34,7 +34,7 @@ public class CheckInDesksOthers {
 
     public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events) {
         int index = getCheckInDesks(rngs, 11); //TODO sameStreamIndex here???
-        if (index < 1 || index > 19) {
+        if (index < 1 || index > checkInDesksSingleFlights.length) {
             throw new IllegalArgumentException("Invalid centerID: " + index);
         }
         checkInDesksSingleFlights[index - 1].processArrival(arrival, time, events);
@@ -43,7 +43,7 @@ public class CheckInDesksOthers {
 
     public void processCompletion(MsqEvent completion, MsqTime time, List<MsqEvent> events) {
         int index = completion.centerID;
-        if (index < 1 || index > 19) {
+        if (index < 1 || index > checkInDesksSingleFlights.length) {
             throw new IllegalArgumentException("Invalid centerID: " + index);
         }
         checkInDesksSingleFlights[index - 1].processCompletion(completion, time, events);
@@ -53,7 +53,7 @@ public class CheckInDesksOthers {
 
         int numberOfJobsInNode = 0;
 
-        for(int index=1; index<=19; index++){
+        for(int index=1; index<=checkInDesksSingleFlights.length; index++){
             numberOfJobsInNode += checkInDesksSingleFlights[index-1].numberOfJobsInNode;
         }
 
@@ -62,19 +62,19 @@ public class CheckInDesksOthers {
 
     public void setArea(MsqTime time){
 
-        for(int index=1; index<=19; index++){
+        for(int index=1; index<=checkInDesksSingleFlights.length; index++){
             checkInDesksSingleFlights[index-1].area += (time.next - time.current) * checkInDesksSingleFlights[index-1].numberOfJobsInNode;
         }
     }
 
     public void saveStats() {
-        for(int index=1; index<=19; index++){
+        for(int index=1; index<=checkInDesksSingleFlights.length; index++){
             checkInDesksSingleFlights[index-1].saveStats();
         }
     }
 
     public void writeStats(String simulationType){
-        for(int index=1; index<=19; index++){
+        for(int index=1; index<=checkInDesksSingleFlights.length; index++){
             checkInDesksSingleFlights[index-1].writeStats(simulationType);
         }
     }

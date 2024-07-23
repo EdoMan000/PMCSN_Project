@@ -1,7 +1,7 @@
 package org.pmcsn;
 
-import org.pmcsn.controller.BasicModelSimulationRunner;
-import org.pmcsn.controller.BatchModelSimulationRunner;
+import org.pmcsn.controller.BasicSimulationRunner;
+import org.pmcsn.controller.BatchSimulationRunner;
 import org.pmcsn.controller.ImprovedModelSimulationRunner;
 
 import java.util.Scanner;
@@ -29,30 +29,29 @@ public class MenaraAirportSimulator {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        BasicModelSimulationRunner basicRunner = new BasicModelSimulationRunner();
+        BasicSimulationRunner basicRunner = new BasicSimulationRunner();
         ImprovedModelSimulationRunner improvedRunner = new ImprovedModelSimulationRunner();
-        BatchModelSimulationRunner batchRunner = new BatchModelSimulationRunner();
+        BatchSimulationRunner batchRunner = new BatchSimulationRunner();
 
         while (true) {
-            clearScreen();
-            showMenu(scanner, basicRunner, improvedRunner, batchRunner);
+            mainMenu(scanner, basicRunner, improvedRunner, batchRunner);
         }
     }
 
-    private static void printAsciiArt() {
-        System.out.println(YELLOW + "╔╦╗┌─┐┌┐┌┌─┐┬─┐┌─┐╔═╗┬┬─┐┌─┐┌─┐┬─┐┌┬┐  ╔═╗┬┌┬┐┬ ┬┬  ┌─┐┌┬┐┌─┐┬─┐");
+    private static void printTitle() {
+        System.out.println(BLUE + "╔╦╗┌─┐┌┐┌┌─┐┬─┐┌─┐╔═╗┬┬─┐┌─┐┌─┐┬─┐┌┬┐  ╔═╗┬┌┬┐┬ ┬┬  ┌─┐┌┬┐┌─┐┬─┐");
         System.out.println("║║║├┤ │││├─┤├┬┘├─┤╠═╣│├┬┘├─┘│ │├┬┘ │   ╚═╗│││││ ││  ├─┤ │ │ │├┬┘");
         System.out.println("╩ ╩└─┘┘└┘┴ ┴┴└─┴ ┴╩ ╩┴┴└─┴  └─┘┴└─ ┴   ╚═╝┴┴ ┴└─┘┴─┘┴ ┴ ┴ └─┘┴└─" + RESET);
     }
 
-    private static void showMenu(Scanner scanner, BasicModelSimulationRunner basicRunner, ImprovedModelSimulationRunner improvedRunner, BatchModelSimulationRunner batchRunner) {
+    private static void mainMenu(Scanner scanner, BasicSimulationRunner basicRunner, ImprovedModelSimulationRunner improvedRunner, BatchSimulationRunner batchRunner) {
+        resetMenu();
         System.out.println("\nWelcome to Menara Airport Simulator!");
-        System.out.println(YELLOW + "Please select an option:" + RESET);
-        System.out.println(YELLOW + "1" + RESET + ". Start Simulation");
-        System.out.println(YELLOW + "2" + RESET + ". View Simulation Types");
-        System.out.println(YELLOW + "3" + RESET + ". Exit");
+        System.out.println(BLUE + "Please select an option:" + RESET);
+        System.out.println(BLUE + "1" + RESET + ". Start Simulation");
+        System.out.println(BLUE + "2" + RESET + ". Exit");
 
-        System.out.print(YELLOW + "Enter your choice >>> " + RESET);
+        System.out.print(BLUE + "Enter your choice >>> " + RESET);
         int choice = scanner.nextInt();
         scanner.nextLine();  // Consume newline
 
@@ -61,10 +60,6 @@ public class MenaraAirportSimulator {
                 startSimulation(scanner, basicRunner, improvedRunner, batchRunner);
                 break;
             case 2:
-                viewSimulationTypes();
-                pauseAndClear(scanner);
-                break;
-            case 3:
                 System.out.println(RED + "Exiting Menara Airport Simulator. Goodbye!" + RESET);
                 System.exit(0);
                 break;
@@ -74,19 +69,20 @@ public class MenaraAirportSimulator {
         }
     }
 
-    private static void startSimulation(Scanner scanner, BasicModelSimulationRunner basicRunner, ImprovedModelSimulationRunner improvedRunner, BatchModelSimulationRunner batchRunner) {
-        clearScreen();
-        System.out.println("\nStarting Simulation...");
-        System.out.println("Select simulation type:");
-        viewSimulationTypes();
+    private static void startSimulation(Scanner scanner, BasicSimulationRunner basicRunner, ImprovedModelSimulationRunner improvedRunner, BatchSimulationRunner batchRunner) {
+        resetMenu();
+        System.out.println(BLUE + "\nSelect simulation Type:" + RESET);
+        System.out.println(BLUE + "1" + RESET  + ". Basic Simulation");
+        System.out.println(BLUE + "2" + RESET + ". Improved Model Simulation");
+        System.out.println(BLUE + "3" + RESET + ". Batch Simulation");
 
-        System.out.print(YELLOW + "Enter the simulation type number: " + RESET);
+        System.out.print(BLUE + "Enter the simulation type number: " + RESET);
         int simulationType = scanner.nextInt();
         scanner.nextLine();  // Consume newline
 
         switch (simulationType) {
             case 1:
-                basicRunner.runBasicModelSimulation();
+                basicRunner.runBasicSimulation();
                 break;
             case 2:
                 improvedRunner.runImprovedModelSimulation();
@@ -97,20 +93,16 @@ public class MenaraAirportSimulator {
             default:
                 System.out.println(RED + "Invalid simulation type '" + simulationType + "'. Returning to main menu." + RESET);
         }
-
         pauseAndClear(scanner);
     }
 
-    private static void viewSimulationTypes() {
+    private static void resetMenu() {
         clearScreen();
-        System.out.println(YELLOW + "\nSimulation Types:" + RESET);
-        System.out.println(YELLOW + "1" + RESET  + ". Basic Model Simulation");
-        System.out.println(YELLOW + "2" + RESET + ". Improved Model Simulation");
-        System.out.println(YELLOW + "3" + RESET + ". Batch Simulation");
+        printTitle();
     }
 
     private static void pauseAndClear(Scanner scanner) {
-        System.out.println(YELLOW + "\nPress Enter to return to the menu..." + RESET);
+        System.out.println(BLUE + "\nPress Enter to return to the menu..." + RESET);
         scanner.nextLine();
         clearScreen();
     }
@@ -126,6 +118,5 @@ public class MenaraAirportSimulator {
         } catch (Exception e) {
             System.out.println("Error clearing the console: " + e.getMessage());
         }
-        printAsciiArt();
     }
 }

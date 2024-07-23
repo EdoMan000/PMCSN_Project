@@ -40,6 +40,10 @@ public class LuggageChecks {
 
     }
 
+    public void setSTOP(int STOP) {
+        this.STOP = STOP;
+    }
+
     public double getSarrival(){
         return sarrival;
     }

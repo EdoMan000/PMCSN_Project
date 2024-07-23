@@ -62,9 +62,9 @@ public class Verification {
     public static final String YELLOW = "\033[0;33m";
 
     public static void printResult(Result result) {
-        System.out.println(YELLOW + "\n\n***************************************");
+        System.out.println(YELLOW + "\n\n*************************************************");
         System.out.println("Verification results for " + result.name.toUpperCase());
-        System.out.println("***************************************" + RESET);
+        System.out.println("*************************************************" + RESET);
         // Print results
         System.out.println("Lambda: " + result.lambda);
         System.out.println("Rho: " + result.rho);
@@ -73,7 +73,7 @@ public class Verification {
         System.out.println("E[Ts]: " + result.Ets);
         System.out.println("E[Ns]: " + result.Ens);
         System.out.println("E[s]: " + result.Es);
-        System.out.println(YELLOW + "***************************************" + RESET);
+        System.out.println(YELLOW + "*************************************************" + RESET);
     }
 
     public static Result singleServer(String centerName, double lambda, double Es) {
@@ -86,7 +86,7 @@ public class Verification {
             Ets = Double.POSITIVE_INFINITY;
             Ens = Double.POSITIVE_INFINITY;
         } else {
-            Etq = rho * Es / (1 - rho);
+            Etq = (rho * Es) / (1 - rho);
             Enq = Etq * lambda;
             Ets = Etq + Es;
             Ens = Ets * lambda;
@@ -110,7 +110,7 @@ public class Verification {
         } else {
             double p0 = calculateP0(numServers, rho);
             double Pq = calculatePq(numServers, rho, p0);
-            Etq = Pq * Es / (1 - rho);
+            Etq = (Pq * Es) / (1 - rho);
             Enq = Etq * lambda;
             Ets = Etq + Esi;
             Ens = Ets * lambda;
@@ -121,7 +121,7 @@ public class Verification {
         return result;
     }
 
-    public static List<Result> basicModelVerification() {
+    public static List<Result> modelVerification(String simulationType) {
         List<Result> results = new ArrayList<>();
         double lambda = 6300/(24*60); // mean of 63 flights with 100 passengers each during the whole day
 
@@ -144,7 +144,7 @@ public class Verification {
 
         results.add(multiServer("BOARDING", (lambda * (1 - pCitizen) * pTarget) + (lambda * pCitizen * pTarget), 2, 2));
 
-        writeResultsVerification("BASIC_MODEL", results);
+        writeResultsVerification(simulationType, results);
 
         return(results);
     }
@@ -185,13 +185,13 @@ public class Verification {
         }
     }
 
-    public static void writeResultsVerification(String modelName, List<Result> results){
-        File file = new File("csvFiles/"+modelName+"/verification/" );
+    public static void writeResultsVerification(String simulationType, List<Result> results){
+        File file = new File("csvFiles/"+simulationType+"/verification/" );
         if (!file.exists()) {
             file.mkdirs();
         }
 
-        file = new File("csvFiles/"+modelName+"/verification/verification.csv");
+        file = new File("csvFiles/"+simulationType+"/verification/verification.csv");
         try(FileWriter fileWriter = new FileWriter(file)) {
 
             String DELIMITER = "\n";
