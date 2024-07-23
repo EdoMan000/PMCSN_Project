@@ -22,6 +22,8 @@ public class Boarding {
 
     Statistics statistics = new Statistics("BOARDING");
 
+    Statistics batchStatistics = new Statistics("BOARDING");
+
     //Constants and Variables
     public static long  arrivalsCounter = 0;        /* number of arrivals */
     long numberOfJobsInNode =0;                     /* number in the node */
@@ -69,6 +71,10 @@ public class Boarding {
 
     public long getNumberOfJobsInNode() {
         return numberOfJobsInNode;
+    }
+
+    public long getJobsServed(){
+        return numberOfJobsServed;
     }
 
     public void setArea(MsqTime time){
@@ -173,6 +179,8 @@ public class Boarding {
     public void saveStats() {
         statistics.saveStats(SERVERS, numberOfJobsServed, area, sum, firstArrivalTime, lastArrivalTime, lastCompletionTime);
     }
+
+
     public void writeStats(String simulationType){
         statistics.writeStats(simulationType);
     }

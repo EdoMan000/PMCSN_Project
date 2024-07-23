@@ -68,6 +68,10 @@ public class CheckInDesksTarget {
         }
     }
 
+    public long getJobsServed(){
+        return numberOfJobsServed;
+    }
+
     public long getNumberOfJobsInNode() {
         return numberOfJobsInNode;
     }

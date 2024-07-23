@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.pmcsn.controller.Verification.modelVerification;
+import static org.pmcsn.model.EventType.*;
 import static org.pmcsn.utils.Comparison.compareResults;
 import static org.pmcsn.utils.EventUtils.getNextEvent;
 
@@ -26,8 +27,9 @@ public class BatchSimulationRunner {
     private static final int START = 0;
     private static final long SEED = 123456789L;
     private static final String SIMULATION_TYPE = "BATCH_SIMULATION";
+    private static int STOP = 1440;
 
-    private static final int BATCH_SIZE = 70000*7; // Number of jobs in single batch (B)
+    private static final int BATCH_SIZE = STOP*100; // Number of jobs in single batch (B)
     private static final int NUM_BATCHES = 150; // Number of batches (K)
 
 
@@ -70,91 +72,90 @@ public class BatchSimulationRunner {
         stampsCheck.reset(rngs);
         boarding.reset(rngs);
 
-        for (int batch = 0; batch < NUM_BATCHES; batch++) {
-            int eventCount = 0;
-            long number;
+        long number = 1;
+        MsqEvent event;
 
-            while (eventCount < BATCH_SIZE) {
-                MsqEvent event = getNextEvent(events);
-                msqTime.next = event.time;
+        // need to use OR because both the conditions should be false
+        while (!luggageChecks.isEndOfArrivals() || number != 0) {
 
-                // Updating the areas
-                luggageChecks.setArea(msqTime);
-                checkInDesksTarget.setArea(msqTime);
-                checkInDesksOthers.setArea(msqTime);
-                boardingPassScanners.setArea(msqTime);
-                securityChecks.setArea(msqTime);
-                passportChecks.setArea(msqTime);
-                stampsCheck.setArea(msqTime);
-                boarding.setArea(msqTime);
+            event = getNextEvent(events);
+            msqTime.next = event.time;
 
-                // Advancing the clock
-                msqTime.current = msqTime.next;
+            // Updating the areas
+            luggageChecks.setArea(msqTime);
+            checkInDesksTarget.setArea(msqTime);
+            checkInDesksOthers.setArea(msqTime);
+            boardingPassScanners.setArea(msqTime);
+            securityChecks.setArea(msqTime);
+            passportChecks.setArea(msqTime);
+            stampsCheck.setArea(msqTime);
+            boarding.setArea(msqTime);
 
-                // Processing the event based on its type
-                switch (event.type) {
-                    case ARRIVAL_LUGGAGE_CHECK:
-                        luggageChecks.processArrival(event, msqTime, events);
-                        break;
-                    case LUGGAGE_CHECK_DONE:
-                        luggageChecks.processCompletion(event, msqTime, events);
-                        break;
-                    case ARRIVAL_CHECK_IN_TARGET:
-                        checkInDesksTarget.processArrival(event, msqTime, events);
-                        break;
-                    case CHECK_IN_TARGET_DONE:
-                        checkInDesksTarget.processCompletion(event, msqTime, events);
-                        break;
-                    case ARRIVAL_CHECK_IN_OTHERS:
-                        checkInDesksOthers.processArrival(event, msqTime, events);
-                        break;
-                    case CHECK_IN_OTHERS_DONE:
-                        checkInDesksOthers.processCompletion(event, msqTime, events);
-                        break;
-                    case ARRIVAL_BOARDING_PASS_SCANNERS:
-                        boardingPassScanners.processArrival(event, msqTime, events);
-                        break;
-                    case BOARDING_PASS_SCANNERS_DONE:
-                        boardingPassScanners.processCompletion(event, msqTime, events);
-                        break;
-                    case ARRIVAL_SECURITY_CHECK:
-                        securityChecks.processArrival(event, msqTime, events);
-                        break;
-                    case SECURITY_CHECK_DONE:
-                        securityChecks.processCompletion(event, msqTime, events);
-                        break;
-                    case ARRIVAL_PASSPORT_CHECK:
-                        passportChecks.processArrival(event, msqTime, events);
-                        break;
-                    case PASSPORT_CHECK_DONE:
-                        passportChecks.processCompletion(event, msqTime, events);
-                        break;
-                    case ARRIVAL_STAMP_CHECK:
-                        stampsCheck.processArrival(event, msqTime, events);
-                        break;
-                    case STAMP_CHECK_DONE:
-                        stampsCheck.processCompletion(event, msqTime, events);
-                        break;
-                    case ARRIVAL_BOARDING:
-                        boarding.processArrival(event, msqTime, events);
-                        break;
-                    case BOARDING_DONE:
-                        boarding.processCompletion(event, msqTime, events);
-                        break;
-                }
-                eventCount++;
+            // Advancing the clock
+            msqTime.current = msqTime.next;
 
+            // Processing the event based on its type
+            switch (event.type) {
+                case ARRIVAL_LUGGAGE_CHECK:
+                    luggageChecks.processArrival(event, msqTime, events);
+                    break;
+                case LUGGAGE_CHECK_DONE:
+                    luggageChecks.processCompletion(event, msqTime, events);
+                    break;
+                case ARRIVAL_CHECK_IN_TARGET:
+                    checkInDesksTarget.processArrival(event, msqTime, events);
+                    break;
+                case CHECK_IN_TARGET_DONE:
+                    checkInDesksTarget.processCompletion(event, msqTime, events);
+                    break;
+                case ARRIVAL_CHECK_IN_OTHERS:
+                    checkInDesksOthers.processArrival(event, msqTime, events);
+                    break;
+                case CHECK_IN_OTHERS_DONE:
+                    checkInDesksOthers.processCompletion(event, msqTime, events);
+                    break;
+                case ARRIVAL_BOARDING_PASS_SCANNERS:
+                    boardingPassScanners.processArrival(event, msqTime, events);
+                    break;
+                case BOARDING_PASS_SCANNERS_DONE:
+                    boardingPassScanners.processCompletion(event, msqTime, events);
+                    break;
+                case ARRIVAL_SECURITY_CHECK:
+                    securityChecks.processArrival(event, msqTime, events);
+                    break;
+                case SECURITY_CHECK_DONE:
+                    securityChecks.processCompletion(event, msqTime, events);
+                    break;
+                case ARRIVAL_PASSPORT_CHECK:
+                    passportChecks.processArrival(event, msqTime, events);
+                    break;
+                case PASSPORT_CHECK_DONE:
+                    passportChecks.processCompletion(event, msqTime, events);
+                    break;
+                case ARRIVAL_STAMP_CHECK:
+                    stampsCheck.processArrival(event, msqTime, events);
+                    break;
+                case STAMP_CHECK_DONE:
+                    stampsCheck.processCompletion(event, msqTime, events);
+                    break;
+                case ARRIVAL_BOARDING:
+                    boarding.processArrival(event, msqTime, events);
+                    break;
+                case BOARDING_DONE:
+                    boarding.processCompletion(event, msqTime, events);
+                    break;
             }
 
+            // TODO implementare saveBatchStats()
             // Saving statistics for current batch
-            luggageChecks.saveStats();
-            checkInDesksTarget.saveStats();
-            checkInDesksOthers.saveStats();
-            boardingPassScanners.saveStats();
-            securityChecks.saveStats();
-            passportChecks.saveStats();
-            stampsCheck.saveStats();
-            boarding.saveStats();
+            if(luggageChecks.getJobsServed() % BATCH_SIZE == 0)   luggageChecks.saveBatchStats();
+            if(checkInDesksTarget.getJobsServed() % BATCH_SIZE == 0)   checkInDesksTarget.saveBatchStats();
+            if(checkInDesksOthers.getJobsServed() % BATCH_SIZE == 0)   checkInDesksOthers.saveBatchStats();
+            if(boardingPassScanners.getJobsServed() % BATCH_SIZE == 0)   boardingPassScanners.saveBatchStats();
+            if(securityChecks.getJobsServed() % BATCH_SIZE == 0)   securityChecks.saveBatchStats();
+            if(passportChecks.getJobsServed() % BATCH_SIZE == 0)   passportChecks.saveBatchStats();
+            if(stampsCheck.getJobsServed() % BATCH_SIZE == 0)   stampsCheck.saveBatchStats();
+            if(boarding.getJobsServed() % BATCH_SIZE == 0)   boarding.saveBatchStats();
 
             number = luggageChecks.getNumberOfJobsInNode() + checkInDesksTarget.getNumberOfJobsInNode() + checkInDesksOthers.getNumberOfJobsInNode() + boarding.getNumberOfJobsInNode()
                     + boardingPassScanners.getNumberOfJobsInNode() + securityChecks.getNumberOfJobsInNode() + passportChecks.getNumberOfJobsInNode() + stampsCheck.getNumberOfJobsInNode() + boarding.getNumberOfJobsInNode();

@@ -69,6 +69,10 @@ public class PassportChecks {
         }
     }
 
+    public long getJobsServed(){
+        return numberOfJobsServed;
+    }
+
     public long getNumberOfJobsInNode() {
         return numberOfJobsInNode;
     }

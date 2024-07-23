@@ -107,6 +107,16 @@ public class LuggageChecks {
         return numberOfJobsInNode;
     }
 
+    public int getJobsServed(){
+        int numberOfJobsServed = 0;
+
+        for(int index=1; index<=luggageChecksSingleEntrances.length; index++){
+            numberOfJobsServed += (int) luggageChecksSingleEntrances[index-1].numberOfJobsServed;
+        }
+
+        return numberOfJobsServed;
+    }
+
     public void setArea(MsqTime time){
 
         for(int index=1; index<=luggageChecksSingleEntrances.length; index++){

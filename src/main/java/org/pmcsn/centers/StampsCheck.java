@@ -55,6 +55,10 @@ public class StampsCheck {
         sum.service = 0;
     }
 
+    public long getJobsServed(){
+        return numberOfJobsServed;
+    }
+
 
     public long getNumberOfJobsInNode() {
         return numberOfJobsInNode;

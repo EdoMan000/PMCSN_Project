@@ -67,6 +67,10 @@ public class BoardingPassScanners {
         }
     }
 
+    public long getJobsServed(){
+        return numberOfJobsServed;
+    }
+
     public long getNumberOfJobsInNode() {
         return numberOfJobsInNode;
     }
