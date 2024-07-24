@@ -4,10 +4,9 @@ import org.pmcsn.libraries.Rngs;
 import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
+import static org.pmcsn.model.Statistics.computeMean;
 import static org.pmcsn.utils.Distributions.*;
 import static org.pmcsn.utils.Probabilities.getCheckInDesks;
 
@@ -16,6 +15,7 @@ public class CheckInDesksOthers {
     Rngs rngs;
     Rvgs rvgs;
     CheckInDesksSingleFlight[] checkInDesksSingleFlights;
+    public int numberOfCenters;
 
     public CheckInDesksOthers() {
         this.checkInDesksSingleFlights = new CheckInDesksSingleFlight[19];
@@ -23,6 +23,7 @@ public class CheckInDesksOthers {
             checkInDesksSingleFlights[i] = new CheckInDesksSingleFlight(i + 1);
             checkInDesksSingleFlights[i].CENTER_INDEX = 12 + (2 * i);
         }
+        this.numberOfCenters = checkInDesksSingleFlights.length;
     }
 
     public void reset(Rngs rngs) {
@@ -60,14 +61,35 @@ public class CheckInDesksOthers {
         return numberOfJobsInNode;
     }
 
-    public int getJobsServed(){
-        int numberOfJobsServed = 0;
+    public void resetBatch(int center ) {
+        checkInDesksSingleFlights[center].resetBatch();
 
-        for(int index=1; index<=checkInDesksSingleFlights.length; index++){
-            numberOfJobsServed += (int) checkInDesksSingleFlights[index-1].numberOfJobsServed;
-        }
+    }
+
+    public int getJobsServed(int center){
+
+        int numberOfJobsServed = (int) checkInDesksSingleFlights[center].numberOfJobsServed;
 
         return numberOfJobsServed;
+    }
+
+    public int getBatchIndex(int center){
+        return checkInDesksSingleFlights[center].batchIndex;
+    }
+
+    public int getMinBatchIndex() {
+        // Assume there's at least one center in the array
+        if (checkInDesksSingleFlights.length == 0) {
+            throw new IllegalStateException("No centers available");
+        }
+
+        int minBatchIndex = checkInDesksSingleFlights[0].batchIndex;
+        for (int i = 1; i < checkInDesksSingleFlights.length; i++) {
+            if (checkInDesksSingleFlights[i].batchIndex < minBatchIndex) {
+                minBatchIndex = checkInDesksSingleFlights[i].batchIndex;
+            }
+        }
+        return minBatchIndex;
     }
 
     public void setArea(MsqTime time){
@@ -81,6 +103,10 @@ public class CheckInDesksOthers {
         for(int index=1; index<=checkInDesksSingleFlights.length; index++){
             checkInDesksSingleFlights[index-1].saveStats();
         }
+    }
+
+    public void saveStats(int center) {
+        checkInDesksSingleFlights[center].saveStats();
     }
 
     public void writeStats(String simulationType){
@@ -112,13 +138,13 @@ public class CheckInDesksOthers {
             meanQueuePopulationList.add(ms.meanQueuePopulation);
         }
 
-        double meanResponseTime = Statistics.MeanStatistics.computeMean(meanResponseTimeList);
-        double meanServiceTime = Statistics.MeanStatistics.computeMean(meanServiceTimeList);
-        double meanQueueTime = Statistics.MeanStatistics.computeMean(meanQueueTimeList);
-        double lambda = Statistics.MeanStatistics.computeMean(lambdaList);
-        double meanSystemPopulation = Statistics.MeanStatistics.computeMean(meanSystemPopulationList);
-        double meanUtilization = Statistics.MeanStatistics.computeMean(meanUtilizationList);
-        double meanQueuePopulation = Statistics.MeanStatistics.computeMean(meanQueuePopulationList);
+        double meanResponseTime = computeMean(meanResponseTimeList);
+        double meanServiceTime = computeMean(meanServiceTimeList);
+        double meanQueueTime = computeMean(meanQueueTimeList);
+        double lambda = computeMean(lambdaList);
+        double meanSystemPopulation = computeMean(meanSystemPopulationList);
+        double meanUtilization = computeMean(meanUtilizationList);
+        double meanQueuePopulation = computeMean(meanQueuePopulationList);
 
         return new Statistics.MeanStatistics("CHECK-IN OTHERS", meanResponseTime, meanServiceTime, meanQueueTime, lambda, meanSystemPopulation, meanUtilization, meanQueuePopulation);
 
@@ -151,6 +177,7 @@ public class CheckInDesksOthers {
         double firstArrivalTime = Double.NEGATIVE_INFINITY;
         double lastArrivalTime = 0;
         double lastCompletionTime = 0;
+            public int batchIndex = 0;
 
         Rngs rngs;
 
@@ -173,6 +200,23 @@ public class CheckInDesksOthers {
 
                 // resetting variables
                 this.numberOfJobsInNode =0;
+                this.numberOfJobsServed = 0;
+                this.area   = 0.0;
+                this.service = 0;
+                this.firstArrivalTime = Double.NEGATIVE_INFINITY;
+                this.lastArrivalTime = 0;
+                this.lastCompletionTime = 0;
+
+                for(int i=0; i<SERVERS ; i++){
+                    sum[i].served = 0;
+                    sum[i].service = 0;
+                    servers[i].running = false;
+                    servers[i].lastCompletionTime = 0;
+                }
+            }
+
+            public void resetBatch() {
+                // resetting variables
                 this.numberOfJobsServed = 0;
                 this.area   = 0.0;
                 this.service = 0;
@@ -304,6 +348,7 @@ public class CheckInDesksOthers {
         }
 
         public void saveStats() {
+            batchIndex++;
             statistics.saveStats(SERVERS, numberOfJobsServed, area, sum, firstArrivalTime, lastArrivalTime, lastCompletionTime);
         }
         public void writeStats(String simulationType){

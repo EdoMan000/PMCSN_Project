@@ -61,9 +61,6 @@ public class Statistics {
             this.meanQueuePopulation = meanQueuePopulation;
         }
 
-        public static double computeMean(List<Double> values) {
-            return values.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
-        }
 
         public void setCenterName(String centerName) {
             this.centerName = centerName;
@@ -72,6 +69,10 @@ public class Statistics {
 
     public MeanStatistics getMeanStatistics() {
         return new MeanStatistics(this);
+    }
+
+    public static double computeMean(List<Double> values) {
+        return values.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
     }
 
     public Statistics(String centerName) {
@@ -108,15 +109,14 @@ public class Statistics {
         double utilization = 0;
 
         // inter-arrival
-        lambdaList.add( numberOfJobsServed / lastArrivalTime );
+        double lambda = numberOfJobsServed / lastArrivalTime;
+        lambdaList.add( lambda);
 
         // mean response time (E[Ts])
         double Ets = area / numberOfJobsServed;
         meanResponseTimeList.add(Ets);
-
         // mean system population (E[Ns])
-        double Ens = area / totalResponseTime;
-        meanSystemPopulationList.add(Ens);
+        meanSystemPopulationList.add(Ets*lambda);
 
         double totalServiceTime = 0;
 
@@ -127,10 +127,8 @@ public class Statistics {
         double totalQueueTime = totalResponseTime - totalServiceTime;
         double Etq = totalQueueTime / numberOfJobsServed;
         meanQueueTimeList.add(Etq);
-
         // mean queue population (E[Nq])
-        double Enq = totalQueueTime / totalResponseTime;
-        meanQueuePopulationList.add(Enq);
+        meanQueuePopulationList.add(Etq*lambda);
 
         for(int i = 0; i < numberOfServers; i++) {
             utilization += sum[i].service / totalResponseTime;
@@ -141,7 +139,7 @@ public class Statistics {
         meanUtilizationList.add(utilization/numberOfServers);
 
         // mean service time (E[s])
-        meanServiceTimeList.add((totalServiceTime / numberOfJobsServed)/numberOfServers);
+        meanServiceTimeList.add((totalServiceTime / numberOfJobsServed) / numberOfServers);
 
     }
 
@@ -161,9 +159,9 @@ public class Statistics {
 
 
             fileWriter.append("#Run, E[Ts], E[Tq], E[s], E[Ns], E[Nq], ρ, λ").append(DELIMITER);
-            for (run = 0; run < 150; run++){
+            for (run = 0; run < meanResponseTimeList.size(); run++){
 
-                fileWriter.append(String.valueOf(run)).append(COMMA)
+                fileWriter.append(String.valueOf(run+1)).append(COMMA)
                         .append(String.valueOf(meanResponseTimeList.get(run))).append(COMMA)
                         .append(String.valueOf(meanQueueTimeList.get(run))).append(COMMA)
                         .append(String.valueOf(meanServiceTimeList.get(run))).append(COMMA)

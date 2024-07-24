@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.pmcsn.controller.Verification.modelVerification;
-import static org.pmcsn.model.EventType.*;
 import static org.pmcsn.utils.Comparison.compareResults;
 import static org.pmcsn.utils.EventUtils.getNextEvent;
 
@@ -29,7 +28,7 @@ public class BatchSimulationRunner {
     private static final String SIMULATION_TYPE = "BATCH_SIMULATION";
     private static int STOP = 1440;
 
-    private static final int BATCH_SIZE = STOP*100; // Number of jobs in single batch (B)
+    private static final int BATCH_SIZE = 1024; // Number of jobs in single batch (B)
     private static final int NUM_BATCHES = 150; // Number of batches (K)
 
 
@@ -57,7 +56,7 @@ public class BatchSimulationRunner {
 
         // Initialize LuggageChecks
         luggageChecks.reset(rngs, START);
-        luggageChecks.setSTOP(Integer.MAX_VALUE); // so that it will not stop generating arrivals
+        luggageChecks.setSTOP(STOP * 365);
 
         // Generate the first arrival
         double time = luggageChecks.getArrival();
@@ -74,9 +73,10 @@ public class BatchSimulationRunner {
 
         long number = 1;
         MsqEvent event;
+        int batchIndex = 0;
 
         // need to use OR because both the conditions should be false
-        while (!luggageChecks.isEndOfArrivals() || number != 0) {
+        while (!luggageChecks.isEndOfArrivals()) {
 
             event = getNextEvent(events);
             msqTime.next = event.time;
@@ -146,20 +146,78 @@ public class BatchSimulationRunner {
                     break;
             }
 
-            // TODO implementare saveBatchStats()
             // Saving statistics for current batch
-            if(luggageChecks.getJobsServed() % BATCH_SIZE == 0)   luggageChecks.saveBatchStats();
-            if(checkInDesksTarget.getJobsServed() % BATCH_SIZE == 0)   checkInDesksTarget.saveBatchStats();
-            if(checkInDesksOthers.getJobsServed() % BATCH_SIZE == 0)   checkInDesksOthers.saveBatchStats();
-            if(boardingPassScanners.getJobsServed() % BATCH_SIZE == 0)   boardingPassScanners.saveBatchStats();
-            if(securityChecks.getJobsServed() % BATCH_SIZE == 0)   securityChecks.saveBatchStats();
-            if(passportChecks.getJobsServed() % BATCH_SIZE == 0)   passportChecks.saveBatchStats();
-            if(stampsCheck.getJobsServed() % BATCH_SIZE == 0)   stampsCheck.saveBatchStats();
-            if(boarding.getJobsServed() % BATCH_SIZE == 0)   boarding.saveBatchStats();
+            for (int i = 0; i < luggageChecks.numberOfCenters; i++) {
+                long jobsServed = luggageChecks.getJobsServed(i);
+                //System.out.println("Luggage Checks Center " + i + ": Jobs Served = " + jobsServed);
+                if (jobsServed == BATCH_SIZE && luggageChecks.getBatchIndex(i) == batchIndex) {
+                    luggageChecks.saveStats(i);
+                    luggageChecks.resetBatch(i);
+                }
+            }
 
-            number = luggageChecks.getNumberOfJobsInNode() + checkInDesksTarget.getNumberOfJobsInNode() + checkInDesksOthers.getNumberOfJobsInNode() + boarding.getNumberOfJobsInNode()
-                    + boardingPassScanners.getNumberOfJobsInNode() + securityChecks.getNumberOfJobsInNode() + passportChecks.getNumberOfJobsInNode() + stampsCheck.getNumberOfJobsInNode() + boarding.getNumberOfJobsInNode();
-            //System.out.println("JOBS REMAINING IN SYSTEM FOR BATCH N°"+(batch+1)+": "+number);
+            long checkInDesksTargetJobsServed = checkInDesksTarget.getJobsServed();
+            //System.out.println("Check-In Desks Target: Jobs Served = " + checkInDesksTargetJobsServed);
+            if (checkInDesksTargetJobsServed == BATCH_SIZE && checkInDesksTarget.batchIndex == batchIndex) {
+                checkInDesksTarget.saveStats();
+                checkInDesksTarget.resetBatch();
+            }
+
+            for (int i = 0; i < checkInDesksOthers.numberOfCenters; i++) {
+                long jobsServed = checkInDesksOthers.getJobsServed(i);
+                //System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + jobsServed);
+                if (jobsServed == BATCH_SIZE && checkInDesksOthers.getBatchIndex(i) == batchIndex) {
+                    checkInDesksOthers.saveStats(i);
+                    checkInDesksOthers.resetBatch(i);
+                }
+            }
+
+            long boardingPassScannersJobsServed = boardingPassScanners.getJobsServed();
+            //System.out.println("Boarding Pass Scanners: Jobs Served = " + boardingPassScannersJobsServed);
+            if (boardingPassScannersJobsServed == BATCH_SIZE && boardingPassScanners.batchIndex == batchIndex) {
+                boardingPassScanners.saveStats();
+                boardingPassScanners.resetBatch();
+            }
+
+            long securityChecksJobsServed = securityChecks.getJobsServed();
+            //System.out.println("Security Checks: Jobs Served = " + securityChecksJobsServed);
+            if (securityChecksJobsServed == BATCH_SIZE && securityChecks.batchIndex == batchIndex) {
+                securityChecks.saveStats();
+                securityChecks.resetBatch();
+            }
+
+            long passportChecksJobsServed = passportChecks.getJobsServed();
+            //System.out.println("Passport Checks: Jobs Served = " + passportChecksJobsServed);
+            if (passportChecksJobsServed == BATCH_SIZE && passportChecks.batchIndex == batchIndex) {
+                passportChecks.saveStats();
+                passportChecks.resetBatch();
+            }
+
+            long stampsCheckJobsServed = stampsCheck.getJobsServed();
+            //System.out.println("Stamps Check: Jobs Served = " + stampsCheckJobsServed);
+            if (stampsCheckJobsServed == BATCH_SIZE && stampsCheck.batchIndex == batchIndex) {
+                stampsCheck.saveStats();
+                stampsCheck.resetBatch();
+            }
+
+            long boardingJobsServed = boarding.getJobsServed();
+            //System.out.println("Boarding: Jobs Served = " + boardingJobsServed);
+            if (boardingJobsServed == BATCH_SIZE && boarding.batchIndex == batchIndex) {
+                boarding.saveStats();
+                boarding.resetBatch();
+            }
+
+            //System.out.println("**********************************************************************");
+
+            //updating the batch only when all centers have updated theirs
+            if((luggageChecks.getMinBatchIndex() + checkInDesksTarget.batchIndex + checkInDesksOthers.getMinBatchIndex() +
+                    boardingPassScanners.batchIndex + securityChecks.batchIndex + passportChecks.batchIndex
+                    + stampsCheck.batchIndex + boarding.batchIndex) == (batchIndex+1)*8) {
+                batchIndex++;
+                number = luggageChecks.getNumberOfJobsInNode() + checkInDesksTarget.getNumberOfJobsInNode() + checkInDesksOthers.getNumberOfJobsInNode() + boarding.getNumberOfJobsInNode()
+                        + boardingPassScanners.getNumberOfJobsInNode() + securityChecks.getNumberOfJobsInNode() + passportChecks.getNumberOfJobsInNode() + stampsCheck.getNumberOfJobsInNode() + boarding.getNumberOfJobsInNode();
+                System.out.println("JOBS REMAINING IN SYSTEM FOR BATCH N°"+(batchIndex)+": "+number);
+            }
         }
 
         // Writing statistics csv with data from all batches
@@ -187,7 +245,5 @@ public class BatchSimulationRunner {
         meanStatisticsList.add(boarding.getMeanStatistics());
 
         compareResults(SIMULATION_TYPE, verificationResults, meanStatisticsList);
-
     }
-
 }

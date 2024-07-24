@@ -7,7 +7,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import static org.pmcsn.utils.Distributions.exponential;
-import static org.pmcsn.utils.Distributions.logNormal;
 
 public class CheckInDesksTarget {
 
@@ -34,6 +33,7 @@ public class CheckInDesksTarget {
     double firstArrivalTime = Double.NEGATIVE_INFINITY;
     double lastArrivalTime = 0;
     double lastCompletionTime = 0;
+    public int batchIndex = 0;
 
     Rngs rngs;
 
@@ -53,6 +53,23 @@ public class CheckInDesksTarget {
 
         // resetting variables
         this.numberOfJobsInNode =0;
+        this.numberOfJobsServed = 0;
+        this.area   = 0.0;
+        this.service = 0;
+        this.firstArrivalTime = Double.NEGATIVE_INFINITY;
+        this.lastArrivalTime = 0;
+        this.lastCompletionTime = 0;
+
+        for(int i=0; i<SERVERS ; i++){
+            sum[i].served = 0;
+            sum[i].service = 0;
+            servers[i].running = false;
+            servers[i].lastCompletionTime = 0;
+        }
+    }
+
+    public void resetBatch() {
+        // resetting variables
         this.numberOfJobsServed = 0;
         this.area   = 0.0;
         this.service = 0;
@@ -190,7 +207,9 @@ public class CheckInDesksTarget {
         return exponential(10, rngs);
     }
 
+
     public void saveStats() {
+        batchIndex++;
         statistics.saveStats(SERVERS, numberOfJobsServed, area, sum, firstArrivalTime, lastArrivalTime, lastCompletionTime);
     }
     public void writeStats(String simulationType){

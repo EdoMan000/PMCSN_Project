@@ -2,12 +2,11 @@ package org.pmcsn.centers;
 
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.*;
-import org.pmcsn.model.Statistics.*;
+import org.pmcsn.model.Statistics.MeanStatistics;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
+import static org.pmcsn.model.Statistics.computeMean;
 import static org.pmcsn.utils.Distributions.exponential;
 import static org.pmcsn.utils.Probabilities.getEntrance;
 import static org.pmcsn.utils.Probabilities.isTargetFlight;
@@ -16,6 +15,7 @@ public class LuggageChecks {
 
     Rngs rngs;
     LuggageChecksSingleEntrance[] luggageChecksSingleEntrances;
+    public int numberOfCenters;
     double sarrival;
     // all the times are measured in min
     int STOP = 1440;
@@ -27,6 +27,7 @@ public class LuggageChecks {
             luggageChecksSingleEntrances[i] = new LuggageChecksSingleEntrance(i + 1);
             luggageChecksSingleEntrances[i].CENTER_INDEX = 1 + (3 * i);
         }
+        this.numberOfCenters = luggageChecksSingleEntrances.length;
     }
 
     public void reset(Rngs rngs, double sarrival) {
@@ -38,6 +39,10 @@ public class LuggageChecks {
             luggageChecksSingleEntrances[i].reset(rngs);
         }
 
+    }
+
+    public void resetBatch(int center ) {
+        luggageChecksSingleEntrances[center].resetBatch();
     }
 
     public void setSTOP(int STOP) {
@@ -107,12 +112,9 @@ public class LuggageChecks {
         return numberOfJobsInNode;
     }
 
-    public int getJobsServed(){
-        int numberOfJobsServed = 0;
+    public int getJobsServed(int center){
 
-        for(int index=1; index<=luggageChecksSingleEntrances.length; index++){
-            numberOfJobsServed += (int) luggageChecksSingleEntrances[index-1].numberOfJobsServed;
-        }
+        int numberOfJobsServed = (int) luggageChecksSingleEntrances[center].numberOfJobsServed;
 
         return numberOfJobsServed;
     }
@@ -124,11 +126,34 @@ public class LuggageChecks {
         }
     }
 
+    public int getBatchIndex(int center){
+        return luggageChecksSingleEntrances[center].batchIndex;
+    }
+
+    public int getMinBatchIndex() {
+        // Assume there's at least one center in the array
+        if (luggageChecksSingleEntrances.length == 0) {
+            throw new IllegalStateException("No centers available");
+        }
+
+        int minBatchIndex = luggageChecksSingleEntrances[0].batchIndex;
+        for (int i = 1; i < luggageChecksSingleEntrances.length; i++) {
+            if (luggageChecksSingleEntrances[i].batchIndex < minBatchIndex) {
+                minBatchIndex = luggageChecksSingleEntrances[i].batchIndex;
+            }
+        }
+        return minBatchIndex;
+    }
+
 
     public void saveStats() {
         for(int index=1; index<=luggageChecksSingleEntrances.length; index++){
             luggageChecksSingleEntrances[index-1].saveStats();
         }
+    }
+
+    public void saveStats(int center) {
+            luggageChecksSingleEntrances[center].saveStats();
     }
 
     public void writeStats(String simulationType){
@@ -159,13 +184,13 @@ public class LuggageChecks {
             meanQueuePopulationList.add(ms.meanQueuePopulation);
         }
 
-        double meanResponseTime = MeanStatistics.computeMean(meanResponseTimeList);
-        double meanServiceTime = MeanStatistics.computeMean(meanServiceTimeList);
-        double meanQueueTime = MeanStatistics.computeMean(meanQueueTimeList);
-        double lambda = MeanStatistics.computeMean(lambdaList);
-        double meanSystemPopulation = MeanStatistics.computeMean(meanSystemPopulationList);
-        double meanUtilization = MeanStatistics.computeMean(meanUtilizationList);
-        double meanQueuePopulation = MeanStatistics.computeMean(meanQueuePopulationList);
+        double meanResponseTime = computeMean(meanResponseTimeList);
+        double meanServiceTime = computeMean(meanServiceTimeList);
+        double meanQueueTime = computeMean(meanQueueTimeList);
+        double lambda = computeMean(lambdaList);
+        double meanSystemPopulation = computeMean(meanSystemPopulationList);
+        double meanUtilization = computeMean(meanUtilizationList);
+        double meanQueuePopulation = computeMean(meanQueuePopulationList);
 
         return new MeanStatistics("LUGGAGE CHECK", meanResponseTime, meanServiceTime, meanQueueTime, lambda, meanSystemPopulation, meanUtilization, meanQueuePopulation);
 
@@ -196,6 +221,7 @@ public class LuggageChecks {
         double firstArrivalTime = Double.NEGATIVE_INFINITY;
         double lastArrivalTime = 0;
         double lastCompletionTime = 0;
+        public int batchIndex = 0;
 
         Rngs rngs;
 
@@ -211,6 +237,19 @@ public class LuggageChecks {
 
             // resetting variables
             this.numberOfJobsInNode =0;
+            this.numberOfJobsServed = 0;
+            this.area   = 0.0;
+            this.service = 0;
+            this.firstArrivalTime = Double.NEGATIVE_INFINITY;
+            this.lastArrivalTime = 0;
+            this.lastCompletionTime = 0;
+
+            sum.served = 0;
+            sum.service = 0;
+        }
+
+        public void resetBatch() {
+            // resetting variables
             this.numberOfJobsServed = 0;
             this.area   = 0.0;
             this.service = 0;
@@ -295,6 +334,7 @@ public class LuggageChecks {
         }
 
         public void saveStats() {
+            batchIndex++;
             MsqSum[] sums = new MsqSum[1];
             sums[0] = this.sum;
             statistics.saveStats(1, numberOfJobsServed, area, sums, firstArrivalTime, lastArrivalTime, lastCompletionTime);

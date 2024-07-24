@@ -1,6 +1,7 @@
 package org.pmcsn.model;
 
 public class MsqEvent {
+
     public double time;   //time
     public boolean active;  //status
     public final EventType type; //type

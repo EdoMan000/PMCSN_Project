@@ -34,6 +34,7 @@ public class StampsCheck {
     double firstArrivalTime = Double.NEGATIVE_INFINITY;
     double lastArrivalTime = 0;
     double lastCompletionTime = 0;
+    public int batchIndex = 0;
 
     Rngs rngs;
 
@@ -54,6 +55,21 @@ public class StampsCheck {
         sum.served = 0;
         sum.service = 0;
     }
+
+    public void resetBatch() {
+        // resetting variables
+        this.numberOfJobsServed = 0;
+        this.area   = 0.0;
+        this.service = 0;
+        this.firstArrivalTime = Double.NEGATIVE_INFINITY;
+        this.lastArrivalTime = 0;
+        this.lastCompletionTime = 0;
+
+        sum.served = 0;
+        sum.service = 0;
+    }
+
+
 
     public long getJobsServed(){
         return numberOfJobsServed;
@@ -143,6 +159,7 @@ public class StampsCheck {
     }
 
     public void saveStats() {
+        batchIndex++;
         MsqSum[] sums = new MsqSum[1];
         sums[0] = this.sum;
         statistics.saveStats(1, numberOfJobsServed, area, sums, firstArrivalTime, lastArrivalTime, lastCompletionTime);

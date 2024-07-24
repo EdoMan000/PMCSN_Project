@@ -142,7 +142,7 @@ public class Verification {
 
         results.add(singleServer("STAMP_CHECK", lambda * (1 - pCitizen), 0.10));
 
-        results.add(multiServer("BOARDING", (lambda * (1 - pCitizen) * pTarget) + (lambda * pCitizen * pTarget), 2, 2));
+        results.add(multiServer("BOARDING", lambda * pTarget, 2, 2));
 
         writeResultsVerification(simulationType, results);
 
