@@ -32,7 +32,6 @@ public class BatchSimulationRunner {
     private static final int BATCH_SIZE = 24765; // Number of jobs in single batch (B)
     private static final int NUM_BATCHES = 1024; // Number of batches (K)
 
-
     public void runBatchSimulation() {
         System.out.println("\nRunning Batch Simulation...");
 

@@ -221,5 +221,4 @@ public class BasicSimulationRunner {
         System.out.println("Boarding: Jobs Served = " + boardingJobsServed);
 
     }
-
 }
