@@ -199,6 +199,28 @@ public class BasicSimulationRunner {
 
         compareResults(SIMULATION_TYPE, verificationResults, meanStatisticsList);
 
+        // controllo di consistenza sul numero di jobs processati
+        for (int i = 0; i < luggageChecks.numberOfCenters; i++) {
+            long jobsServed = luggageChecks.getJobsServed(i);
+            System.out.println("Luggage Checks Center " + i + ": Jobs Served = " + jobsServed);
+        }
+        long checkInDesksTargetJobsServed = checkInDesksTarget.getJobsServed();
+        System.out.println("Check-In Desks Target: Jobs Served = " + checkInDesksTargetJobsServed);
+        for (int i = 0; i < checkInDesksOthers.numberOfCenters; i++) {
+            long jobsServed = checkInDesksOthers.getJobsServed(i);
+            System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + jobsServed);
+        }
+        long boardingPassScannersJobsServed = boardingPassScanners.getJobsServed();
+        System.out.println("Boarding Pass Scanners: Jobs Served = " + boardingPassScannersJobsServed);
+        long securityChecksJobsServed = securityChecks.getJobsServed();
+        System.out.println("Security Checks: Jobs Served = " + securityChecksJobsServed);
+        long passportChecksJobsServed = passportChecks.getJobsServed();
+        System.out.println("Passport Checks: Jobs Served = " + passportChecksJobsServed);
+        long stampsCheckJobsServed = stampsCheck.getJobsServed();
+        System.out.println("Stamps Check: Jobs Served = " + stampsCheckJobsServed);
+        long boardingJobsServed = boarding.getJobsServed();
+        System.out.println("Boarding: Jobs Served = " + boardingJobsServed);
+
     }
 
 }
