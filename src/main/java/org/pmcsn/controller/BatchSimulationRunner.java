@@ -75,7 +75,6 @@ public class BatchSimulationRunner {
         long number = 1;
         MsqEvent event;
 
-
         while (!luggageChecks.isEndOfArrivals()) {
 
             event = getNextEvent(events);

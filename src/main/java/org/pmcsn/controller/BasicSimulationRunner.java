@@ -172,7 +172,6 @@ public class BasicSimulationRunner {
             rngs.selectStream(255);
             seeds[i + 1] = rngs.getSeed();
         }
-
         // Writing statistics csv with data from all runs
         luggageChecks.writeStats(SIMULATION_TYPE);
         checkInDesksTarget.writeStats(SIMULATION_TYPE);
