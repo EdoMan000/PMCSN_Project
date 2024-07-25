@@ -1,6 +1,6 @@
 package org.pmcsn.utils;
 
-import org.pmcsn.controller.Verification.Result;
+import org.pmcsn.utils.Verification.Result;
 import org.pmcsn.model.Statistics.MeanStatistics;
 
 import java.io.File;

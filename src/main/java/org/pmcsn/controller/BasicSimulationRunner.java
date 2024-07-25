@@ -2,7 +2,7 @@ package org.pmcsn.controller;
 
 
 import org.pmcsn.centers.*;
-import org.pmcsn.controller.Verification.Result;
+import org.pmcsn.utils.Verification.Result;
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.EventType;
 import org.pmcsn.model.MsqEvent;
@@ -12,7 +12,7 @@ import org.pmcsn.model.Statistics.MeanStatistics;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.pmcsn.controller.Verification.modelVerification;
+import static org.pmcsn.utils.Verification.modelVerification;
 import static org.pmcsn.utils.Comparison.compareResults;
 import static org.pmcsn.utils.EventUtils.getNextEvent;
 
@@ -199,24 +199,37 @@ public class BasicSimulationRunner {
         compareResults(SIMULATION_TYPE, verificationResults, meanStatisticsList);
 
         // controllo di consistenza sul numero di jobs processati
+        long jobServedEntrances = 0;
         for (int i = 0; i < luggageChecks.numberOfCenters; i++) {
             long jobsServed = luggageChecks.getJobsServed(i);
-            System.out.println("Luggage Checks Center " + i + ": Jobs Served = " + jobsServed);
+            jobServedEntrances += jobsServed;
+            //System.out.println("Luggage Checks Center " + i + ": Jobs Served = " + jobsServed);
         }
+        System.out.println("TOT Luggage Checks Jobs Served = " + jobServedEntrances);
+
         long checkInDesksTargetJobsServed = checkInDesksTarget.getJobsServed();
-        System.out.println("Check-In Desks Target: Jobs Served = " + checkInDesksTargetJobsServed);
+        //System.out.println("Check-In Desks Target: Jobs Served = " + checkInDesksTargetJobsServed);
+
+        long jobServedCheckIns = checkInDesksTargetJobsServed;
         for (int i = 0; i < checkInDesksOthers.numberOfCenters; i++) {
             long jobsServed = checkInDesksOthers.getJobsServed(i);
-            System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + jobsServed);
+            jobServedCheckIns += jobsServed;
+            //System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + jobsServed);
         }
+        System.out.println("TOT Check-In Desks Jobs Served = " + jobServedCheckIns);
+
         long boardingPassScannersJobsServed = boardingPassScanners.getJobsServed();
         System.out.println("Boarding Pass Scanners: Jobs Served = " + boardingPassScannersJobsServed);
+
         long securityChecksJobsServed = securityChecks.getJobsServed();
         System.out.println("Security Checks: Jobs Served = " + securityChecksJobsServed);
+
         long passportChecksJobsServed = passportChecks.getJobsServed();
         System.out.println("Passport Checks: Jobs Served = " + passportChecksJobsServed);
+
         long stampsCheckJobsServed = stampsCheck.getJobsServed();
         System.out.println("Stamps Check: Jobs Served = " + stampsCheckJobsServed);
+
         long boardingJobsServed = boarding.getJobsServed();
         System.out.println("Boarding: Jobs Served = " + boardingJobsServed);
 

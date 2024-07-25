@@ -112,6 +112,17 @@ public class LuggageChecks {
         return numberOfJobsInNode;
     }
 
+    public long getTotalNumberOfJobsServed() {
+
+        int totalNumberOfJobsServed = 0;
+
+        for(int index=1; index<=luggageChecksSingleEntrances.length; index++){
+            totalNumberOfJobsServed += (int) luggageChecksSingleEntrances[index-1].numberOfJobsServed;
+        }
+
+        return totalNumberOfJobsServed;
+    }
+
     public int getJobsServed(int center){
 
         int numberOfJobsServed = (int) luggageChecksSingleEntrances[center].numberOfJobsServed;

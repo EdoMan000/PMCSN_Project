@@ -2,7 +2,7 @@ package org.pmcsn.controller;
 
 
 import org.pmcsn.centers.*;
-import org.pmcsn.controller.Verification.Result;
+import org.pmcsn.utils.Verification.Result;
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.EventType;
 import org.pmcsn.model.MsqEvent;
@@ -12,7 +12,7 @@ import org.pmcsn.model.Statistics.MeanStatistics;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.pmcsn.controller.Verification.modelVerification;
+import static org.pmcsn.utils.Verification.modelVerification;
 import static org.pmcsn.utils.Comparison.compareResults;
 import static org.pmcsn.utils.EventUtils.getNextEvent;
 
@@ -28,9 +28,13 @@ public class BatchSimulationRunner {
     private static final String SIMULATION_TYPE = "BATCH_SIMULATION";
     private static int STOP = 1440;
 
-    // total jobs processed are 24M so the following k and b works
-    private static final int BATCH_SIZE = 24765; // Number of jobs in single batch (B)
-    private static final int NUM_BATCHES = 1024; // Number of batches (K)
+    // total jobs processed are 24M so the following k and b work
+//    private static final int BATCH_SIZE = 24765; // Number of jobs in single batch (B)
+//    private static final int NUM_BATCHES = 1024; // Number of batches (K)
+
+
+    private static final int BATCH_SIZE = 10000; // Number of jobs in single batch (B)
+    private static final int NUM_BATCHES = 100; // Number of batches (K)
 
     public void runBatchSimulation() {
         System.out.println("\nRunning Batch Simulation...");
@@ -56,7 +60,7 @@ public class BatchSimulationRunner {
 
         // Initialize LuggageChecks
         luggageChecks.reset(rngs, START);
-        luggageChecks.setSTOP(STOP * 365);
+        luggageChecks.setSTOP(Integer.MAX_VALUE);
 
         // Generate the first arrival
         double time = luggageChecks.getArrival();
@@ -73,8 +77,9 @@ public class BatchSimulationRunner {
 
         long number = 1;
         MsqEvent event;
-
-        while (!luggageChecks.isEndOfArrivals()) {
+        long alreadySaved = 0;
+        //while (!luggageChecks.isEndOfArrivals()) {
+        while (!(luggageChecks.getTotalNumberOfJobsServed() > BATCH_SIZE*NUM_BATCHES)) {
 
             event = getNextEvent(events);
             msqTime.next = event.time;
@@ -148,66 +153,88 @@ public class BatchSimulationRunner {
                     + boardingPassScanners.getNumberOfJobsInNode() + securityChecks.getNumberOfJobsInNode() + passportChecks.getNumberOfJobsInNode() + stampsCheck.getNumberOfJobsInNode() + boarding.getNumberOfJobsInNode();
 
             // Saving statistics for current batch
-            for (int i = 0; i < luggageChecks.numberOfCenters; i++) {
-                long jobsServed = luggageChecks.getJobsServed(i);
-                //System.out.println("Luggage Checks Center " + i + ": Jobs Served = " + jobsServed);
-                if (jobsServed == BATCH_SIZE && luggageChecks.getBatchIndex(i) <= NUM_BATCHES) {
-                    luggageChecks.saveStats(i);
-                    luggageChecks.resetBatch(i);
-                }
-            }
-
-            long checkInDesksTargetJobsServed = checkInDesksTarget.getJobsServed();
-            //System.out.println("Check-In Desks Target: Jobs Served = " + checkInDesksTargetJobsServed);
-            if (checkInDesksTargetJobsServed == BATCH_SIZE && checkInDesksTarget.batchIndex <= NUM_BATCHES) {
+            //TODO condizione di scarto (forse?) (es: non contare primi 20/30 batch)
+            long totJobs = luggageChecks.getTotalNumberOfJobsServed();
+            if((totJobs - alreadySaved) == BATCH_SIZE) {
+                alreadySaved += totJobs;
+                luggageChecks.saveStats();
                 checkInDesksTarget.saveStats();
-                checkInDesksTarget.resetBatch();
-            }
-
-            for (int i = 0; i < checkInDesksOthers.numberOfCenters; i++) {
-                long jobsServed = checkInDesksOthers.getJobsServed(i);
-                //System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + jobsServed);
-                if (jobsServed == BATCH_SIZE && checkInDesksOthers.getBatchIndex(i) <= NUM_BATCHES) {
-                    checkInDesksOthers.saveStats(i);
-                    checkInDesksOthers.resetBatch(i);
-                }
-            }
-
-            long boardingPassScannersJobsServed = boardingPassScanners.getJobsServed();
-            //System.out.println("Boarding Pass Scanners: Jobs Served = " + boardingPassScannersJobsServed);
-            if (boardingPassScannersJobsServed == BATCH_SIZE && boardingPassScanners.batchIndex <= NUM_BATCHES){
+                checkInDesksOthers.saveStats();
                 boardingPassScanners.saveStats();
-                boardingPassScanners.resetBatch();
-            }
-
-            long securityChecksJobsServed = securityChecks.getJobsServed();
-            //System.out.println("Security Checks: Jobs Served = " + securityChecksJobsServed);
-            if (securityChecksJobsServed == BATCH_SIZE && securityChecks.batchIndex <= NUM_BATCHES) {
                 securityChecks.saveStats();
-                securityChecks.resetBatch();
-            }
-
-            long passportChecksJobsServed = passportChecks.getJobsServed();
-            //System.out.println("Passport Checks: Jobs Served = " + passportChecksJobsServed);
-            if (passportChecksJobsServed == BATCH_SIZE && passportChecks.batchIndex <= NUM_BATCHES) {
                 passportChecks.saveStats();
-                passportChecks.resetBatch();
-            }
-
-            long stampsCheckJobsServed = stampsCheck.getJobsServed();
-            //System.out.println("Stamps Check: Jobs Served = " + stampsCheckJobsServed);
-            if (stampsCheckJobsServed == BATCH_SIZE && stampsCheck.batchIndex <= NUM_BATCHES) {
                 stampsCheck.saveStats();
-                stampsCheck.resetBatch();
-            }
-
-            long boardingJobsServed = boarding.getJobsServed();
-            //System.out.println("Boarding: Jobs Served = " + boardingJobsServed);
-            if (boardingJobsServed == BATCH_SIZE && boarding.batchIndex <= NUM_BATCHES) {
                 boarding.saveStats();
-                boarding.resetBatch();
             }
 
+
+//            for (int i = 0; i < luggageChecks.numberOfCenters; i++) {
+//                long jobsServed = luggageChecks.getJobsServed(i);
+//                //System.out.println("Luggage Checks Center " + i + ": Jobs Served = " + jobsServed);
+//                if (jobsServed == BATCH_SIZE && luggageChecks.getBatchIndex(i) <= NUM_BATCHES) {
+//                    luggageChecks.saveStats(i);
+//                    luggageChecks.resetBatch(i);
+//                    System.out.println("Luggage Checks Center " + i + ": Jobs Served = " + jobsServed + ": BATCH:INDEX = " + luggageChecks.getBatchIndex(i));
+//                }
+//            }
+//
+//            long checkInDesksTargetJobsServed = checkInDesksTarget.getJobsServed();
+//            //System.out.println("Check-In Desks Target: Jobs Served = " + checkInDesksTargetJobsServed);
+//            if (checkInDesksTargetJobsServed == BATCH_SIZE && checkInDesksTarget.batchIndex <= NUM_BATCHES) {
+//                checkInDesksTarget.saveStats();
+//                checkInDesksTarget.resetBatch();
+//                System.out.println("Check-In Desks Target: Jobs Served = " + checkInDesksTargetJobsServed + ": BATCH:INDEX = " + checkInDesksTarget.batchIndex);
+//            }
+//
+//            for (int i = 0; i < checkInDesksOthers.numberOfCenters; i++) {
+//                long jobsServed = checkInDesksOthers.getJobsServed(i);
+//                //System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + jobsServed);
+//                if (jobsServed == BATCH_SIZE && checkInDesksOthers.getBatchIndex(i) <= NUM_BATCHES) {
+//                    checkInDesksOthers.saveStats(i);
+//                    checkInDesksOthers.resetBatch(i);
+//                    System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + jobsServed + ": BATCH:INDEX = " + checkInDesksOthers.getBatchIndex(i));
+//                }
+//            }
+//
+//            long boardingPassScannersJobsServed = boardingPassScanners.getJobsServed();
+//            //System.out.println("Boarding Pass Scanners: Jobs Served = " + boardingPassScannersJobsServed);
+//            if (boardingPassScannersJobsServed == BATCH_SIZE && boardingPassScanners.batchIndex <= NUM_BATCHES){
+//                boardingPassScanners.saveStats();
+//                boardingPassScanners.resetBatch();
+//                System.out.println("Boarding Pass Scanners: Jobs Served = " + checkInDesksTargetJobsServed + ": BATCH:INDEX = " + boardingPassScanners.batchIndex);
+//            }
+//
+//            long securityChecksJobsServed = securityChecks.getJobsServed();
+//            //System.out.println("Security Checks: Jobs Served = " + securityChecksJobsServed);
+//            if (securityChecksJobsServed == BATCH_SIZE && securityChecks.batchIndex <= NUM_BATCHES) {
+//                securityChecks.saveStats();
+//                securityChecks.resetBatch();
+//                System.out.println("Security Checks: Jobs Served = " + checkInDesksTargetJobsServed + ": BATCH:INDEX = " + securityChecks.batchIndex);
+//            }
+//
+//            long passportChecksJobsServed = passportChecks.getJobsServed();
+//            //System.out.println("Passport Checks: Jobs Served = " + passportChecksJobsServed);
+//            if (passportChecksJobsServed == BATCH_SIZE && passportChecks.batchIndex <= NUM_BATCHES) {
+//                passportChecks.saveStats();
+//                passportChecks.resetBatch();
+//                System.out.println("Passport Checks: Jobs Served = " + checkInDesksTargetJobsServed + ": BATCH:INDEX = " + passportChecks.batchIndex);
+//            }
+//
+//            long stampsCheckJobsServed = stampsCheck.getJobsServed();
+//            //System.out.println("Stamps Check: Jobs Served = " + stampsCheckJobsServed);
+//            if (stampsCheckJobsServed == BATCH_SIZE && stampsCheck.batchIndex <= NUM_BATCHES) {
+//                stampsCheck.saveStats();
+//                stampsCheck.resetBatch();
+//                System.out.println("Stamps Check: Jobs Served = " + checkInDesksTargetJobsServed + ": BATCH:INDEX = " + stampsCheck.batchIndex);
+//            }
+//
+//            long boardingJobsServed = boarding.getJobsServed();
+//            //System.out.println("Boarding: Jobs Served = " + boardingJobsServed);
+//            if (boardingJobsServed == BATCH_SIZE && boarding.batchIndex <= NUM_BATCHES) {
+//                boarding.saveStats();
+//                boarding.resetBatch();
+//                System.out.println("Boarding: Jobs Served = " + checkInDesksTargetJobsServed + ": BATCH:INDEX = " + boarding.batchIndex);
+//            }
         }
 
         // Writing statistics csv with data from all batches
@@ -238,24 +265,37 @@ public class BatchSimulationRunner {
         compareResults(SIMULATION_TYPE, verificationResults, meanStatisticsList);
 
         // controllo di consistenza sul numero di jobs processati
+        long jobServedEntrances = 0;
         for (int i = 0; i < luggageChecks.numberOfCenters; i++) {
             long jobsServed = luggageChecks.getJobsServed(i);
-            System.out.println("Luggage Checks Center " + i + ": Jobs Served = " + jobsServed);
+            jobServedEntrances += jobsServed;
+            //System.out.println("Luggage Checks Center " + i + ": Jobs Served = " + jobsServed);
         }
+        System.out.println("TOT Luggage Checks Jobs Served = " + jobServedEntrances);
+
         long checkInDesksTargetJobsServed = checkInDesksTarget.getJobsServed();
-        System.out.println("Check-In Desks Target: Jobs Served = " + checkInDesksTargetJobsServed);
+        //System.out.println("Check-In Desks Target: Jobs Served = " + checkInDesksTargetJobsServed);
+
+        long jobServedCheckIns = checkInDesksTargetJobsServed;
         for (int i = 0; i < checkInDesksOthers.numberOfCenters; i++) {
             long jobsServed = checkInDesksOthers.getJobsServed(i);
-            System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + jobsServed);
+            jobServedCheckIns += jobsServed;
+            //System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + jobsServed);
         }
+        System.out.println("TOT Check-In Desks Jobs Served = " + jobServedCheckIns);
+
         long boardingPassScannersJobsServed = boardingPassScanners.getJobsServed();
         System.out.println("Boarding Pass Scanners: Jobs Served = " + boardingPassScannersJobsServed);
+
         long securityChecksJobsServed = securityChecks.getJobsServed();
         System.out.println("Security Checks: Jobs Served = " + securityChecksJobsServed);
+
         long passportChecksJobsServed = passportChecks.getJobsServed();
         System.out.println("Passport Checks: Jobs Served = " + passportChecksJobsServed);
+
         long stampsCheckJobsServed = stampsCheck.getJobsServed();
         System.out.println("Stamps Check: Jobs Served = " + stampsCheckJobsServed);
+
         long boardingJobsServed = boarding.getJobsServed();
         System.out.println("Boarding: Jobs Served = " + boardingJobsServed);
 

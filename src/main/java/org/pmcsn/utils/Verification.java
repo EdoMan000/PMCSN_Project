@@ -1,4 +1,4 @@
-package org.pmcsn.controller;
+package org.pmcsn.utils;
 
 import org.pmcsn.libraries.Rvms;
 
@@ -129,9 +129,8 @@ public class Verification {
         results.add(singleServer("LUGGAGE CHECK", lambda / 6, 1.4));
 
         double pTarget = 0.0159;
-        double lambda_checkin_others = lambda * (1 - pTarget);
         results.add(multiServer("CHECK_IN_TARGET", lambda * pTarget, 10, 3));
-        results.add(multiServer("CHECK-IN OTHERS", lambda_checkin_others / 19, 10, 3));
+        results.add(multiServer("CHECK-IN OTHERS", (lambda * (1 - pTarget)) / 19, 10, 3));
 
         results.add(multiServer("SCAN_BOARDING_PASS", lambda, 0.30, 3));
 
