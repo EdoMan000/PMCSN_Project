@@ -11,7 +11,6 @@ import static org.pmcsn.utils.Probabilities.isPriority;
 import static org.pmcsn.utils.Probabilities.isTargetFlight;
 
 public class StampsCheck {
-
     /*  STATISTICS OF INTEREST :
      *  * Response times
      *  * Service times
@@ -22,36 +21,38 @@ public class StampsCheck {
      *  * Queue population
      */
 
-    Statistics statistics = new Statistics("STAMP_CHECK");
+    // index of center to select stream
+    private static final int CENTER_INDEX = 59;
 
-    //Constants and Variables
-    public static long  arrivalsCounter = 0;        /* number of arrivals */
-    long numberOfJobsInNode =0;                     /* number in the node */
-    long numberOfJobsServed = 0;                    /* number of processed jobs */
-    static int CENTER_INDEX = 59;                   /* index of center to select stream*/
-    double area   = 0.0;
-    double service;
-    double firstArrivalTime = Double.NEGATIVE_INFINITY;
-    double lastArrivalTime = 0;
-    double lastCompletionTime = 0;
+    private final Statistics statistics = new Statistics("STAMP_CHECK");
+    private Area area;
+    private final double meanServiceTime;
+    // node population
+    private long numberOfJobsInNode = 0;
+    // number of completions
+    private long numberOfJobsServed = 0;
+    private double firstArrivalTime = Double.NEGATIVE_INFINITY;
+    private double lastArrivalTime = 0;
+    private double lastCompletionTime = 0;
     public int batchIndex = 0;
 
-    Rngs rngs;
+    private Rngs rngs;
 
-    MsqSum sum = new MsqSum();
+    private final MsqSum sum = new MsqSum();
+
+    public StampsCheck(double meanServiceTime) {
+        this.meanServiceTime = meanServiceTime;
+    }
 
     public void reset(Rngs rngs) {
         this.rngs = rngs;
-
+        this.area = new Area();
         // resetting variables
-        this.numberOfJobsInNode =0;
+        this.numberOfJobsInNode = 0;
         this.numberOfJobsServed = 0;
-        this.area   = 0.0;
-        this.service = 0;
         this.firstArrivalTime = Double.NEGATIVE_INFINITY;
         this.lastArrivalTime = 0;
         this.lastCompletionTime = 0;
-
         sum.served = 0;
         sum.service = 0;
     }
@@ -59,33 +60,36 @@ public class StampsCheck {
     public void resetBatch() {
         // resetting variables
         this.numberOfJobsServed = 0;
-        this.area   = 0.0;
-        this.service = 0;
         this.firstArrivalTime = Double.NEGATIVE_INFINITY;
         this.lastArrivalTime = 0;
         this.lastCompletionTime = 0;
-
-        sum.served = 0;
-        sum.service = 0;
+        sum.reset();
+        area.reset();
     }
 
-
-
-    public long getJobsServed(){
-        return numberOfJobsServed;
+    public double getBusyTime() {
+        return sum.service;
     }
 
+    public long getCompletions(){
+        return sum.served;
+    }
 
     public long getNumberOfJobsInNode() {
         return numberOfJobsInNode;
     }
 
-    public void setArea(MsqTime time){
-        area += (time.next - time.current) * numberOfJobsInNode;
+    public void setArea(MsqTime time) {
+        // TODO: il controllo per l'aggiornamento di area dovrebbe avvenire nel loop principale
+        if (numberOfJobsInNode > 0) {
+            double width = time.next - time.current;
+            area.incNodeArea(width * numberOfJobsInNode);
+            area.incQueueArea(width * (numberOfJobsInNode - 1));
+            area.incServiceArea(width);
+        }
     }
 
     public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events){
-
         // increment the number of jobs in the node
         numberOfJobsInNode++;
 
@@ -99,71 +103,47 @@ public class StampsCheck {
         events.remove(arrival);
 
         if (numberOfJobsInNode == 1) {
-            //generating service time
-            service         = getService(CENTER_INDEX);
-
-            //update statistics
-            sum.service += service;
-            sum.served++;
-            //generate a new completion event
-            MsqEvent event = new MsqEvent(time.current + service, true, EventType.STAMP_CHECK_DONE, 0);
-            events.add(event);
-            events.sort(Comparator.comparing(MsqEvent::getTime));
+            spawnCompletionEvent(time, events);
         }
     }
 
     public void processCompletion(MsqEvent completion, MsqTime time, List<MsqEvent> events) {
-        //updating counters
-        numberOfJobsServed++;
         numberOfJobsInNode--;
-
+        sum.served++;
+        sum.service += completion.service;
         lastCompletionTime = completion.time;
-
-        //remove the event since I'm processing it
         events.remove(completion);
-
-        // generating arrival for the next center
-        if(isTargetFlight(rngs, CENTER_INDEX+2)){
-            if(isPriority(rngs, CENTER_INDEX+3)){
-                /* generate an arrival at boarding with priority*/
-                MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_BOARDING, 0, true);
-                events.add(event);
-                events.sort(Comparator.comparing(MsqEvent::getTime));
-            } else {
-                /* generate an arrival at boarding without priority*/
-                MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_BOARDING, 0);
-                events.add(event);
-                events.sort(Comparator.comparing(MsqEvent::getTime));
-            }
-        }
-
-        //checking if there are jobs in queue, if so the server starts processing one
-        if (numberOfJobsInNode > 0) {
-            service = getService(CENTER_INDEX+1);
-            sum.service += service;
-            sum.served++;
-
-            //generate a new completion event
-            MsqEvent event = new MsqEvent(time.current + service, true, EventType.STAMP_CHECK_DONE, 0);
+        if(isTargetFlight(rngs, CENTER_INDEX+2)) {
+            MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_BOARDING, 0, isPriority(rngs, CENTER_INDEX + 3));
             events.add(event);
             events.sort(Comparator.comparing(MsqEvent::getTime));
         }
+        //checking if there are jobs in queue, if so the server starts processing one
+        if (numberOfJobsInNode > 0) {
+            spawnCompletionEvent(time, events);
+        }
+    }
+
+    private void spawnCompletionEvent(MsqTime time, List<MsqEvent> events) {
+        double service = getService(CENTER_INDEX);
+        MsqEvent event = new MsqEvent(time.current + service, true, EventType.STAMP_CHECK_DONE);
+        // TODO: inizializzare in costruttore
+        event.service = service;
+        events.add(event);
+        events.sort(Comparator.comparing(MsqEvent::getTime));
     }
 
     public double getService(int streamIndex)
     {
         rngs.selectStream(streamIndex);
-        // between 1 and 2 minutes
-        //return (uniform(1 , 2, rngs));
-        return (exponential(0.1, rngs));
+        return exponential(meanServiceTime, rngs);
     }
 
     public void saveStats() {
         batchIndex++;
-        MsqSum[] sums = new MsqSum[1];
-        sums[0] = this.sum;
-        statistics.saveStats(1, numberOfJobsServed, area, sums, firstArrivalTime, lastArrivalTime, lastCompletionTime);
+        statistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime);
     }
+
     public void writeStats(String simulationType){
         statistics.writeStats(simulationType);
     }
@@ -171,5 +151,4 @@ public class StampsCheck {
     public Statistics.MeanStatistics getMeanStatistics() {
         return statistics.getMeanStatistics();
     }
-
 }

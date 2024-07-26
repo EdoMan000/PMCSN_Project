@@ -1,7 +1,7 @@
 package org.pmcsn.model;
 
 public class MsqEvent {
-
+    public double service;
     public double time;   //time
     public boolean active;  //status
     public final EventType type; //type
@@ -9,6 +9,15 @@ public class MsqEvent {
     public boolean hasPriority = false;     //if the event has priority
     public int centerID;
 
+    public MsqEvent(EventType type, double service, double time, boolean active, int server, boolean hasPriority, int centerID) {
+        this.type = type;
+        this.service = service;
+        this.time = time;
+        this.active = active;
+        this.server = server;
+        this.hasPriority = hasPriority;
+        this.centerID = centerID;
+    }
 
     public MsqEvent(double time, boolean active, EventType type, int server) {
         this.time = time;

@@ -16,6 +16,7 @@ public class Probabilities {
         return generateProbability(0.4, rngs, streamIndex);
     }
 
+    // TODO: perché non ritornare direttamente un numero casuale intero in [0,5]??
     public static int getEntrance(Rngs rngs, int streamIndex) {
         double prob = 1.0 / 6.0;
         rngs.selectStream(streamIndex);

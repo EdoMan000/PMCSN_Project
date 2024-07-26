@@ -37,13 +37,13 @@ public class BasicSimulationRunner {
         Rngs rngs = new Rngs();
 
         // Declare variables for centers
-        LuggageChecks luggageChecks = new LuggageChecks();
+        LuggageChecks luggageChecks = new LuggageChecks(6, (24 * 60) / 6300.0, 0.5);
         CheckInDesksTarget checkInDesksTarget = new CheckInDesksTarget();
         CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers();
         BoardingPassScanners boardingPassScanners = new BoardingPassScanners();
         SecurityChecks securityChecks = new SecurityChecks();
         PassportChecks passportChecks = new PassportChecks();
-        StampsCheck stampsCheck = new StampsCheck();
+        StampsCheck stampsCheck = new StampsCheck(0.1);
         Boarding boarding = new Boarding();
 
         for (int i = 0; i < 150; i++) {
@@ -80,7 +80,7 @@ public class BasicSimulationRunner {
 
             // need to use OR because both the conditions should be false
             while (!luggageChecks.isEndOfArrivals() || number != 0) {
-
+                // TODO: getNextEvent dovrebbe rimuovere l'evento dalla lista
                 event = getNextEvent(events);
                 msqTime.next = event.time;
 
@@ -199,12 +199,7 @@ public class BasicSimulationRunner {
         compareResults(SIMULATION_TYPE, verificationResults, meanStatisticsList);
 
         // controllo di consistenza sul numero di jobs processati
-        long jobServedEntrances = 0;
-        for (int i = 0; i < luggageChecks.numberOfCenters; i++) {
-            long jobsServed = luggageChecks.getJobsServed(i);
-            jobServedEntrances += jobsServed;
-            //System.out.println("Luggage Checks Center " + i + ": Jobs Served = " + jobsServed);
-        }
+        long jobServedEntrances = luggageChecks.getTotalNumberOfJobsServed();
         System.out.println("TOT Luggage Checks Jobs Served = " + jobServedEntrances);
 
         long checkInDesksTargetJobsServed = checkInDesksTarget.getJobsServed();
@@ -227,7 +222,7 @@ public class BasicSimulationRunner {
         long passportChecksJobsServed = passportChecks.getJobsServed();
         System.out.println("Passport Checks: Jobs Served = " + passportChecksJobsServed);
 
-        long stampsCheckJobsServed = stampsCheck.getJobsServed();
+        long stampsCheckJobsServed = stampsCheck.getCompletions();
         System.out.println("Stamps Check: Jobs Served = " + stampsCheckJobsServed);
 
         long boardingJobsServed = boarding.getJobsServed();

@@ -44,13 +44,13 @@ public class BatchSimulationRunner {
         rngs.plantSeeds(SEED);
 
         // Declare variables for centers
-        LuggageChecks luggageChecks = new LuggageChecks();
+        LuggageChecks luggageChecks = new LuggageChecks(6, (24 * 60) / 3600.0, 1.4);
         CheckInDesksTarget checkInDesksTarget = new CheckInDesksTarget();
         CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers();
         BoardingPassScanners boardingPassScanners = new BoardingPassScanners();
         SecurityChecks securityChecks = new SecurityChecks();
         PassportChecks passportChecks = new PassportChecks();
-        StampsCheck stampsCheck = new StampsCheck();
+        StampsCheck stampsCheck = new StampsCheck(0.1);
         Boarding boarding = new Boarding();
 
         // Initialize MsqTime
@@ -265,12 +265,7 @@ public class BatchSimulationRunner {
         compareResults(SIMULATION_TYPE, verificationResults, meanStatisticsList);
 
         // controllo di consistenza sul numero di jobs processati
-        long jobServedEntrances = 0;
-        for (int i = 0; i < luggageChecks.numberOfCenters; i++) {
-            long jobsServed = luggageChecks.getJobsServed(i);
-            jobServedEntrances += jobsServed;
-            //System.out.println("Luggage Checks Center " + i + ": Jobs Served = " + jobsServed);
-        }
+        long jobServedEntrances = luggageChecks.getTotalNumberOfJobsServed();
         System.out.println("TOT Luggage Checks Jobs Served = " + jobServedEntrances);
 
         long checkInDesksTargetJobsServed = checkInDesksTarget.getJobsServed();
@@ -293,7 +288,7 @@ public class BatchSimulationRunner {
         long passportChecksJobsServed = passportChecks.getJobsServed();
         System.out.println("Passport Checks: Jobs Served = " + passportChecksJobsServed);
 
-        long stampsCheckJobsServed = stampsCheck.getJobsServed();
+        long stampsCheckJobsServed = stampsCheck.getCompletions();
         System.out.println("Stamps Check: Jobs Served = " + stampsCheckJobsServed);
 
         long boardingJobsServed = boarding.getJobsServed();

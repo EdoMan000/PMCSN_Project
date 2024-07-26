@@ -1,10 +1,18 @@
 package org.pmcsn.centers;
 
 import org.pmcsn.libraries.Rngs;
-import org.pmcsn.model.*;
+import org.pmcsn.model.Area;
+import org.pmcsn.model.EventType;
+import org.pmcsn.model.MsqEvent;
+import org.pmcsn.model.MsqSum;
+import org.pmcsn.model.MsqTime;
+import org.pmcsn.model.Statistics;
 import org.pmcsn.model.Statistics.MeanStatistics;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 import static org.pmcsn.model.Statistics.computeMean;
 import static org.pmcsn.utils.Distributions.exponential;
@@ -12,33 +20,29 @@ import static org.pmcsn.utils.Probabilities.getEntrance;
 import static org.pmcsn.utils.Probabilities.isTargetFlight;
 
 public class LuggageChecks {
-
     Rngs rngs;
     LuggageChecksSingleEntrance[] luggageChecksSingleEntrances;
-    public int numberOfCenters;
+    private final double interArrivalTime;
     double sarrival;
     // all the times are measured in min
     int STOP = 1440;
     boolean endOfArrivals = false;
 
-    public LuggageChecks() {
-        this.luggageChecksSingleEntrances = new LuggageChecksSingleEntrance[6]; //TODO risistemare CENTER_INDEX
+    public LuggageChecks(int numberOfCenters, double interArrivalTime, double meanServiceTime) {
+        this.interArrivalTime = interArrivalTime;
+        this.luggageChecksSingleEntrances = new LuggageChecksSingleEntrance[numberOfCenters]; //TODO risistemare CENTER_INDEX
         for (int i = 0; i < luggageChecksSingleEntrances.length; i++) {
-            luggageChecksSingleEntrances[i] = new LuggageChecksSingleEntrance(i + 1);
-            luggageChecksSingleEntrances[i].CENTER_INDEX = 1 + (3 * i);
+            luggageChecksSingleEntrances[i] = new LuggageChecksSingleEntrance(i + 1, 1 + 3 * i, meanServiceTime);
         }
-        this.numberOfCenters = luggageChecksSingleEntrances.length;
     }
 
     public void reset(Rngs rngs, double sarrival) {
         this.rngs = rngs;
         this.sarrival = sarrival;
         this.endOfArrivals = false;
-
-        for (int i = 0; i < luggageChecksSingleEntrances.length; i++) {
-            luggageChecksSingleEntrances[i].reset(rngs);
+        for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
+            center.reset(rngs);
         }
-
     }
 
     public void resetBatch(int center ) {
@@ -49,16 +53,11 @@ public class LuggageChecks {
         this.STOP = STOP;
     }
 
-    public double getSarrival(){
-        return sarrival;
-    }
-
     public boolean isEndOfArrivals(){
         return endOfArrivals;
     }
 
     public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events) {
-
         int index = getEntrance(rngs, 67);
         if (index < 1 || index > luggageChecksSingleEntrances.length) {
             throw new IllegalArgumentException("Invalid centerID: " + index);
@@ -87,53 +86,31 @@ public class LuggageChecks {
         luggageChecksSingleEntrances[index - 1].processCompletion(arrival, time, events);
     }
 
-
     public double getArrival() {
         /* --------------------------------------------------------------
          * generate the next arrival time
          * --------------------------------------------------------------
          */
         rngs.selectStream(68);
-        // 1/2 min inter-arrival time
-        double inter_arrival = (double) (24 * 60) /6300;
-        sarrival += exponential( inter_arrival, rngs);
+        sarrival += exponential(interArrivalTime, rngs);
         return (sarrival);
     }
 
-
     public long getNumberOfJobsInNode() {
-
-        int numberOfJobsInNode = 0;
-
-        for(int index=1; index<=luggageChecksSingleEntrances.length; index++){
-            numberOfJobsInNode += (int) luggageChecksSingleEntrances[index-1].numberOfJobsInNode;
-        }
-
-        return numberOfJobsInNode;
+        return Arrays.stream(luggageChecksSingleEntrances).mapToLong(c -> c.numberOfJobsInNode).sum();
     }
 
     public long getTotalNumberOfJobsServed() {
-
-        int totalNumberOfJobsServed = 0;
-
-        for(int index=1; index<=luggageChecksSingleEntrances.length; index++){
-            totalNumberOfJobsServed += (int) luggageChecksSingleEntrances[index-1].numberOfJobsServed;
-        }
-
-        return totalNumberOfJobsServed;
+        return Arrays.stream(luggageChecksSingleEntrances).mapToLong(LuggageChecksSingleEntrance::getCompletions).sum();
     }
 
     public int getJobsServed(int center){
-
-        int numberOfJobsServed = (int) luggageChecksSingleEntrances[center].numberOfJobsServed;
-
-        return numberOfJobsServed;
+        return (int) luggageChecksSingleEntrances[center].getCompletions();
     }
 
     public void setArea(MsqTime time){
-
-        for(int index=1; index<=luggageChecksSingleEntrances.length; index++){
-            luggageChecksSingleEntrances[index-1].area += (time.next - time.current) * luggageChecksSingleEntrances[index-1].numberOfJobsInNode;
+        for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
+            center.updateArea(time.next - time.current);
         }
     }
 
@@ -158,18 +135,18 @@ public class LuggageChecks {
 
 
     public void saveStats() {
-        for(int index=1; index<=luggageChecksSingleEntrances.length; index++){
-            luggageChecksSingleEntrances[index-1].saveStats();
+        for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
+            center.saveStats();
         }
     }
 
     public void saveStats(int center) {
-            luggageChecksSingleEntrances[center].saveStats();
+        luggageChecksSingleEntrances[center].saveStats();
     }
 
     public void writeStats(String simulationType){
-        for(int index=1; index<=luggageChecksSingleEntrances.length; index++){
-            luggageChecksSingleEntrances[index-1].writeStats(simulationType);
+        for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
+            center.writeStats(simulationType);
         }
     }
 
@@ -221,14 +198,11 @@ public class LuggageChecks {
 
         Statistics statistics;
 
-        //Constants and Variables
-        public static long  arrivalsCounter = 0;        /* number of arrivals */
-        long numberOfJobsInNode =0;                     /* number in the node */
-        long numberOfJobsServed = 0;                    /* number of processed jobs */
-        int CENTER_INDEX;                               /* index of center to select stream*/
+        long numberOfJobsInNode = 0;                     /* number in the node */
+        int centerIndex;                               /* index of center to select stream*/
         int centerID;
-        double area   = 0.0;
-        double service;
+        private final double meanServiceTime;
+        private final Area area;
         double firstArrivalTime = Double.NEGATIVE_INFINITY;
         double lastArrivalTime = 0;
         double lastCompletionTime = 0;
@@ -238,43 +212,53 @@ public class LuggageChecks {
 
         MsqSum sum = new MsqSum();
 
-        public LuggageChecksSingleEntrance(int centerID) {
+        public LuggageChecksSingleEntrance(int centerID, int centerIndex, double meanServiceTime) {
             this.centerID = centerID;
+            this.centerIndex = centerIndex;
             this.statistics = new Statistics("LUGGAGE_CHECK_" + this.centerID);
+            this.meanServiceTime = meanServiceTime;
+            this.area = new Area();
+        }
+
+        public void updateArea(double width) {
+            // TODO: questo controllo dovrebbe avvenire nel loop principale
+            if (numberOfJobsInNode > 0) {
+                area.incNodeArea(width * numberOfJobsInNode);
+                area.incQueueArea(width * (numberOfJobsInNode - 1));
+                area.incServiceArea(width);
+            }
         }
 
         public void reset(Rngs rngs) {
             this.rngs = rngs;
-
             // resetting variables
-            this.numberOfJobsInNode =0;
-            this.numberOfJobsServed = 0;
-            this.area   = 0.0;
-            this.service = 0;
+            this.numberOfJobsInNode = 0;
             this.firstArrivalTime = Double.NEGATIVE_INFINITY;
             this.lastArrivalTime = 0;
             this.lastCompletionTime = 0;
-
-            sum.served = 0;
-            sum.service = 0;
+            area.reset();
+            sum.reset();
         }
 
         public void resetBatch() {
             // resetting variables
-            this.numberOfJobsServed = 0;
-            this.area   = 0.0;
-            this.service = 0;
             this.firstArrivalTime = Double.NEGATIVE_INFINITY;
             this.lastArrivalTime = 0;
             this.lastCompletionTime = 0;
+            area.reset();
+            sum.reset();
+        }
 
-            sum.served = 0;
-            sum.service = 0;
+        public double getBusyTime() {
+            return sum.service;
+        }
+
+        public long getCompletions() {
+            return sum.served;
         }
 
 
         public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events){
-
             // increment the number of jobs in the node
             numberOfJobsInNode++;
 
@@ -289,66 +273,51 @@ public class LuggageChecks {
 
             // Server can process one job at a time
             if (numberOfJobsInNode == 1) {
-                //generating service time
-                service         = getService(CENTER_INDEX);
-
-                //update statistics
-                sum.service += service;
-                sum.served++;
-                //generate a new completion event
-                MsqEvent event = new MsqEvent(time.current + service, true, EventType.LUGGAGE_CHECK_DONE, 0, centerID);
-                events.add(event);
-                events.sort(Comparator.comparing(MsqEvent::getTime));
+                spawnCompletionEvent(time, events);
             }
         }
 
         public void processCompletion(MsqEvent completion, MsqTime time, List<MsqEvent> events) {
-            //updating counters
-            numberOfJobsServed++;
             numberOfJobsInNode--;
-
+            sum.service += completion.service;
+            sum.served++;
             lastCompletionTime = completion.time;
-
-            //remove the event since I'm processing it
             events.remove(completion);
-
-            // generating arrival for the next center
-            if(isTargetFlight(rngs, CENTER_INDEX+2)){
-                MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_CHECK_IN_TARGET);
-                events.add(event);
-                events.sort(Comparator.comparing(MsqEvent::getTime));
-            }else{
-                MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_CHECK_IN_OTHERS);
-                events.add(event);
-                events.sort(Comparator.comparing(MsqEvent::getTime));
-            }
-
-            //checking if there are jobs in queue, if so the server starts processing one
+            spawnCheckInEvent(time, events);
             if (numberOfJobsInNode > 0) {
-                service = getService(CENTER_INDEX+1);
-                sum.service += service;
-                sum.served++;
-
-                //generate a new completion event
-                MsqEvent event = new MsqEvent(time.current + service, true, EventType.LUGGAGE_CHECK_DONE, 0, centerID);
-                events.add(event);
-                events.sort(Comparator.comparing(MsqEvent::getTime));
+                spawnCompletionEvent(time, events);
             }
         }
 
-        public double getService(int streamIndex)
+        private void spawnCheckInEvent(MsqTime time, List<MsqEvent> events) {
+            // generating arrival for the next center
+            EventType type = EventType.ARRIVAL_CHECK_IN_OTHERS;
+            if(isTargetFlight(rngs, centerIndex + 2)){
+                type = EventType.ARRIVAL_CHECK_IN_TARGET;
+            }
+            MsqEvent event = new MsqEvent(time.current, true, type);
+            events.add(event);
+            events.sort(Comparator.comparing(MsqEvent::getTime));
+        }
+
+        private void spawnCompletionEvent(MsqTime time, List<MsqEvent> events) {
+            double service = getService(centerIndex);
+            MsqEvent event = new MsqEvent(time.current + service, true, EventType.LUGGAGE_CHECK_DONE, 0, centerID);
+            // TODO: inizializzare in costruttore
+            event.service = service;
+            events.add(event);
+            events.sort(Comparator.comparing(MsqEvent::getTime));
+        }
+
+        private double getService(int streamIndex)
         {
             rngs.selectStream(streamIndex);
-
-            // 1.4 min as mean service time
-            return (exponential(1.4, rngs));
+            return exponential(meanServiceTime, rngs);
         }
 
         public void saveStats() {
             batchIndex++;
-            MsqSum[] sums = new MsqSum[1];
-            sums[0] = this.sum;
-            statistics.saveStats(1, numberOfJobsServed, area, sums, firstArrivalTime, lastArrivalTime, lastCompletionTime);
+            statistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime);
         }
         public void writeStats(String simulationType){
             statistics.writeStats(simulationType);

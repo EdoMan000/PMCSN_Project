@@ -123,7 +123,7 @@ public class Verification {
 
     public static List<Result> modelVerification(String simulationType) {
         List<Result> results = new ArrayList<>();
-        double lambda = 6300/(24*60); // mean of 63 flights with 100 passengers each during the whole day
+        double lambda = 6300.0/(24*60); // mean of 63 flights with 100 passengers each during the whole day
 
 
         results.add(singleServer("LUGGAGE CHECK", lambda / 6, 1.4));
