@@ -37,7 +37,7 @@ public class BasicSimulationRunner {
         Rngs rngs = new Rngs();
 
         // Declare variables for centers
-        LuggageChecks luggageChecks = new LuggageChecks(6, (24 * 60) / 6300.0, 0.5);
+        LuggageChecks luggageChecks = new LuggageChecks(6, (24 * 60) / 6300.0, 1);
         CheckInDesksTarget checkInDesksTarget = new CheckInDesksTarget();
         CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers();
         BoardingPassScanners boardingPassScanners = new BoardingPassScanners();
@@ -203,13 +203,13 @@ public class BasicSimulationRunner {
         System.out.println("TOT Luggage Checks Jobs Served = " + jobServedEntrances);
 
         long checkInDesksTargetJobsServed = checkInDesksTarget.getJobsServed();
-        //System.out.println("Check-In Desks Target: Jobs Served = " + checkInDesksTargetJobsServed);
+        System.out.println("Check-In Desks Target: Jobs Served = " + checkInDesksTargetJobsServed);
 
         long jobServedCheckIns = checkInDesksTargetJobsServed;
         for (int i = 0; i < checkInDesksOthers.numberOfCenters; i++) {
             long jobsServed = checkInDesksOthers.getJobsServed(i);
             jobServedCheckIns += jobsServed;
-            //System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + jobsServed);
+            System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + jobsServed);
         }
         System.out.println("TOT Check-In Desks Jobs Served = " + jobServedCheckIns);
 

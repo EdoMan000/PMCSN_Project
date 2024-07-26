@@ -126,7 +126,7 @@ public class Verification {
         double lambda = 6300.0/(24*60); // mean of 63 flights with 100 passengers each during the whole day
 
 
-        results.add(singleServer("LUGGAGE CHECK", lambda / 6, 1.4));
+        results.add(singleServer("LUGGAGE CHECK", lambda / 6, 1));
 
         double pTarget = 0.0159;
         results.add(multiServer("CHECK_IN_TARGET", lambda * pTarget, 10, 3));

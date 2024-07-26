@@ -141,7 +141,9 @@ public class StampsCheck {
 
     public void saveStats() {
         batchIndex++;
-        statistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime);
+        MsqSum[] sums = new MsqSum[1];
+        sums[0] = this.sum;
+        statistics.saveStats(area, sums, lastArrivalTime, lastCompletionTime);
     }
 
     public void writeStats(String simulationType){

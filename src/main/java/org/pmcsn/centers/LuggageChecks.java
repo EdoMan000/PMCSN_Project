@@ -109,8 +109,8 @@ public class LuggageChecks {
     }
 
     public void setArea(MsqTime time){
-        for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
-            center.updateArea(time.next - time.current);
+        for (LuggageChecksSingleEntrance singleEntrance : luggageChecksSingleEntrances) {
+            singleEntrance.updateArea(time.next - time.current);
         }
     }
 
@@ -220,14 +220,6 @@ public class LuggageChecks {
             this.area = new Area();
         }
 
-        public void updateArea(double width) {
-            // TODO: questo controllo dovrebbe avvenire nel loop principale
-            if (numberOfJobsInNode > 0) {
-                area.incNodeArea(width * numberOfJobsInNode);
-                area.incQueueArea(width * (numberOfJobsInNode - 1));
-                area.incServiceArea(width);
-            }
-        }
 
         public void reset(Rngs rngs) {
             this.rngs = rngs;
@@ -249,8 +241,13 @@ public class LuggageChecks {
             sum.reset();
         }
 
-        public double getBusyTime() {
-            return sum.service;
+        public void updateArea(double width) {
+            // TODO: questo controllo dovrebbe avvenire nel loop principale
+            if (numberOfJobsInNode > 0) {
+                area.incNodeArea(width * numberOfJobsInNode);
+                area.incQueueArea(width * (numberOfJobsInNode - 1));
+                area.incServiceArea(width);
+            }
         }
 
         public long getCompletions() {
@@ -283,13 +280,13 @@ public class LuggageChecks {
             sum.served++;
             lastCompletionTime = completion.time;
             events.remove(completion);
-            spawnCheckInEvent(time, events);
+            spawnNextCenterEvent(time, events);
             if (numberOfJobsInNode > 0) {
                 spawnCompletionEvent(time, events);
             }
         }
 
-        private void spawnCheckInEvent(MsqTime time, List<MsqEvent> events) {
+        private void spawnNextCenterEvent(MsqTime time, List<MsqEvent> events) {
             // generating arrival for the next center
             EventType type = EventType.ARRIVAL_CHECK_IN_OTHERS;
             if(isTargetFlight(rngs, centerIndex + 2)){
@@ -317,7 +314,9 @@ public class LuggageChecks {
 
         public void saveStats() {
             batchIndex++;
-            statistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime);
+            MsqSum[] sums = new MsqSum[1];
+            sums[0] = this.sum;
+            statistics.saveStats(area, sums, lastArrivalTime, lastCompletionTime);
         }
         public void writeStats(String simulationType){
             statistics.writeStats(simulationType);

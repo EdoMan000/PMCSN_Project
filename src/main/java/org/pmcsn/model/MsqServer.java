@@ -5,7 +5,12 @@ public class MsqServer {
     public boolean running;
 
     public MsqServer() {
-        lastCompletionTime = 0;
-        running = false;
+        this.lastCompletionTime = 0;
+        this.running = false;
+    }
+
+    public void reset() {
+        this.lastCompletionTime = 0;
+        this.running = false;
     }
 }

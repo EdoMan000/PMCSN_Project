@@ -5,32 +5,32 @@ public class MsqEvent {
     public double time;   //time
     public boolean active;  //status
     public final EventType type; //type
-    public int server;  //server (if needed)
+    public int serverId;  //server (if needed)
     public boolean hasPriority = false;     //if the event has priority
     public int centerID;
 
-    public MsqEvent(EventType type, double service, double time, boolean active, int server, boolean hasPriority, int centerID) {
+    public MsqEvent(EventType type, double service, double time, boolean active, int serverId, boolean hasPriority, int centerID) {
         this.type = type;
         this.service = service;
         this.time = time;
         this.active = active;
-        this.server = server;
+        this.serverId = serverId;
         this.hasPriority = hasPriority;
         this.centerID = centerID;
     }
 
-    public MsqEvent(double time, boolean active, EventType type, int server) {
+    public MsqEvent(double time, boolean active, EventType type, int serverId) {
         this.time = time;
         this.active = active;
         this.type = type;
-        this.server = server;
+        this.serverId = serverId;
     }
 
-    public MsqEvent(double time, boolean active, EventType type, int server, int centerID) {
+    public MsqEvent(double time, boolean active, EventType type, int serverId, int centerID) {
         this.time = time;
         this.active = active;
         this.type = type;
-        this.server = server;
+        this.serverId = serverId;
         this.centerID = centerID;
     }
 
@@ -40,11 +40,11 @@ public class MsqEvent {
         this.type = type;
     }
 
-    public MsqEvent(double time, boolean active, EventType type, int server, boolean hasPriority) {
+    public MsqEvent(double time, boolean active, EventType type, int serverId, boolean hasPriority) {
         this.time = time;
         this.active = active;
         this.type = type;
-        this.server = server;
+        this.serverId = serverId;
         this.hasPriority = hasPriority;
     }
 
