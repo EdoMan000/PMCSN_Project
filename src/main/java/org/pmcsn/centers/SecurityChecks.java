@@ -182,7 +182,7 @@ public class SecurityChecks {
         double service = getService(CENTER_INDEX+1);
 
         //generate a new completion event
-        MsqEvent event = new MsqEvent(time.current + service, true, EventType.CHECK_IN_TARGET_DONE, serverId);
+        MsqEvent event = new MsqEvent(time.current + service, true, EventType.SECURITY_CHECK_DONE, serverId);
         // TODO: inizializzare in costruttore
         event.service = service;
         events.add(event);
