@@ -38,13 +38,13 @@ public class BasicSimulationRunner {
 
         // Declare variables for centers
         LuggageChecks luggageChecks = new LuggageChecks(6, (24 * 60) / 6300.0, 1);
-        CheckInDesksTarget checkInDesksTarget = new CheckInDesksTarget();
+        CheckInDesksTarget checkInDesksTarget = new CheckInDesksTarget("CHECK_IN_TARGET", 10, 3, 10);
         CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers();
         BoardingPassScanners boardingPassScanners = new BoardingPassScanners();
-        SecurityChecks securityChecks = new SecurityChecks();
-        PassportChecks passportChecks = new PassportChecks();
+        SecurityChecks securityChecks = new SecurityChecks("SECURITY_CHECKS", 1.8, 8, 52);
+        PassportChecks passportChecks = new PassportChecks("PASSPORT_CHECK", 5, 24, 57);
         StampsCheck stampsCheck = new StampsCheck(0.1);
-        Boarding boarding = new Boarding();
+        Boarding boarding = new Boarding("BOARDING", 4, 2, 63);
 
         for (int i = 0; i < 150; i++) {
 
@@ -186,7 +186,7 @@ public class BasicSimulationRunner {
         List<Result> verificationResults = modelVerification(SIMULATION_TYPE);
 
         // Compare results and verifications and save comparison result
-        List<MeanStatistics> meanStatisticsList = new ArrayList<MeanStatistics>();
+        List<MeanStatistics> meanStatisticsList = new ArrayList<>();
         meanStatisticsList.add(luggageChecks.getMeanStatistics());
         meanStatisticsList.add(checkInDesksTarget.getMeanStatistics());
         meanStatisticsList.add(checkInDesksOthers.getMeanStatistics());

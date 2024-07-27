@@ -45,13 +45,13 @@ public class BatchSimulationRunner {
 
         // Declare variables for centers
         LuggageChecks luggageChecks = new LuggageChecks(6, (24 * 60) / 3600.0, 1.4);
-        CheckInDesksTarget checkInDesksTarget = new CheckInDesksTarget();
+        CheckInDesksTarget checkInDesksTarget = new CheckInDesksTarget("CHECK_IN_TARGET", 10, 3, 10);
         CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers();
         BoardingPassScanners boardingPassScanners = new BoardingPassScanners();
-        SecurityChecks securityChecks = new SecurityChecks();
-        PassportChecks passportChecks = new PassportChecks();
+        SecurityChecks securityChecks = new SecurityChecks("SECURITY_CHECKS", 1.8, 8, 52);
+        PassportChecks passportChecks = new PassportChecks("PASSPORT_CHECKS", 5, 24, 57);
         StampsCheck stampsCheck = new StampsCheck(0.1);
-        Boarding boarding = new Boarding();
+        Boarding boarding = new Boarding("BOARDING", 4, 2, 63);
 
         // Initialize MsqTime
         MsqTime msqTime = new MsqTime();
