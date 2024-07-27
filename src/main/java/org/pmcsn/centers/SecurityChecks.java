@@ -1,22 +1,17 @@
 package org.pmcsn.centers;
 
-import org.pmcsn.model.*;
-
-import java.util.Comparator;
-import java.util.List;
+import org.pmcsn.model.EventQueue;
+import org.pmcsn.model.EventType;
+import org.pmcsn.model.MsqEvent;
+import org.pmcsn.model.MsqTime;
 
 import static org.pmcsn.utils.Distributions.exponential;
+import static org.pmcsn.utils.Distributions.logNormal;
 import static org.pmcsn.utils.Probabilities.*;
 
 public class SecurityChecks extends Multiserver {
-    public SecurityChecks(String name, double meanServiceTime, int serversNumber, int centerIndex) {
-        super(name, meanServiceTime, serversNumber, centerIndex);
-    }
-
-    @Override
-    double getService(int streamIndex) {
-        rngs.selectStream(streamIndex);
-        return exponential(meanServiceTime, rngs);
+    public SecurityChecks(String name, double meanServiceTime, int serversNumber, int centerIndex, boolean approximateServiceAsExponential) {
+        super(name, meanServiceTime, serversNumber, centerIndex, approximateServiceAsExponential);
     }
 
     @Override
@@ -39,5 +34,14 @@ public class SecurityChecks extends Multiserver {
         //generate a new completion event
         MsqEvent event = new MsqEvent(EventType.SECURITY_CHECK_DONE, time.current + service, service, serverId);
         queue.add(event);
+    }
+
+    @Override
+    double getService(int streamIndex) {
+        rngs.selectStream(streamIndex);
+        if(approximateServiceAsExponential){
+            return exponential(meanServiceTime, rngs);
+        }
+        return (logNormal(meanServiceTime, meanServiceTime*0.2, rngs));
     }
 }

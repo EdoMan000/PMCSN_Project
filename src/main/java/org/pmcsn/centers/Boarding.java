@@ -3,10 +3,11 @@ package org.pmcsn.centers;
 import org.pmcsn.model.*;
 
 import static org.pmcsn.utils.Distributions.exponential;
+import static org.pmcsn.utils.Distributions.logNormal;
 
 public class Boarding extends Multiserver {
-    public Boarding(String name, double meanServiceTime, int serversNum, int centerIndex) {
-        super(name, meanServiceTime, serversNum, centerIndex);
+    public Boarding(String name, double meanServiceTime, int serversNum, int centerIndex, boolean approximateServiceAsExponential) {
+        super(name, meanServiceTime, serversNum, centerIndex, approximateServiceAsExponential);
     }
 
     @Override
@@ -24,6 +25,9 @@ public class Boarding extends Multiserver {
     @Override
     double getService(int streamIndex) {
         rngs.selectStream(streamIndex);
-        return exponential(meanServiceTime,  rngs);
+        if(approximateServiceAsExponential){
+            return exponential(meanServiceTime, rngs);
+        }
+        return (logNormal(meanServiceTime, meanServiceTime*0.2, rngs));
     }
 }

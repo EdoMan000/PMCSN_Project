@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.pmcsn.utils.PrintUtils.printComparisonResult;
+
 public class Comparison {
 
     public static class ComparisonResult {
@@ -92,39 +94,6 @@ public class Comparison {
             fileWriter.flush();
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    public static final String RESET = "\033[0m";
-    public static final String YELLOW = "\033[0;33m";
-    public static final String GREEN = "\033[0;32m";
-    public static final String RED = "\033[0;31m";
-    public static final String BLUE = "\033[0;34m";
-
-    public static void printComparisonResult(ComparisonResult comparisonResult) {
-        System.out.println(BLUE + "\n\n********************************************");
-        System.out.println("Comparison results for " + comparisonResult.name.toUpperCase());
-        System.out.println("********************************************" + RESET);
-
-        // Print results with color based on the value
-        System.out.println("E[Ts]_Diff: " + getColor(comparisonResult.responseTimeDiff) + comparisonResult.responseTimeDiff + RESET);
-        System.out.println("E[Tq]_Diff: " + getColor(comparisonResult.queueTimeDiff) + comparisonResult.queueTimeDiff + RESET);
-        System.out.println("E[s]_Diff: " + getColor(comparisonResult.serviceTimeDiff) + comparisonResult.serviceTimeDiff + RESET);
-        System.out.println("E[Ns]_Diff: " + getColor(comparisonResult.systemPopulationDiff) + comparisonResult.systemPopulationDiff + RESET);
-        System.out.println("E[Nq]_Diff: " + getColor(comparisonResult.queuePopulationDiff) + comparisonResult.queuePopulationDiff + RESET);
-        System.out.println("rho_Diff: " + getColor(comparisonResult.utilizationDiff) + comparisonResult.utilizationDiff + RESET);
-        System.out.println("lambda_Diff: " + getColor(comparisonResult.lambdaDiff) + comparisonResult.lambdaDiff + RESET);
-
-        System.out.println(BLUE + "********************************************" + RESET);
-    }
-
-    private static String getColor(double value) {
-        if (value < 0.5) {
-            return GREEN;
-        } else if (value < 1) {
-            return YELLOW;
-        } else {
-            return RED;
         }
     }
 }

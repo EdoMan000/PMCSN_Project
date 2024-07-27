@@ -9,8 +9,8 @@ import java.util.List;
 import static org.pmcsn.utils.Distributions.exponential;
 
 public class PassportChecks extends Multiserver {
-    public PassportChecks(String name, double meanServiceTime, int numOfServers, int centerIndex) {
-        super(name, meanServiceTime, numOfServers, centerIndex);
+    public PassportChecks(String name, double meanServiceTime, int numOfServers, int centerIndex, boolean approximateServiceAsExponential) {
+        super(name, meanServiceTime, numOfServers, centerIndex, approximateServiceAsExponential);
     }
 
     @Override

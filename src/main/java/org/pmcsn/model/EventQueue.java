@@ -27,6 +27,7 @@ public class EventQueue {
         }
     }
 
+    // returns the event with the smallest time among ALL queues and removes it
     public MsqEvent pop() throws Exception {
         MsqEvent e1 = noPriority.peek();
         MsqEvent e2 = peek(priority);
@@ -44,6 +45,7 @@ public class EventQueue {
         }
     }
 
+    // returns the event with the smallest time without removing it
     private MsqEvent peek(List<PriorityQueue<MsqEvent>> priorityQueues) {
         for (PriorityQueue<MsqEvent> queue : priorityQueues) {
             if (!queue.isEmpty()) {
@@ -53,6 +55,7 @@ public class EventQueue {
         return null;
     }
 
+    // returns the event with the smallest time among all the priority queues and removes it
     private MsqEvent poll(List<PriorityQueue<MsqEvent>> priorityQueues) {
         for (PriorityQueue<MsqEvent> queue : priorityQueues) {
             if (!queue.isEmpty()) {

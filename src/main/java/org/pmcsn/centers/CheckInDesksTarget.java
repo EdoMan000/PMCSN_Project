@@ -1,15 +1,16 @@
 package org.pmcsn.centers;
 
-import org.pmcsn.model.*;
-
-import java.util.Comparator;
-import java.util.List;
+import org.pmcsn.model.EventQueue;
+import org.pmcsn.model.EventType;
+import org.pmcsn.model.MsqEvent;
+import org.pmcsn.model.MsqTime;
 
 import static org.pmcsn.utils.Distributions.exponential;
+import static org.pmcsn.utils.Distributions.logNormal;
 
 public class CheckInDesksTarget extends Multiserver {
-    public CheckInDesksTarget(String name, double meanServiceTime, int numOfServers, int centerIndex) {
-        super(name, meanServiceTime, numOfServers, centerIndex);
+    public CheckInDesksTarget(String name, double meanServiceTime, int numOfServers, int centerIndex, boolean approximateServiceAsExponential) {
+        super(name, meanServiceTime, numOfServers, centerIndex, approximateServiceAsExponential);
     }
 
     @Override
@@ -30,6 +31,9 @@ public class CheckInDesksTarget extends Multiserver {
     public double getService(int streamIndex)
     {
         rngs.selectStream(streamIndex);
-        return exponential(meanServiceTime, rngs);
+        if(approximateServiceAsExponential){
+            return exponential(meanServiceTime, rngs);
+        }
+        return (logNormal(meanServiceTime, meanServiceTime*0.2, rngs));
     }
 }

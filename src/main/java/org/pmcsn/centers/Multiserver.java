@@ -16,7 +16,7 @@ public abstract class Multiserver {
     protected int batchIndex = 0;
     protected double meanServiceTime;
     protected String centerName;
-
+    protected boolean approximateServiceAsExponential;
     protected Rngs rngs;
 
     protected MsqSum[] sum;
@@ -24,7 +24,7 @@ public abstract class Multiserver {
 
     protected Statistics statistics;
 
-    public Multiserver(String centerName, double meanServiceTime, int numServers, int centerIndex) {
+    public Multiserver(String centerName, double meanServiceTime, int numServers, int centerIndex, boolean approximateServiceAsExponential) {
         this.centerName = centerName;
         this.meanServiceTime = meanServiceTime;
         this.SERVERS = numServers;
@@ -37,6 +37,7 @@ public abstract class Multiserver {
         }
         this.area = new Area();
         this.statistics = new Statistics(centerName);
+        this.approximateServiceAsExponential = approximateServiceAsExponential;
     }
 
     //********************************** ABSTRACT METHODS *********************************************
@@ -86,16 +87,12 @@ public abstract class Multiserver {
         return numberOfJobsInNode;
     }
 
-    public void updateArea(double width) {
+    public void setArea(MsqTime time){
+        double width = time.next - time.current;
         area.incNodeArea(width * numberOfJobsInNode);
         long busyServers = Arrays.stream(servers).filter(s -> s.running).count();
         area.incQueueArea(width * (numberOfJobsInNode - busyServers));
         area.incServiceArea(width);
-
-    }
-
-    public void setArea(MsqTime time){
-        updateArea(time.next - time.current);
     }
 
     public void processArrival(MsqEvent arrival, MsqTime time, EventQueue queue){
@@ -147,7 +144,7 @@ public abstract class Multiserver {
 
     public void saveStats() {
         batchIndex++;
-        statistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime);
+        statistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime, true);
     }
     public void writeStats(String simulationType){
         statistics.writeStats(simulationType);

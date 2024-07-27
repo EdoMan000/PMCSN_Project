@@ -5,14 +5,8 @@ import org.pmcsn.model.*;
 import static org.pmcsn.utils.Distributions.exponential;
 
 public class BoardingPassScanners extends Multiserver {
-    public BoardingPassScanners(String name, double meanServiceTime, int serversNumber, int centerId) {
-        super(name, meanServiceTime, serversNumber, centerId);
-    }
-
-    @Override
-    double getService(int streamIndex) {
-        rngs.selectStream(streamIndex);
-        return exponential(meanServiceTime, rngs);
+    public BoardingPassScanners(String name, double meanServiceTime, int serversNumber, int centerId, boolean approximateServiceAsExponential) {
+        super(name, meanServiceTime, serversNumber, centerId, approximateServiceAsExponential);
     }
 
     @Override
@@ -26,5 +20,11 @@ public class BoardingPassScanners extends Multiserver {
     public void spawnNextCenterEvent(MsqTime time, EventQueue queue) {
         MsqEvent event = new MsqEvent(EventType.ARRIVAL_SECURITY_CHECK, time.current);
         queue.add(event);
+    }
+
+    @Override
+    double getService(int streamIndex) {
+        rngs.selectStream(streamIndex);
+        return exponential(meanServiceTime, rngs);
     }
 }

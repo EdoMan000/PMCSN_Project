@@ -58,24 +58,6 @@ public class Verification {
         return (numerator / denominator) * p0;
     }
 
-    public static final String RESET = "\033[0m";
-    public static final String YELLOW = "\033[0;33m";
-
-    public static void printResult(Result result) {
-        System.out.println(YELLOW + "\n\n*************************************************");
-        System.out.println("Verification results for " + result.name.toUpperCase());
-        System.out.println("*************************************************" + RESET);
-        // Print results
-        System.out.println("Lambda: " + result.lambda);
-        System.out.println("Rho: " + result.rho);
-        System.out.println("E[Tq]: " + result.Etq);
-        System.out.println("E[Nq]: " + result.Enq);
-        System.out.println("E[Ts]: " + result.Ets);
-        System.out.println("E[Ns]: " + result.Ens);
-        System.out.println("E[s]: " + result.Es);
-        System.out.println(YELLOW + "*************************************************" + RESET);
-    }
-
     public static Result singleServer(String centerName, double lambda, double Es) {
         double rho = lambda * Es;
         double Etq, Enq, Ets, Ens;
@@ -131,14 +113,14 @@ public class Verification {
         results.add(multiServer("CHECK_IN_TARGET", lambda * pTarget, 10, 3));
         results.add(multiServer("CHECK-IN OTHERS", (lambda * (1 - pTarget)) / 19, 10, 3));
 
-        results.add(multiServer("SCAN_BOARDING_PASS", lambda, 0.30, 3));
+        results.add(multiServer("SCAN_BOARDING_PASS", lambda, 0.3, 3));
 
         results.add(multiServer("SECURITY_CHECKS", lambda, 0.9, 8));
 
         double pCitizen = 0.2;
         results.add(multiServer("PASSPORT_CHECK", lambda * (1 - pCitizen), 5, 24));
 
-        results.add(singleServer("STAMP_CHECK", lambda * (1 - pCitizen), 0.10));
+        results.add(singleServer("STAMP_CHECK", lambda * (1 - pCitizen), 0.1));
 
         results.add(multiServer("BOARDING", lambda * pTarget, 4, 2));
 

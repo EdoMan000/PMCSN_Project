@@ -14,10 +14,10 @@ public class CheckInDesksOthers {
     CheckInDesksSingleFlight[] checkInDesksSingleFlights;
     public int numberOfCenters;
 
-    public CheckInDesksOthers(int nodesNumber, int serversNumber, double meanServiceTime, int centerIndex) {
+    public CheckInDesksOthers(int nodesNumber, int serversNumber, double meanServiceTime, int centerIndex, boolean approximateServiceAsExponential) {
         this.checkInDesksSingleFlights = new CheckInDesksSingleFlight[nodesNumber];
         for (int i = 0; i < checkInDesksSingleFlights.length; i++) {
-            checkInDesksSingleFlights[i] = new CheckInDesksSingleFlight("CHECK_IN_OTHERS", meanServiceTime, serversNumber, centerIndex + (2 * i), i + 1);
+            checkInDesksSingleFlights[i] = new CheckInDesksSingleFlight("CHECK_IN_OTHERS", meanServiceTime, serversNumber, centerIndex + (2 * i), i + 1, approximateServiceAsExponential);
         }
         this.numberOfCenters = checkInDesksSingleFlights.length;
     }
@@ -80,7 +80,7 @@ public class CheckInDesksOthers {
 
     public void updateArea(MsqTime time){
         for(CheckInDesksSingleFlight singleFlight : checkInDesksSingleFlights){
-            singleFlight.updateArea(time.next - time.current);
+            singleFlight.setArea(time);
         }
     }
 
@@ -134,8 +134,8 @@ public class CheckInDesksOthers {
     private static class CheckInDesksSingleFlight extends Multiserver {
         private final int nodeId;
 
-        public CheckInDesksSingleFlight(String name, double meanServiceTime, int numOfServers, int centerIndex, int nodeId) {
-            super(name + nodeId, meanServiceTime, numOfServers, centerIndex);
+        public CheckInDesksSingleFlight(String name, double meanServiceTime, int numOfServers, int centerIndex, int nodeId, boolean approximateServiceAsExponential) {
+            super(name + nodeId, meanServiceTime, numOfServers, centerIndex, approximateServiceAsExponential);
             this.nodeId = nodeId;
         }
 
@@ -157,7 +157,10 @@ public class CheckInDesksOthers {
 
         public double getService(int streamIndex) {
             rngs.selectStream(streamIndex);
-            return exponential(meanServiceTime, rngs);
+            if(approximateServiceAsExponential){
+                return exponential(meanServiceTime, rngs);
+            }
+            return (logNormal(meanServiceTime, meanServiceTime*0.2, rngs));
         }
     }
 }
