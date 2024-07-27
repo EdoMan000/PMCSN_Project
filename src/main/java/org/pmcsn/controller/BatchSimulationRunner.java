@@ -24,8 +24,8 @@ public class BatchSimulationRunner {
     private static final long SEED = 123456789L;
 
 
-    private int BATCH_SIZE_B = 10000; // Number of jobs in single batch (B)
-    private int NUM_BATCHES_K = 100; // Number of batches (K)
+    private int BATCH_SIZE_B = 128; // Number of jobs in single batch (B)
+    private int NUM_BATCHES_K = 32; // Number of batches (K)
 
     public BatchSimulationRunner() {}
 
@@ -159,8 +159,9 @@ public class BatchSimulationRunner {
             // Saving statistics for current batch
             //TODO condizione di scarto (forse?) (es: non contare primi 20/30 batch)
             long totJobs = luggageChecks.getTotalNumberOfJobsServed();
-            if((totJobs - alreadySaved) == BATCH_SIZE_B) { //TODO ricontrolla perché ne fa solo 7 in results.csv
-                alreadySaved += totJobs;
+
+            // still in the middle of a batch, need to save statistics
+            if((totJobs - alreadySaved) != BATCH_SIZE_B) {
                 luggageChecks.saveStats();
                 checkInDesksTarget.saveStats();
                 checkInDesksOthers.saveStats();
@@ -169,6 +170,19 @@ public class BatchSimulationRunner {
                 passportChecks.saveStats();
                 stampsCheck.saveStats();
                 boarding.saveStats();
+            } else {
+                // keeping track of the fact that a batch has already been processed
+                alreadySaved += BATCH_SIZE_B;
+                System.out.println(totJobs);
+                //one batch has ended, time to save the statistics for one batch
+                luggageChecks.saveOneBatchStats();
+                checkInDesksTarget.saveOneBatchStats();
+                checkInDesksOthers.saveOneBatchStats();
+                boardingPassScanners.saveOneBatchStats();
+                securityChecks.saveOneBatchStats();
+                passportChecks.saveOneBatchStats();
+                stampsCheck.saveOneBatchStats();
+                boarding.saveOneBatchStats();
             }
         }
 

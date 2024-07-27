@@ -30,6 +30,15 @@ public class Statistics {
     public List<Double> meanUtilizationList = new ArrayList<Double>();
     public List<Double> meanQueuePopulationList = new ArrayList<Double>();
 
+
+    public List<Double> meanResponseTimeListBatch = new ArrayList<Double>();
+    public List<Double> meanServiceTimeListBatch = new ArrayList<Double>();
+    public List<Double> meanQueueTimeListBatch = new ArrayList<Double>();
+    public List<Double> lambdaListBatch = new ArrayList<Double>();
+    public List<Double> meanSystemPopulationListBatch = new ArrayList<Double>();
+    public List<Double> meanUtilizationListBatch = new ArrayList<Double>();
+    public List<Double> meanQueuePopulationListBatch = new ArrayList<Double>();
+
     public static class MeanStatistics {
         public String centerName;
         public double meanResponseTime;
@@ -121,6 +130,34 @@ public class Statistics {
 
     }
 
+    public void saveOneBatchStats(){
+
+        // obtaining the mean of the current batch
+        MeanStatistics ms =  getMeanStatistics();
+
+        lambdaListBatch.add(ms.lambda);
+        meanSystemPopulationListBatch.add(ms.meanSystemPopulation);
+        meanResponseTimeListBatch.add(ms.meanResponseTime);
+        meanQueuePopulationListBatch.add(ms.meanQueuePopulation);
+        meanQueueTimeListBatch.add(ms.meanQueueTime);
+        meanServiceTimeListBatch.add(ms.meanServiceTime);
+        meanUtilizationListBatch.add(ms.meanUtilization);
+
+        //clearing the lists so in the next batch they will be empty
+        reset();
+
+    }
+
+    private void reset(){
+        meanResponseTimeList.clear();
+        meanServiceTimeList.clear();
+        meanQueueTimeList.clear();
+        lambdaList.clear();
+        meanSystemPopulationList.clear();
+        meanUtilizationList.clear();
+        meanQueuePopulationList.clear();
+    }
+
     public void writeStats(String simulationType) {
         File file = new File("csvFiles/"+simulationType+"/results/" );
         if (!file.exists()) {
@@ -134,19 +171,38 @@ public class Statistics {
             String COMMA = ",";
             int run;
 
+            if(simulationType.contains("BATCH")) {
+                fileWriter.append("#Batch, E[Ts], E[Tq], E[s], E[Ns], E[Nq], ρ, λ").append(DELIMITER);
 
-            fileWriter.append("#Run, E[Ts], E[Tq], E[s], E[Ns], E[Nq], ρ, λ").append(DELIMITER);
-            for (run = 0; run < meanResponseTimeList.size(); run++){
+                for (run = 0; run < meanResponseTimeListBatch.size(); run++) {
+                    fileWriter.append(String.valueOf(run + 1)).append(COMMA)
+                            .append(String.valueOf(meanResponseTimeListBatch.get(run))).append(COMMA)
+                            .append(String.valueOf(meanQueueTimeListBatch.get(run))).append(COMMA)
+                            .append(String.valueOf(meanServiceTimeListBatch.get(run))).append(COMMA)
+                            .append(String.valueOf(meanSystemPopulationListBatch.get(run))).append(COMMA)
+                            .append(String.valueOf(meanQueueTimeListBatch.get(run))).append(COMMA)
+                            .append(String.valueOf(meanUtilizationListBatch.get(run))).append(COMMA)
+                            .append(String.valueOf(lambdaListBatch.get(run))).append(DELIMITER);
+                }
 
-                fileWriter.append(String.valueOf(run+1)).append(COMMA)
-                        .append(String.valueOf(meanResponseTimeList.get(run))).append(COMMA)
-                        .append(String.valueOf(meanQueueTimeList.get(run))).append(COMMA)
-                        .append(String.valueOf(meanServiceTimeList.get(run))).append(COMMA)
-                        .append(String.valueOf(meanSystemPopulationList.get(run))).append(COMMA)
-                        .append(String.valueOf(meanQueueTimeList.get(run))).append(COMMA)
-                        .append(String.valueOf(meanUtilizationList.get(run))).append(COMMA)
-                        .append(String.valueOf(lambdaList.get(run))).append(DELIMITER);
+
+            } else {
+
+                fileWriter.append("#Run, E[Ts], E[Tq], E[s], E[Ns], E[Nq], ρ, λ").append(DELIMITER);
+
+                for (run = 0; run < meanResponseTimeList.size(); run++) {
+
+                    fileWriter.append(String.valueOf(run + 1)).append(COMMA)
+                            .append(String.valueOf(meanResponseTimeList.get(run))).append(COMMA)
+                            .append(String.valueOf(meanQueueTimeList.get(run))).append(COMMA)
+                            .append(String.valueOf(meanServiceTimeList.get(run))).append(COMMA)
+                            .append(String.valueOf(meanSystemPopulationList.get(run))).append(COMMA)
+                            .append(String.valueOf(meanQueueTimeList.get(run))).append(COMMA)
+                            .append(String.valueOf(meanUtilizationList.get(run))).append(COMMA)
+                            .append(String.valueOf(lambdaList.get(run))).append(DELIMITER);
+                }
             }
+
 
             // Compute mean values
             MeanStatistics meanStats = getMeanStatistics();

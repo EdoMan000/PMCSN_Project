@@ -4,6 +4,8 @@ import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.*;
 import org.pmcsn.model.Statistics;
 
+import java.util.Arrays;
+
 public abstract class SingleServer {
 
     /*  STATISTICS OF INTEREST :
@@ -30,6 +32,7 @@ public abstract class SingleServer {
     protected Rngs rngs;
     protected MsqSum sum = new MsqSum();
     protected boolean approximateServiceAsExponential;
+    public int alreadySaved = 0;
 
     public SingleServer(String centerName, double meanServiceTime, int centerIndex, boolean approximateServiceAsExponential) {
         this.centerName = centerName;
@@ -116,6 +119,10 @@ public abstract class SingleServer {
         MsqSum[] sums = new MsqSum[1];
         sums[0] = this.sum;
         statistics.saveStats(area, sums, lastArrivalTime, lastCompletionTime, false);
+    }
+
+    public void saveOneBatchStats(){
+        statistics.saveOneBatchStats();
     }
 
     public void writeStats(String simulationType){

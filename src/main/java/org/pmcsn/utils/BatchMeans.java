@@ -13,69 +13,63 @@ public class BatchMeans {
 
     public static void main(String[] args) throws Exception {
 
-        BatchSimulationRunner batchRunner = new BatchSimulationRunner(32, 64);
+        int numBatch_k = 32;
+
+        BatchSimulationRunner batchRunner = new BatchSimulationRunner(numBatch_k, 64);
 
         List<Statistics> statisticsList = batchRunner.runBatchSimulation(true);
 
         for (Statistics statistics : statisticsList) {
 
-            computeAutocorrelation(statistics.meanResponseTimeList, 32, 33);
-            computeAutocorrelation(statistics.meanQueueTimeList, 32, 33);
-            computeAutocorrelation(statistics.meanServiceTimeList, 32, 33);
+            computeAutocorrelation(statistics.meanResponseTimeListBatch, numBatch_k, statistics.centerName, "E[Ts]");
+            computeAutocorrelation(statistics.meanQueueTimeListBatch, numBatch_k, statistics.centerName, "E[Tq]");
+            computeAutocorrelation(statistics.meanServiceTimeListBatch, numBatch_k, statistics.centerName, "E[s]");
 
         }
 
     }
 
 
-    private static double computeAutocorrelation(List<Double> values, int K, int B) {
+    private static void computeAutocorrelation(List<Double> values, int K, String centerName, String metrics) {
         int    i = 0;                   /* data point index              */
         int    j;                       /* lag index                     */
         int    p = 0;                   /* points to the head of 'hold'  */
-        double x;                       /* current x[i] data point       */
         double sum = 0.0;               /* sums x[i]                     */
         long   n;                       /* number of data points         */
         double mean;
-        double hold[]  = new double [B]; /* K + 1 most recent data points */
-        double cosum[] = new double [B]; /* cosum[j] sums x[i] * x[i+j]   */
+        int SIZE = K+1;
+        double hold[]  = new double [SIZE]; /* K + 1 most recent data points */
+        double cosum[] = new double [SIZE]; /* cosum[j] sums x[i] * x[i+j]   */
 
-        for (j = 0; j < B; j++)
+        for (j = 0; j < SIZE; j++)
             cosum[j] = 0.0;
 
-        String line;
-        InputStreamReader r = new InputStreamReader(System.in);
-        BufferedReader ReadThis = new BufferedReader(r);
-        try {                         /* the first K + 1 data values    */
-            while (i < B) {              /* initialize the hold array with */
-                if ( (line = ReadThis.readLine()) != null) {
-                    x        = Double.parseDouble(line);
-                    sum     += x;
-                    hold[i]  = x;
-                    i++;
-                }
-            }
 
-            while ( (line = ReadThis.readLine()) != null ) {
-                for (j = 0; j < B; j++)
-                    cosum[j] += hold[p] * hold[(p + j) % B];
-                x       = Double.parseDouble(line);
-                sum    += x;
-                hold[p] = x;
-                p       = (p + 1) % B;
+        while(i < SIZE-1) {
+            for (double x : values) {   /* the first K + 1 data values initialize the hold array with */
+                sum += x;
+                hold[i] = x;
                 i++;
             }
-        } catch (EOFException e) {
-            System.out.println("Acs: " + e);
-        } catch (NumberFormatException nfe) {
-//      System.out.println("Acs: " + nfe);
         }
 
+        /* x is the current x[i] data point */
+        for (double x : values) {
+            for (j = 0; j < SIZE; j++)
+                cosum[j] += hold[p] * hold[(p + j) % SIZE];
+            sum += x;
+            hold[p] = x;
+            p = (p + 1) % SIZE;
+            i++;
+        }
+
+
         n = i;
-        while (i < n + B) {        /* empty the circular array       */
-            for (j = 0; j < B; j++)
-                cosum[j] += hold[p] * hold[(p + j) % B];
+        while (i < n + SIZE) {        /* empty the circular array */
+            for (j = 0; j < SIZE; j++)
+                cosum[j] += hold[p] * hold[(p + j) % SIZE];
             hold[p] = 0.0;
-            p       = (p + 1) % B;
+            p       = (p + 1) % SIZE;
             i++;
         }
 
@@ -87,12 +81,12 @@ public class BatchMeans {
         DecimalFormat g = new DecimalFormat("###0.000");
 
         System.out.println("for " + n + " data points");
+        System.out.println("for " + n + " data points");
         System.out.println("the mean is ... " + f.format(mean));
         System.out.println("the stdev is .. " + f.format(Math.sqrt(cosum[0])) +"\n");
         System.out.println("  j (lag)   r[j] (autocorrelation)");
-        for (j = 1; j < B; j++)
+        for (j = 1; j < SIZE; j++)
             System.out.println("  " + j + "          " + g.format(cosum[j] / cosum[0]));
-    }
     }
 
 }
