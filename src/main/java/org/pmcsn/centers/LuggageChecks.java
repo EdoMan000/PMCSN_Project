@@ -1,10 +1,7 @@
 package org.pmcsn.centers;
 
 import org.pmcsn.libraries.Rngs;
-import org.pmcsn.model.EventQueue;
-import org.pmcsn.model.EventType;
-import org.pmcsn.model.MsqEvent;
-import org.pmcsn.model.MsqTime;
+import org.pmcsn.model.*;
 import org.pmcsn.model.Statistics.MeanStatistics;
 
 import java.util.ArrayList;
@@ -105,6 +102,17 @@ public class LuggageChecks {
         for (LuggageChecksSingleEntrance singleEntrance : luggageChecksSingleEntrances) {
             singleEntrance.setArea(time);
         }
+    }
+
+    public List<Statistics> getStatistics(){
+        List<Statistics> statistics = new ArrayList<>();
+        for (int i = 1; i < luggageChecksSingleEntrances.length; i++) {
+
+            statistics.add(luggageChecksSingleEntrances[i].getStatistics());
+
+        }
+
+        return statistics;
     }
 
     public int getBatchIndex(int center){

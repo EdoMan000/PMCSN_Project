@@ -126,4 +126,8 @@ public abstract class SingleServer {
         return statistics.getMeanStatistics();
     }
 
+    public Statistics getStatistics(){
+        return this.statistics;
+    }
+
 }

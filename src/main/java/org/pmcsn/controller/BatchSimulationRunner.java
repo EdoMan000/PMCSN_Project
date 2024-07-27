@@ -2,12 +2,9 @@ package org.pmcsn.controller;
 
 
 import org.pmcsn.centers.*;
-import org.pmcsn.model.EventQueue;
+import org.pmcsn.model.*;
 import org.pmcsn.utils.Verification.Result;
 import org.pmcsn.libraries.Rngs;
-import org.pmcsn.model.EventType;
-import org.pmcsn.model.MsqEvent;
-import org.pmcsn.model.MsqTime;
 import org.pmcsn.model.Statistics.MeanStatistics;
 
 import java.util.ArrayList;
@@ -27,11 +24,24 @@ public class BatchSimulationRunner {
     private static final long SEED = 123456789L;
 
 
-    private static final int BATCH_SIZE = 10000; // Number of jobs in single batch (B)
-    private static final int NUM_BATCHES = 100; // Number of batches (K)
+    private int BATCH_SIZE_B = 10000; // Number of jobs in single batch (B)
+    private int NUM_BATCHES_K = 100; // Number of batches (K)
 
-    public void runBatchSimulation(boolean approximateServiceAsExponential) throws Exception {
-        System.out.println("\nRunning Batch Simulation...");
+    public BatchSimulationRunner() {}
+
+    public BatchSimulationRunner(int numBatch_k, int batchSize_b) {
+        this.BATCH_SIZE_B = batchSize_b;
+        this.NUM_BATCHES_K = numBatch_k;
+    }
+
+
+    public List<Statistics> runBatchSimulation(boolean approximateServiceAsExponential) throws Exception {
+
+        if (approximateServiceAsExponential) {
+            System.out.println("\nRunning Batch Simulation with Exponential Service...");
+        }else{
+            System.out.println("\nRunning Batch Simulation...");
+        }
 
         // Rng setting the seed
         Rngs rngs = new Rngs();
@@ -73,7 +83,7 @@ public class BatchSimulationRunner {
         MsqEvent event;
         long alreadySaved = 0;
         //while (!luggageChecks.isEndOfArrivals()) {
-        while (!(luggageChecks.getTotalNumberOfJobsServed() > BATCH_SIZE*NUM_BATCHES)) {
+        while (!(luggageChecks.getTotalNumberOfJobsServed() > BATCH_SIZE_B * NUM_BATCHES_K)) {
 
             event = events.pop();
             msqTime.next = event.time;
@@ -149,7 +159,7 @@ public class BatchSimulationRunner {
             // Saving statistics for current batch
             //TODO condizione di scarto (forse?) (es: non contare primi 20/30 batch)
             long totJobs = luggageChecks.getTotalNumberOfJobsServed();
-            if((totJobs - alreadySaved) == BATCH_SIZE) {
+            if((totJobs - alreadySaved) == BATCH_SIZE_B) { //TODO ricontrolla perché ne fa solo 7 in results.csv
                 alreadySaved += totJobs;
                 luggageChecks.saveStats();
                 checkInDesksTarget.saveStats();
@@ -178,6 +188,16 @@ public class BatchSimulationRunner {
         passportChecks.writeStats(SIMULATION_TYPE);
         stampsCheck.writeStats(SIMULATION_TYPE);
         boarding.writeStats(SIMULATION_TYPE);
+
+        List<Statistics> statisticsList = new ArrayList<>();
+        statisticsList.addAll(luggageChecks.getStatistics());
+        statisticsList.add(checkInDesksTarget.getStatistics());
+        statisticsList.addAll(checkInDesksOthers.getStatistics());
+        statisticsList.add(boardingPassScanners.getStatistics());
+        statisticsList.add(securityChecks.getStatistics());
+        statisticsList.add(passportChecks.getStatistics());
+        statisticsList.add(stampsCheck.getStatistics());
+        statisticsList.add(boarding.getStatistics());
 
         if(approximateServiceAsExponential) {
             // Computing and writing verifications stats csv
@@ -211,6 +231,8 @@ public class BatchSimulationRunner {
                 //System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + jobsServed);
             }
         }
+
+        return statisticsList;
 
         //printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boarding);
     }

@@ -66,6 +66,17 @@ public class CheckInDesksOthers {
         return checkInDesksSingleFlights[center].batchIndex;
     }
 
+    public List<Statistics> getStatistics(){
+        List<Statistics> statistics = new ArrayList<>();
+        for (int i = 1; i < checkInDesksSingleFlights.length; i++) {
+
+            statistics.add(checkInDesksSingleFlights[i].getStatistics());
+
+        }
+
+        return statistics;
+    }
+
     public int getMinBatchIndex() {
         // Assume there's at least one center in the array
         if (checkInDesksSingleFlights.length == 0) {

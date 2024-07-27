@@ -28,7 +28,11 @@ public class BasicSimulationRunner {
 
 
     public void runBasicSimulation(boolean approximateServiceAsExponential) throws Exception {
-        System.out.println("\nRunning Basic Simulation...");
+        if (approximateServiceAsExponential) {
+            System.out.println("\nRunning Basic Simulation with Exponential Service...");
+        }else{
+            System.out.println("\nRunning Basic Simulation...");
+        }
 
         //Rng setting the seed
         long[] seeds = new long[1024];

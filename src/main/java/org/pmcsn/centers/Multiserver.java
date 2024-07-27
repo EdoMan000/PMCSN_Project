@@ -84,6 +84,10 @@ public abstract class Multiserver {
         return numberOfJobsServed;
     }
 
+    public Statistics getStatistics(){
+        return this.statistics;
+    }
+
     public long getNumberOfJobsInNode() {
         return numberOfJobsInNode;
     }
