@@ -25,8 +25,6 @@ public class BatchSimulationRunner {
     // Constants
     private static final int START = 0;
     private static final long SEED = 123456789L;
-    private static final String SIMULATION_TYPE = "BATCH_SIMULATION";
-    private static int STOP = 1440;
 
 
     private static final int BATCH_SIZE = 10000; // Number of jobs in single batch (B)
@@ -162,6 +160,13 @@ public class BatchSimulationRunner {
                 stampsCheck.saveStats();
                 boarding.saveStats();
             }
+        }
+
+        String SIMULATION_TYPE;
+        if(approximateServiceAsExponential){
+            SIMULATION_TYPE = "BATCH_SIMULATION_EXPONENTIAL";
+        }else{
+            SIMULATION_TYPE = "BATCH_SIMULATION";
         }
 
         // Writing statistics csv with data from all batches

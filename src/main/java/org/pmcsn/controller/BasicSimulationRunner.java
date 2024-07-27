@@ -25,7 +25,6 @@ public class BasicSimulationRunner {
     // Constants
     private static final int START = 0;
     private static final long SEED = 123456789L;
-    private static final String SIMULATION_TYPE = "BASIC_SIMULATION";
 
 
     public void runBasicSimulation(boolean approximateServiceAsExponential) throws Exception {
@@ -171,6 +170,13 @@ public class BasicSimulationRunner {
             // Generating next seed
             rngs.selectStream(255);
             seeds[i + 1] = rngs.getSeed();
+        }
+
+        String SIMULATION_TYPE;
+        if(approximateServiceAsExponential){
+            SIMULATION_TYPE = "BASIC_SIMULATION_EXPONENTIAL";
+        }else{
+            SIMULATION_TYPE = "BASIC_SIMULATION";
         }
         // Writing statistics csv with data from all runs
         luggageChecks.writeStats(SIMULATION_TYPE);

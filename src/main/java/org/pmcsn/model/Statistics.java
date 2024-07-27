@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.pmcsn.utils.StatisticsUtils.computeMean;
+import static org.pmcsn.utils.StatisticsUtils.computeConfidenceInterval;
+
 public class Statistics {
     /*  STATISTICS OF INTEREST :
      *  * Response times
@@ -70,10 +73,6 @@ public class Statistics {
         return new MeanStatistics(this);
     }
 
-    public static double computeMean(List<Double> values) {
-        return values.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
-    }
-
     public Statistics(String centerName) {
         this.centerName = centerName.toLowerCase();
     }
@@ -122,7 +121,6 @@ public class Statistics {
 
     }
 
-
     public void writeStats(String simulationType) {
         File file = new File("csvFiles/"+simulationType+"/results/" );
         if (!file.exists()) {
@@ -149,6 +147,39 @@ public class Statistics {
                         .append(String.valueOf(meanUtilizationList.get(run))).append(COMMA)
                         .append(String.valueOf(lambdaList.get(run))).append(DELIMITER);
             }
+
+            // Compute mean values
+            MeanStatistics meanStats = getMeanStatistics();
+
+            // Write mean values row
+            fileWriter.append("MEAN_VALUES").append(COMMA)
+                    .append(String.valueOf(meanStats.meanResponseTime)).append(COMMA)
+                    .append(String.valueOf(meanStats.meanQueueTime)).append(COMMA)
+                    .append(String.valueOf(meanStats.meanServiceTime)).append(COMMA)
+                    .append(String.valueOf(meanStats.meanSystemPopulation)).append(COMMA)
+                    .append(String.valueOf(meanStats.meanQueuePopulation)).append(COMMA)
+                    .append(String.valueOf(meanStats.meanUtilization)).append(COMMA)
+                    .append(String.valueOf(meanStats.lambda)).append(DELIMITER);
+
+            // Compute confidence interval
+            double responseTimeCI = computeConfidenceInterval(meanResponseTimeList);
+            double queueTimeCI = computeConfidenceInterval(meanQueueTimeList);
+            double serviceTimeCI = computeConfidenceInterval(meanServiceTimeList);
+            double systemPopulationCI = computeConfidenceInterval(meanSystemPopulationList);
+            double queuePopulationCI = computeConfidenceInterval(meanQueuePopulationList);
+            double utilizationCI = computeConfidenceInterval(meanUtilizationList);
+            double lambdaCI = computeConfidenceInterval(lambdaList);
+
+            String PREAMBLE = "± ";
+            // Write confidence intervals row
+            fileWriter.append("CONFIDENCE_INTERVALS").append(COMMA) //TODO capire se i valori risultanti sono accettabili o meno
+                    .append(PREAMBLE).append(String.valueOf(responseTimeCI)).append(COMMA)
+                    .append(PREAMBLE).append(String.valueOf(queueTimeCI)).append(COMMA)
+                    .append(PREAMBLE).append(String.valueOf(serviceTimeCI)).append(COMMA)
+                    .append(PREAMBLE).append(String.valueOf(systemPopulationCI)).append(COMMA)
+                    .append(PREAMBLE).append(String.valueOf(queuePopulationCI)).append(COMMA)
+                    .append(PREAMBLE).append(String.valueOf(utilizationCI)).append(COMMA)
+                    .append(PREAMBLE).append(String.valueOf(lambdaCI)).append(DELIMITER);
 
             fileWriter.flush();
         } catch (IOException e) {

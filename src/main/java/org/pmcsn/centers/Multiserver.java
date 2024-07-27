@@ -2,6 +2,7 @@ package org.pmcsn.centers;
 
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.*;
+import org.pmcsn.model.Statistics;
 
 import java.util.Arrays;
 

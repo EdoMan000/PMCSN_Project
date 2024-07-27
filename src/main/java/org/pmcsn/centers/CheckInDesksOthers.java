@@ -3,11 +3,14 @@ package org.pmcsn.centers;
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-import static org.pmcsn.model.Statistics.computeMean;
-import static org.pmcsn.utils.Distributions.*;
+import static org.pmcsn.utils.Distributions.exponential;
+import static org.pmcsn.utils.Distributions.logNormal;
 import static org.pmcsn.utils.Probabilities.getCheckInDesks;
+import static org.pmcsn.utils.StatisticsUtils.computeMean;
 
 public class CheckInDesksOthers {
     Rngs rngs;
