@@ -101,7 +101,6 @@ public class Verification {
         double Es = Esi / numServers;
         double rho = lambda * Es;
         double Etq, Enq, Ets, Ens;
-
         if (rho >= 1) {
             Etq = Double.POSITIVE_INFINITY;
             Enq = Double.POSITIVE_INFINITY;
@@ -116,7 +115,7 @@ public class Verification {
             Ens = Ets * lambda;
         }
 
-        Result result = new Result(lambda, rho, Etq, Enq, Ets, Ens, centerName, Es);
+        Result result = new Result(lambda, rho, Etq, Enq, Ets, Ens, centerName, Esi);
         //printResult(result);
         return result;
     }
@@ -134,14 +133,14 @@ public class Verification {
 
         results.add(multiServer("SCAN_BOARDING_PASS", lambda, 0.30, 3));
 
-        results.add(multiServer("SECURITY_CHECKS", lambda, 1.8, 8));
+        results.add(multiServer("SECURITY_CHECKS", lambda, 0.9, 8));
 
         double pCitizen = 0.2;
         results.add(multiServer("PASSPORT_CHECK", lambda * (1 - pCitizen), 5, 24));
 
         results.add(singleServer("STAMP_CHECK", lambda * (1 - pCitizen), 0.10));
 
-        results.add(multiServer("BOARDING", lambda * pTarget, 2, 2));
+        results.add(multiServer("BOARDING", lambda * pTarget, 4, 2));
 
         writeResultsVerification(simulationType, results);
 

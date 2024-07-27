@@ -14,7 +14,7 @@ public class EventQueue {
     private static final Comparator<MsqEvent> PRIORITY_CMP = new Comparator<MsqEvent>() {
         @Override
         public int compare(MsqEvent o1, MsqEvent o2) {
-            return Boolean.compare(o1.hasPriority, o2.hasPriority) & Double.compare(o1.time, o2.time);
+            return Boolean.compare(o1.hasPriority, o2.hasPriority);
         }
     };
 
@@ -25,7 +25,9 @@ public class EventQueue {
         noPriority.add(event);
     }
 
-
+    public void addPriority(MsqEvent event) {
+        priority.add(event);
+    }
 
     public MsqEvent pop() throws Exception {
         MsqEvent e1 = priority.peek();

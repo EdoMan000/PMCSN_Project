@@ -8,35 +8,27 @@ import java.util.List;
 
 import static org.pmcsn.utils.Distributions.exponential;
 
-public class PassportChecks extends Multiserver{
+public class PassportChecks extends Multiserver {
     public PassportChecks(String name, double meanServiceTime, int numOfServers, int centerIndex) {
         super(name, meanServiceTime, numOfServers, centerIndex);
     }
 
-
-    public void spawnNextCenterEvent(MsqTime time, List<MsqEvent> events) {
-        MsqEvent next_center_event = new MsqEvent(time.current, true, EventType.ARRIVAL_STAMP_CHECK, 0);
-        events.add(next_center_event);
-        events.sort(Comparator.comparing(MsqEvent::getTime));
+    @Override
+    public void spawnNextCenterEvent(MsqTime time, EventQueue queue) {
+        MsqEvent next_center_event = new MsqEvent(EventType.ARRIVAL_STAMP_CHECK, time.current);
+        queue.add(next_center_event);
     }
 
-    public void spawnCompletionEvent(MsqTime time, List<MsqEvent> events, int serverId) {
-
+    @Override
+    public void spawnCompletionEvent(MsqTime time, EventQueue queue, int serverId) {
         double service = getService(CENTER_INDEX+1);
-
-        //generate a new completion event
-        MsqEvent event = new MsqEvent(time.current + service, true, EventType.PASSPORT_CHECK_DONE, serverId);
-        // TODO: inizializzare in costruttore
-        event.service = service;
-        events.add(event);
-        events.sort(Comparator.comparing(MsqEvent::getTime));
+        MsqEvent event = new MsqEvent(EventType.PASSPORT_CHECK_DONE, time.current + service, service, serverId);
+        queue.add(event);
     }
 
     public double getService(int streamIndex)
     {
         rngs.selectStream(streamIndex);
-        // 5 min as mean time
-        return (exponential(5,  rngs));
+        return (exponential(meanServiceTime,  rngs));
     }
-
 }

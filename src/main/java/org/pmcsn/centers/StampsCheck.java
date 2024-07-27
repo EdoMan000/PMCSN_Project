@@ -89,7 +89,7 @@ public class StampsCheck {
         }
     }
 
-    public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events){
+    public void processArrival(MsqEvent arrival, MsqTime time, EventQueue queue){
         // increment the number of jobs in the node
         numberOfJobsInNode++;
 
@@ -99,38 +99,29 @@ public class StampsCheck {
         }
         lastArrivalTime = arrival.time;
 
-        //remove the event since I'm processing it
-        events.remove(arrival);
-
         if (numberOfJobsInNode == 1) {
-            spawnCompletionEvent(time, events);
+            spawnCompletionEvent(time, queue);
         }
     }
 
-    public void processCompletion(MsqEvent completion, MsqTime time, List<MsqEvent> events) {
+    public void processCompletion(MsqEvent completion, MsqTime time, EventQueue queue) {
         numberOfJobsInNode--;
         sum.served++;
         sum.service += completion.service;
         lastCompletionTime = completion.time;
-        events.remove(completion);
         if(isTargetFlight(rngs, CENTER_INDEX+2)) {
-            MsqEvent event = new MsqEvent(time.current, true, EventType.ARRIVAL_BOARDING, 0, isPriority(rngs, CENTER_INDEX + 3));
-            events.add(event);
-            events.sort(Comparator.comparing(MsqEvent::getTime));
+            MsqEvent event = new MsqEvent(EventType.ARRIVAL_BOARDING, time.current, isPriority(rngs, CENTER_INDEX + 3));
+            queue.addPriority(event);
         }
-        //checking if there are jobs in queue, if so the server starts processing one
         if (numberOfJobsInNode > 0) {
-            spawnCompletionEvent(time, events);
+            spawnCompletionEvent(time, queue);
         }
     }
 
-    private void spawnCompletionEvent(MsqTime time, List<MsqEvent> events) {
+    private void spawnCompletionEvent(MsqTime time, EventQueue queue) {
         double service = getService(CENTER_INDEX);
-        MsqEvent event = new MsqEvent(time.current + service, true, EventType.STAMP_CHECK_DONE);
-        // TODO: inizializzare in costruttore
-        event.service = service;
-        events.add(event);
-        events.sort(Comparator.comparing(MsqEvent::getTime));
+        MsqEvent event = new MsqEvent(EventType.STAMP_CHECK_DONE, time.current + service, service);
+        queue.add(event);
     }
 
     public double getService(int streamIndex)
@@ -141,9 +132,7 @@ public class StampsCheck {
 
     public void saveStats() {
         batchIndex++;
-        MsqSum[] sums = new MsqSum[1];
-        sums[0] = this.sum;
-        statistics.saveStats(area, sums, lastArrivalTime, lastCompletionTime);
+        statistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime);
     }
 
     public void writeStats(String simulationType){

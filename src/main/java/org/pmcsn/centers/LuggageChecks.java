@@ -1,12 +1,7 @@
 package org.pmcsn.centers;
 
 import org.pmcsn.libraries.Rngs;
-import org.pmcsn.model.Area;
-import org.pmcsn.model.EventType;
-import org.pmcsn.model.MsqEvent;
-import org.pmcsn.model.MsqSum;
-import org.pmcsn.model.MsqTime;
-import org.pmcsn.model.Statistics;
+import org.pmcsn.model.*;
 import org.pmcsn.model.Statistics.MeanStatistics;
 
 import java.util.ArrayList;
@@ -57,40 +52,35 @@ public class LuggageChecks {
         return endOfArrivals;
     }
 
-    public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events) {
+    public void processArrival(MsqEvent arrival, MsqTime time, EventQueue queue) {
         int index = getEntrance(rngs, 67);
         if (index < 1 || index > luggageChecksSingleEntrances.length) {
             throw new IllegalArgumentException("Invalid centerID: " + index);
         }
-        luggageChecksSingleEntrances[index - 1].processArrival(arrival, time, events);
+        luggageChecksSingleEntrances[index - 1].processArrival(arrival, time, queue);
 
         // Generating a new arrival
         double nextArrival = getArrival();
 
         // Checking if the next arrival exceeds time limit
         if(nextArrival < STOP){
-            MsqEvent event = new MsqEvent(nextArrival, true, EventType.ARRIVAL_LUGGAGE_CHECK);
-            events.add(event);
-            events.sort(Comparator.comparing(MsqEvent::getTime));
+            MsqEvent event = new MsqEvent(EventType.ARRIVAL_LUGGAGE_CHECK, nextArrival);
+            queue.add(event);
         } else {
             endOfArrivals = true;
         }
 
     }
 
-    public void processCompletion(MsqEvent arrival, MsqTime time, List<MsqEvent> events){
-        int index = arrival.centerID;
+    public void processCompletion(MsqEvent arrival, MsqTime time, EventQueue queue){
+        int index = arrival.nodeId;
         if (index < 1 || index > luggageChecksSingleEntrances.length) {
             throw new IllegalArgumentException("Invalid centerID: " + index);
         }
-        luggageChecksSingleEntrances[index - 1].processCompletion(arrival, time, events);
+        luggageChecksSingleEntrances[index - 1].processCompletion(arrival, time, queue);
     }
 
     public double getArrival() {
-        /* --------------------------------------------------------------
-         * generate the next arrival time
-         * --------------------------------------------------------------
-         */
         rngs.selectStream(68);
         sarrival += exponential(interArrivalTime, rngs);
         return (sarrival);
@@ -133,7 +123,6 @@ public class LuggageChecks {
         return minBatchIndex;
     }
 
-
     public void saveStats() {
         for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
             center.saveStats();
@@ -161,8 +150,8 @@ public class LuggageChecks {
         MeanStatistics ms;
 
         // obtaining the mean for all centers
-        for(int index=1; index<=luggageChecksSingleEntrances.length; index++){
-            ms = luggageChecksSingleEntrances[index-1].getMeanStatistics();
+        for(LuggageChecksSingleEntrance c : luggageChecksSingleEntrances){
+            ms = c.getMeanStatistics();
             meanResponseTimeList.add(ms.meanResponseTime);
             meanServiceTimeList.add(ms.meanServiceTime);
             meanQueueTimeList.add(ms.meanQueueTime);
@@ -181,7 +170,6 @@ public class LuggageChecks {
         double meanQueuePopulation = computeMean(meanQueuePopulationList);
 
         return new MeanStatistics("LUGGAGE CHECK", meanResponseTime, meanServiceTime, meanQueueTime, lambda, meanSystemPopulation, meanUtilization, meanQueuePopulation);
-
     }
 
     private static class LuggageChecksSingleEntrance {
@@ -255,55 +243,41 @@ public class LuggageChecks {
         }
 
 
-        public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events){
-            // increment the number of jobs in the node
+        public void processArrival(MsqEvent arrival, MsqTime time, EventQueue queue){
             numberOfJobsInNode++;
-
-            // Updating the first arrival time (we will use it in the statistics)
             if(firstArrivalTime == Double.NEGATIVE_INFINITY){
                 firstArrivalTime = arrival.time;
             }
             lastArrivalTime = arrival.time;
-
-            //remove the event since I'm processing it
-            events.remove(arrival);
-
-            // Server can process one job at a time
             if (numberOfJobsInNode == 1) {
-                spawnCompletionEvent(time, events);
+                spawnCompletionEvent(time, queue);
             }
         }
 
-        public void processCompletion(MsqEvent completion, MsqTime time, List<MsqEvent> events) {
+        public void processCompletion(MsqEvent completion, MsqTime time, EventQueue queue) {
             numberOfJobsInNode--;
             sum.service += completion.service;
             sum.served++;
             lastCompletionTime = completion.time;
-            events.remove(completion);
-            spawnNextCenterEvent(time, events);
+            spawnNextCenterEvent(time, queue);
             if (numberOfJobsInNode > 0) {
-                spawnCompletionEvent(time, events);
+                spawnCompletionEvent(time, queue);
             }
         }
 
-        private void spawnNextCenterEvent(MsqTime time, List<MsqEvent> events) {
-            // generating arrival for the next center
+        private void spawnNextCenterEvent(MsqTime time, EventQueue queue) {
             EventType type = EventType.ARRIVAL_CHECK_IN_OTHERS;
             if(isTargetFlight(rngs, centerIndex + 2)){
                 type = EventType.ARRIVAL_CHECK_IN_TARGET;
             }
-            MsqEvent event = new MsqEvent(time.current, true, type);
-            events.add(event);
-            events.sort(Comparator.comparing(MsqEvent::getTime));
+            MsqEvent event = new MsqEvent(type, time.current);
+            queue.add(event);
         }
 
-        private void spawnCompletionEvent(MsqTime time, List<MsqEvent> events) {
+        private void spawnCompletionEvent(MsqTime time, EventQueue queue) {
             double service = getService(centerIndex);
-            MsqEvent event = new MsqEvent(time.current + service, true, EventType.LUGGAGE_CHECK_DONE, 0, centerID);
-            // TODO: inizializzare in costruttore
-            event.service = service;
-            events.add(event);
-            events.sort(Comparator.comparing(MsqEvent::getTime));
+            MsqEvent event = new MsqEvent(EventType.LUGGAGE_CHECK_DONE, time.current + service, service, 0, centerID);
+            queue.add(event);
         }
 
         private double getService(int streamIndex)
@@ -314,9 +288,7 @@ public class LuggageChecks {
 
         public void saveStats() {
             batchIndex++;
-            MsqSum[] sums = new MsqSum[1];
-            sums[0] = this.sum;
-            statistics.saveStats(area, sums, lastArrivalTime, lastCompletionTime);
+            statistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime);
         }
         public void writeStats(String simulationType){
             statistics.writeStats(simulationType);

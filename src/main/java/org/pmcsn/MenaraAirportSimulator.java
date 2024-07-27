@@ -13,7 +13,7 @@ public class MenaraAirportSimulator {
     public static final String RED = "\033[0;31m";
     public static final String BLUE = "\033[0;34m";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         Scanner scanner = new Scanner(System.in);
         BasicSimulationRunner basicRunner = new BasicSimulationRunner();
         ImprovedModelSimulationRunner improvedRunner = new ImprovedModelSimulationRunner();
@@ -30,7 +30,7 @@ public class MenaraAirportSimulator {
         System.out.println("╩ ╩└─┘┘└┘┴ ┴┴└─┴ ┴╩ ╩┴┴└─┴  └─┘┴└─ ┴   ╚═╝┴┴ ┴└─┘┴─┘┴ ┴ ┴ └─┘┴└─" + RESET);
     }
 
-    private static void mainMenu(Scanner scanner, BasicSimulationRunner basicRunner, ImprovedModelSimulationRunner improvedRunner, BatchSimulationRunner batchRunner) {
+    private static void mainMenu(Scanner scanner, BasicSimulationRunner basicRunner, ImprovedModelSimulationRunner improvedRunner, BatchSimulationRunner batchRunner) throws Exception {
         resetMenu();
         System.out.println("\nWelcome to Menara Airport Simulator!");
         System.out.println(BLUE + "Please select an option:" + RESET);
@@ -55,7 +55,7 @@ public class MenaraAirportSimulator {
         }
     }
 
-    private static void startSimulation(Scanner scanner, BasicSimulationRunner basicRunner, ImprovedModelSimulationRunner improvedRunner, BatchSimulationRunner batchRunner) {
+    private static void startSimulation(Scanner scanner, BasicSimulationRunner basicRunner, ImprovedModelSimulationRunner improvedRunner, BatchSimulationRunner batchRunner) throws Exception {
         resetMenu();
         System.out.println(BLUE + "\nSelect simulation Type:" + RESET);
         System.out.println(BLUE + "1" + RESET  + ". Basic Simulation");

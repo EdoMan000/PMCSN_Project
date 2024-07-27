@@ -3,42 +3,12 @@ package org.pmcsn.centers;
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.*;
 
-import java.util.List;
+import java.util.Arrays;
 
 public abstract class Multiserver {
-
-    /*  STATISTICS OF INTEREST :
-     *  * Response times
-     *  * Service times
-     *  * Queue times
-     *  * Inter-arrival times
-     *  * Population
-     *  * Utilization
-     *  * Queue population
-     */
-
-    public Multiserver(String centerName, double meanServiceTime, int numServers, int centerIndex) {
-        this.centerName = centerName;
-        this.meanServiceTime = meanServiceTime;
-        this.SERVERS = numServers;
-        this.CENTER_INDEX = centerIndex;
-
-        this.sum =  new MsqSum[SERVERS];
-        this.servers = new MsqServer[SERVERS];
-
-        for(int i=0; i<SERVERS ; i++){
-            sum[i] = new MsqSum();
-            servers[i] = new MsqServer();
-        }
-
-        this.area = new Area();
-        this.statistics = new Statistics(centerName);
-    }
-
-    //********************************** VARIABLES *********************************************
-    protected long numberOfJobsInNode =0;                     /* number in the node */
-    protected int    SERVERS;                     /* number of servers */
-    protected int CENTER_INDEX;                   /* index of center to select stream*/
+    protected long numberOfJobsInNode = 0;
+    protected int SERVERS;
+    protected int CENTER_INDEX;
     protected Area area;
     protected double firstArrivalTime = Double.NEGATIVE_INFINITY;
     protected double lastArrivalTime = 0;
@@ -54,9 +24,24 @@ public abstract class Multiserver {
 
     protected Statistics statistics;
 
+    public Multiserver(String centerName, double meanServiceTime, int numServers, int centerIndex) {
+        this.centerName = centerName;
+        this.meanServiceTime = meanServiceTime;
+        this.SERVERS = numServers;
+        this.CENTER_INDEX = centerIndex;
+        this.sum =  new MsqSum[SERVERS];
+        this.servers = new MsqServer[SERVERS];
+        for(int i=0; i<SERVERS ; i++){
+            sum[i] = new MsqSum();
+            servers[i] = new MsqServer();
+        }
+        this.area = new Area();
+        this.statistics = new Statistics(centerName);
+    }
+
     //********************************** ABSTRACT METHODS *********************************************
-    abstract void spawnNextCenterEvent(MsqTime time, List<MsqEvent> events);
-    abstract void spawnCompletionEvent(MsqTime time, List<MsqEvent> events, int serverId);
+    abstract void spawnNextCenterEvent(MsqTime time, EventQueue queue);
+    abstract void spawnCompletionEvent(MsqTime time, EventQueue queue, int serverId);
     abstract double getService(int streamIndex);
 
     //********************************** CONCRETE METHODS *********************************************
@@ -102,14 +87,9 @@ public abstract class Multiserver {
     }
 
     public void updateArea(double width) {
-
         area.incNodeArea(width * numberOfJobsInNode);
-
-        long height;
-        if (getNumberIdleServers() > 0) height = 0;
-        else height = numberOfJobsInNode - SERVERS;
-
-        area.incQueueArea(width * height);
+        long busyServers = Arrays.stream(servers).filter(s -> s.running).count();
+        area.incQueueArea(width * (numberOfJobsInNode - busyServers));
         area.incServiceArea(width);
 
     }
@@ -118,8 +98,7 @@ public abstract class Multiserver {
         updateArea(time.next - time.current);
     }
 
-    public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events){
-
+    public void processArrival(MsqEvent arrival, MsqTime time, EventQueue queue){
         // increment the number of jobs in the node
         numberOfJobsInNode++;
 
@@ -129,75 +108,41 @@ public abstract class Multiserver {
         }
         lastArrivalTime = arrival.time;
 
-        //remove the event since I'm processing it
-        events.remove(arrival);
-
         if (numberOfJobsInNode <= SERVERS) {
-            int serverId               = findOne();
+            int serverId = findOne();
             servers[serverId].running = true;
-            spawnCompletionEvent(time, events, serverId);
+            spawnCompletionEvent(time, queue, serverId);
         }
     }
 
-    public void processCompletion(MsqEvent completion, MsqTime time, List<MsqEvent> events) {
-        //updating counters
+    public void processCompletion(MsqEvent completion, MsqTime time, EventQueue queue) {
         numberOfJobsInNode--;
-
         int serverId = completion.serverId;
-        sum[serverId].service += completion.time;
+        sum[serverId].service += completion.service;
         sum[serverId].served++;
         lastCompletionTime = completion.time;
-
-        //remove the event since I'm processing it
-        events.remove(completion);
-
-        // generating arrival for the next center
-        spawnNextCenterEvent(time, events);
-
-        //checking if there are jobs in queue, if so the server starts processing one
+        spawnNextCenterEvent(time, queue);
         if (numberOfJobsInNode >= SERVERS) {
-            spawnCompletionEvent(time, events, serverId);
+            spawnCompletionEvent(time, queue, serverId);
         } else {
-            //if there are no jobs in queue the server returns idle and updates the last completion time
             servers[serverId].lastCompletionTime = completion.time;
             servers[serverId].running = false;
         }
     }
 
     public int findOne() {
-        /* -----------------------------------------------------
-         * return the index of the available server idle longest
-         * -----------------------------------------------------
-         */
-
         int s;
         int i = 0;
-
         while (servers[i].running)       /* find the index of the first available */
             i++;                        /* (idle) server                         */
         s = i;
-
-        // if it's the last server then simply return
         if(s == SERVERS) return s;
-
         while (i < SERVERS-1) {         /* now, check the others to find which   */
             i++;                        /* has been idle longest                 */
-
             if (!servers[i].running && (servers[i].lastCompletionTime < servers[s].lastCompletionTime))
                 s = i;
         }
         return (s);
-    }
-
-    public int getNumberIdleServers(){
-        int i;
-        int num = 0;
-
-        for(i=0; i<SERVERS; i++){
-            if(!servers[i].running) num++;
-        }
-
-        return num;
     }
 
     public void saveStats() {

@@ -2,6 +2,7 @@ package org.pmcsn.controller;
 
 
 import org.pmcsn.centers.*;
+import org.pmcsn.model.EventQueue;
 import org.pmcsn.utils.Verification.Result;
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.EventType;
@@ -14,7 +15,6 @@ import java.util.List;
 
 import static org.pmcsn.utils.Verification.modelVerification;
 import static org.pmcsn.utils.Comparison.compareResults;
-import static org.pmcsn.utils.EventUtils.getNextEvent;
 
 public class BasicSimulationRunner {
     /*  STATISTICS OF INTEREST :
@@ -28,7 +28,7 @@ public class BasicSimulationRunner {
     private static final String SIMULATION_TYPE = "BASIC_SIMULATION";
 
 
-    public void runBasicSimulation() {
+    public void runBasicSimulation() throws Exception {
         System.out.println("\nRunning Basic Simulation...");
 
         //Rng setting the seed
@@ -39,9 +39,9 @@ public class BasicSimulationRunner {
         // Declare variables for centers
         LuggageChecks luggageChecks = new LuggageChecks(6, (24 * 60) / 6300.0, 1);
         CheckInDesksTarget checkInDesksTarget = new CheckInDesksTarget("CHECK_IN_TARGET", 10, 3, 10);
-        CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers();
-        BoardingPassScanners boardingPassScanners = new BoardingPassScanners();
-        SecurityChecks securityChecks = new SecurityChecks("SECURITY_CHECKS", 1.8, 8, 52);
+        CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers(19, 3, 10, 12);
+        BoardingPassScanners boardingPassScanners = new BoardingPassScanners("BOARDING_PASS_SCANNERS", 0.3, 3, 50);
+        SecurityChecks securityChecks = new SecurityChecks("SECURITY_CHECKS", 0.9, 8, 52);
         PassportChecks passportChecks = new PassportChecks("PASSPORT_CHECK", 5, 24, 57);
         StampsCheck stampsCheck = new StampsCheck(0.1);
         Boarding boarding = new Boarding("BOARDING", 4, 2, 63);
@@ -56,14 +56,14 @@ public class BasicSimulationRunner {
             //Msq initialization
             MsqTime msqTime = new MsqTime();
             msqTime.current = START;
-            List<MsqEvent> events = new ArrayList<>();
+            EventQueue queue = new EventQueue();
 
             // Initialize LuggageChecks
             luggageChecks.reset(rngs, sarrival);
 
             //generating first arrival
             double time = luggageChecks.getArrival();
-            events.add(new MsqEvent(time, true, EventType.ARRIVAL_LUGGAGE_CHECK));
+            queue.add(new MsqEvent(EventType.ARRIVAL_LUGGAGE_CHECK, time));
 
             // Initialize other centers
             checkInDesksTarget.reset(rngs);
@@ -81,13 +81,13 @@ public class BasicSimulationRunner {
             // need to use OR because both the conditions should be false
             while (!luggageChecks.isEndOfArrivals() || number != 0) {
                 // TODO: getNextEvent dovrebbe rimuovere l'evento dalla lista
-                event = getNextEvent(events);
+                event = queue.pop();
                 msqTime.next = event.time;
 
                 // Updating the areas
                 luggageChecks.setArea(msqTime);
                 checkInDesksTarget.setArea(msqTime);
-                checkInDesksOthers.setArea(msqTime);
+                checkInDesksOthers.updateArea(msqTime);
                 boardingPassScanners.setArea(msqTime);
                 securityChecks.setArea(msqTime);
                 passportChecks.setArea(msqTime);
@@ -100,52 +100,52 @@ public class BasicSimulationRunner {
                 // Processing the event based on its type
                 switch (event.type) {
                     case ARRIVAL_LUGGAGE_CHECK:
-                        luggageChecks.processArrival(event, msqTime, events);
+                        luggageChecks.processArrival(event, msqTime, queue);
                         break;
                     case LUGGAGE_CHECK_DONE:
-                        luggageChecks.processCompletion(event, msqTime, events);
+                        luggageChecks.processCompletion(event, msqTime, queue);
                         break;
                     case ARRIVAL_CHECK_IN_TARGET:
-                        checkInDesksTarget.processArrival(event, msqTime, events);
+                        checkInDesksTarget.processArrival(event, msqTime, queue);
                         break;
                     case CHECK_IN_TARGET_DONE:
-                        checkInDesksTarget.processCompletion(event, msqTime, events);
+                        checkInDesksTarget.processCompletion(event, msqTime, queue);
                         break;
                     case ARRIVAL_CHECK_IN_OTHERS:
-                        checkInDesksOthers.processArrival(event, msqTime, events);
+                        checkInDesksOthers.processArrival(event, msqTime, queue);
                         break;
                     case CHECK_IN_OTHERS_DONE:
-                        checkInDesksOthers.processCompletion(event, msqTime, events);
+                        checkInDesksOthers.processCompletion(event, msqTime, queue);
                         break;
                     case ARRIVAL_BOARDING_PASS_SCANNERS:
-                        boardingPassScanners.processArrival(event, msqTime, events);
+                        boardingPassScanners.processArrival(event, msqTime, queue);
                         break;
                     case BOARDING_PASS_SCANNERS_DONE:
-                        boardingPassScanners.processCompletion(event, msqTime, events);
+                        boardingPassScanners.processCompletion(event, msqTime, queue);
                         break;
                     case ARRIVAL_SECURITY_CHECK:
-                        securityChecks.processArrival(event, msqTime, events);
+                        securityChecks.processArrival(event, msqTime, queue);
                         break;
                     case SECURITY_CHECK_DONE:
-                        securityChecks.processCompletion(event, msqTime, events);
+                        securityChecks.processCompletion(event, msqTime, queue);
                         break;
                     case ARRIVAL_PASSPORT_CHECK:
-                        passportChecks.processArrival(event, msqTime, events);
+                        passportChecks.processArrival(event, msqTime, queue);
                         break;
                     case PASSPORT_CHECK_DONE:
-                        passportChecks.processCompletion(event, msqTime, events);
+                        passportChecks.processCompletion(event, msqTime, queue);
                         break;
                     case ARRIVAL_STAMP_CHECK:
-                        stampsCheck.processArrival(event, msqTime, events);
+                        stampsCheck.processArrival(event, msqTime, queue);
                         break;
                     case STAMP_CHECK_DONE:
-                        stampsCheck.processCompletion(event, msqTime, events);
+                        stampsCheck.processCompletion(event, msqTime, queue);
                         break;
                     case ARRIVAL_BOARDING:
-                        boarding.processArrival(event, msqTime, events);
+                        boarding.processArrival(event, msqTime, queue);
                         break;
                     case BOARDING_DONE:
-                        boarding.processCompletion(event, msqTime, events);
+                        boarding.processCompletion(event, msqTime, queue);
                         break;
                 }
 

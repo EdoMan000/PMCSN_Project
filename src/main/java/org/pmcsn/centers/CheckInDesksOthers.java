@@ -1,7 +1,6 @@
 package org.pmcsn.centers;
 
 import org.pmcsn.libraries.Rngs;
-import org.pmcsn.libraries.Rvgs;
 import org.pmcsn.model.*;
 
 import java.util.*;
@@ -11,53 +10,44 @@ import static org.pmcsn.utils.Distributions.*;
 import static org.pmcsn.utils.Probabilities.getCheckInDesks;
 
 public class CheckInDesksOthers {
-
     Rngs rngs;
     CheckInDesksSingleFlight[] checkInDesksSingleFlights;
     public int numberOfCenters;
-    int CENTER_INDEX = 12;
 
-    public CheckInDesksOthers() {
-        this.checkInDesksSingleFlights = new CheckInDesksSingleFlight[19];
+    public CheckInDesksOthers(int nodesNumber, int serversNumber, double meanServiceTime, int centerIndex) {
+        this.checkInDesksSingleFlights = new CheckInDesksSingleFlight[nodesNumber];
         for (int i = 0; i < checkInDesksSingleFlights.length; i++) {
-            checkInDesksSingleFlights[i] = new CheckInDesksSingleFlight("CHECK_IN_OTHERS",10, 3, CENTER_INDEX + (2 * i) , i + 1);
+            checkInDesksSingleFlights[i] = new CheckInDesksSingleFlight("CHECK_IN_OTHERS", meanServiceTime, serversNumber, centerIndex + (2 * i), i + 1);
         }
         this.numberOfCenters = checkInDesksSingleFlights.length;
     }
 
     public void reset(Rngs rngs) {
         this.rngs = rngs;
-        for (int i = 0; i < checkInDesksSingleFlights.length; i++) {
-            checkInDesksSingleFlights[i].reset(rngs);
+        for (CheckInDesksSingleFlight checkInDesksSingleFlight : checkInDesksSingleFlights) {
+            checkInDesksSingleFlight.reset(rngs);
         }
     }
 
-    public void processArrival(MsqEvent arrival, MsqTime time, List<MsqEvent> events) {
+    public void processArrival(MsqEvent arrival, MsqTime time, EventQueue queue) {
         int index = getCheckInDesks(rngs, 11); //TODO sameStreamIndex here???
         if (index < 1 || index > checkInDesksSingleFlights.length) {
             throw new IllegalArgumentException("Invalid centerID: " + index);
         }
-        checkInDesksSingleFlights[index - 1].processArrival(arrival, time, events);
+        checkInDesksSingleFlights[index - 1].processArrival(arrival, time, queue);
     }
 
 
-    public void processCompletion(MsqEvent completion, MsqTime time, List<MsqEvent> events) {
-        int index = completion.centerID;
+    public void processCompletion(MsqEvent completion, MsqTime time, EventQueue queue) {
+        int index = completion.nodeId;
         if (index < 1 || index > checkInDesksSingleFlights.length) {
             throw new IllegalArgumentException("Invalid centerID: " + index);
         }
-        checkInDesksSingleFlights[index - 1].processCompletion(completion, time, events);
+        checkInDesksSingleFlights[index - 1].processCompletion(completion, time, queue);
     }
 
     public long getNumberOfJobsInNode() {
-
-        int numberOfJobsInNode = 0;
-
-        for(int index=1; index<=checkInDesksSingleFlights.length; index++){
-            numberOfJobsInNode += checkInDesksSingleFlights[index-1].numberOfJobsInNode;
-        }
-
-        return numberOfJobsInNode;
+        return Arrays.stream(checkInDesksSingleFlights).mapToLong(Multiserver::getNumberOfJobsInNode).sum();
     }
 
     public void resetBatch(int center ) {
@@ -65,8 +55,8 @@ public class CheckInDesksOthers {
 
     }
 
-    public int getJobsServed(int center){
-        return (int) checkInDesksSingleFlights[center].getCompletions();
+    public long getJobsServed(int center){
+        return checkInDesksSingleFlights[center].getCompletions();
     }
 
     public int getBatchIndex(int center){
@@ -88,15 +78,15 @@ public class CheckInDesksOthers {
         return minBatchIndex;
     }
 
-    public void setArea(MsqTime time){
+    public void updateArea(MsqTime time){
         for(CheckInDesksSingleFlight singleFlight : checkInDesksSingleFlights){
             singleFlight.updateArea(time.next - time.current);
         }
     }
 
     public void saveStats() {
-        for(int index=1; index<=checkInDesksSingleFlights.length; index++){
-            checkInDesksSingleFlights[index-1].saveStats();
+        for (CheckInDesksSingleFlight c : checkInDesksSingleFlights){
+            c.saveStats();
         }
     }
 
@@ -105,25 +95,24 @@ public class CheckInDesksOthers {
     }
 
     public void writeStats(String simulationType){
-        for(int index=1; index<=checkInDesksSingleFlights.length; index++){
-            checkInDesksSingleFlights[index-1].writeStats(simulationType);
+        for (CheckInDesksSingleFlight c : checkInDesksSingleFlights){
+            c.writeStats(simulationType);
         }
     }
 
-
     public Statistics.MeanStatistics getMeanStatistics(){
         List<Double> meanResponseTimeList = new ArrayList<>();
-        List<Double> meanServiceTimeList = new ArrayList<Double>();
-        List<Double> meanQueueTimeList = new ArrayList<Double>();
-        List<Double> lambdaList = new ArrayList<Double>();
-        List<Double> meanSystemPopulationList = new ArrayList<Double>();
-        List<Double> meanUtilizationList = new ArrayList<Double>();
-        List<Double> meanQueuePopulationList = new ArrayList<Double>();
+        List<Double> meanServiceTimeList = new ArrayList<>();
+        List<Double> meanQueueTimeList = new ArrayList<>();
+        List<Double> lambdaList = new ArrayList<>();
+        List<Double> meanSystemPopulationList = new ArrayList<>();
+        List<Double> meanUtilizationList = new ArrayList<>();
+        List<Double> meanQueuePopulationList = new ArrayList<>();
         Statistics.MeanStatistics ms;
 
         // obtaining the mean for all centers
-        for(int index=1; index<=checkInDesksSingleFlights.length; index++){
-            ms = checkInDesksSingleFlights[index-1].getMeanStatistics();
+        for(CheckInDesksSingleFlight c : checkInDesksSingleFlights){
+            ms = c.getMeanStatistics();
             meanResponseTimeList.add(ms.meanResponseTime);
             meanServiceTimeList.add(ms.meanServiceTime);
             meanQueueTimeList.add(ms.meanQueueTime);
@@ -132,7 +121,6 @@ public class CheckInDesksOthers {
             meanUtilizationList.add(ms.meanUtilization);
             meanQueuePopulationList.add(ms.meanQueuePopulation);
         }
-
         double meanResponseTime = computeMean(meanResponseTimeList);
         double meanServiceTime = computeMean(meanServiceTimeList);
         double meanQueueTime = computeMean(meanQueueTimeList);
@@ -140,63 +128,36 @@ public class CheckInDesksOthers {
         double meanSystemPopulation = computeMean(meanSystemPopulationList);
         double meanUtilization = computeMean(meanUtilizationList);
         double meanQueuePopulation = computeMean(meanQueuePopulationList);
-
         return new Statistics.MeanStatistics("CHECK-IN OTHERS", meanResponseTime, meanServiceTime, meanQueueTime, lambda, meanSystemPopulation, meanUtilization, meanQueuePopulation);
-
     }
 
+    private static class CheckInDesksSingleFlight extends Multiserver {
+        private final int nodeId;
 
-    private class CheckInDesksSingleFlight extends Multiserver{
-
-
-        public CheckInDesksSingleFlight(String name, double meanServiceTime, int numOfServers, int centerIndex, int centerID) {
-            super(name + centerID, meanServiceTime, numOfServers, centerIndex);
-            this.centerID = centerID;
+        public CheckInDesksSingleFlight(String name, double meanServiceTime, int numOfServers, int centerIndex, int nodeId) {
+            super(name + nodeId, meanServiceTime, numOfServers, centerIndex);
+            this.nodeId = nodeId;
         }
-
-        private int centerID;
 
         public long getCompletions() {
-            long numberOfJobsServed = 0;
-            for(int i=0; i<SERVERS ; i++){
-                numberOfJobsServed += sum[i].served;
-            };
-            return numberOfJobsServed;
+            return Arrays.stream(sum).mapToLong(s -> s.served).sum();
         }
 
-        public void spawnNextCenterEvent(MsqTime time, List<MsqEvent> events) {
-            MsqEvent next_center_event = new MsqEvent(time.current, true, EventType.ARRIVAL_BOARDING_PASS_SCANNERS, 0);
-            events.add(next_center_event);
-            events.sort(Comparator.comparing(MsqEvent::getTime));
+        @Override
+        public void spawnNextCenterEvent(MsqTime time, EventQueue queue) {
+            MsqEvent event = new MsqEvent(EventType.ARRIVAL_BOARDING_PASS_SCANNERS, time.current);
+            queue.add(event);
         }
 
-        public void spawnCompletionEvent(MsqTime time, List<MsqEvent> events, int serverId) {
-
+        public void spawnCompletionEvent(MsqTime time, EventQueue queue, int serverId) {
             double service = getService(CENTER_INDEX+1);
-
-            //generate a new completion event
-            MsqEvent event = new MsqEvent(time.current + service, true, EventType.CHECK_IN_OTHERS_DONE, serverId, centerID);
-            // TODO: inizializzare in costruttore
-            event.service = service;
-            events.add(event);
-            events.sort(Comparator.comparing(MsqEvent::getTime));
+            MsqEvent event = new MsqEvent(EventType.CHECK_IN_OTHERS_DONE, time.current + service, service, serverId, nodeId);
+            queue.add(event);
         }
 
-
-        public double getService(int streamIndex)
-            /* --------------------------------------------
-             * generate the next service time with rate 2/3
-             * --------------------------------------------
-             */
-        {
+        public double getService(int streamIndex) {
             rngs.selectStream(streamIndex);
-
-            rngs.selectStream(streamIndex);
-            // mean time 10 min
-            // std dev 2 min (20% since it has low variability)
-            //return (logNormal(10, 2, rngs));
-            return exponential(10, rngs);
+            return exponential(meanServiceTime, rngs);
         }
-
     }
 }

@@ -2,6 +2,7 @@ package org.pmcsn.controller;
 
 
 import org.pmcsn.centers.*;
+import org.pmcsn.model.EventQueue;
 import org.pmcsn.utils.Verification.Result;
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.EventType;
@@ -14,7 +15,6 @@ import java.util.List;
 
 import static org.pmcsn.utils.Verification.modelVerification;
 import static org.pmcsn.utils.Comparison.compareResults;
-import static org.pmcsn.utils.EventUtils.getNextEvent;
 
 public class BatchSimulationRunner {
     /*  STATISTICS OF INTEREST :
@@ -36,7 +36,7 @@ public class BatchSimulationRunner {
     private static final int BATCH_SIZE = 10000; // Number of jobs in single batch (B)
     private static final int NUM_BATCHES = 100; // Number of batches (K)
 
-    public void runBatchSimulation() {
+    public void runBatchSimulation() throws Exception {
         System.out.println("\nRunning Batch Simulation...");
 
         // Rng setting the seed
@@ -44,19 +44,19 @@ public class BatchSimulationRunner {
         rngs.plantSeeds(SEED);
 
         // Declare variables for centers
-        LuggageChecks luggageChecks = new LuggageChecks(6, (24 * 60) / 3600.0, 1.4);
+        LuggageChecks luggageChecks = new LuggageChecks(6, (24 * 60) / 6300.0, 1);
         CheckInDesksTarget checkInDesksTarget = new CheckInDesksTarget("CHECK_IN_TARGET", 10, 3, 10);
-        CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers();
-        BoardingPassScanners boardingPassScanners = new BoardingPassScanners();
+        CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers(19, 3, 10, 12);
+        BoardingPassScanners boardingPassScanners = new BoardingPassScanners("BOARDING_PASS_SCANNERS", 0.3, 3, 50);
         SecurityChecks securityChecks = new SecurityChecks("SECURITY_CHECKS", 1.8, 8, 52);
-        PassportChecks passportChecks = new PassportChecks("PASSPORT_CHECKS", 5, 24, 57);
+        PassportChecks passportChecks = new PassportChecks("PASSPORT_CHECK", 5, 24, 57);
         StampsCheck stampsCheck = new StampsCheck(0.1);
         Boarding boarding = new Boarding("BOARDING", 4, 2, 63);
 
         // Initialize MsqTime
         MsqTime msqTime = new MsqTime();
         msqTime.current = START;
-        List<MsqEvent> events = new ArrayList<>();
+        EventQueue events = new EventQueue();
 
         // Initialize LuggageChecks
         luggageChecks.reset(rngs, START);
@@ -64,7 +64,7 @@ public class BatchSimulationRunner {
 
         // Generate the first arrival
         double time = luggageChecks.getArrival();
-        events.add(new MsqEvent(time, true, EventType.ARRIVAL_LUGGAGE_CHECK));
+        events.add(new MsqEvent(EventType.ARRIVAL_LUGGAGE_CHECK, time));
 
         // Initialize other centers
         checkInDesksTarget.reset(rngs);
@@ -81,13 +81,13 @@ public class BatchSimulationRunner {
         //while (!luggageChecks.isEndOfArrivals()) {
         while (!(luggageChecks.getTotalNumberOfJobsServed() > BATCH_SIZE*NUM_BATCHES)) {
 
-            event = getNextEvent(events);
+            event = events.pop();
             msqTime.next = event.time;
 
             // Updating the areas
             luggageChecks.setArea(msqTime);
             checkInDesksTarget.setArea(msqTime);
-            checkInDesksOthers.setArea(msqTime);
+            checkInDesksOthers.updateArea(msqTime);
             boardingPassScanners.setArea(msqTime);
             securityChecks.setArea(msqTime);
             passportChecks.setArea(msqTime);

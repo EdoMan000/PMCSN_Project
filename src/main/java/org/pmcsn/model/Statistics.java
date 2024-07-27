@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Statistics {
@@ -98,14 +99,10 @@ public class Statistics {
         System.out.println(YELLOW + "*************************************************" + RESET);
     }
 
-    public void saveStats(Area area, MsqSum[] sum, double lastArrivalTime, double lastCompletionTime) {
-        long numberOfJobsServed = 0;
-        for (MsqSum msqSum : sum) {
-            numberOfJobsServed += msqSum.served;
-        }
-
+    // Si utilizza per server singolo
+    public void saveStats(Area area, MsqSum sum, double lastArrivalTime, double lastCompletionTime) {
         // inter-arrival
-        double lambda = numberOfJobsServed / lastArrivalTime;
+        double lambda = sum.served / lastArrivalTime;
         lambdaList.add(lambda);
         // mean system population (E[Ns])
         double meanNodePopulation = area.getNodeArea() / lastCompletionTime;
@@ -123,7 +120,39 @@ public class Statistics {
         double utilization = area.getServiceArea() / lastCompletionTime;
         meanUtilizationList.add(utilization);
         // mean service time (E[s])
-        meanServiceTimeList.add(area.getServiceArea() / numberOfJobsServed);
+        meanServiceTimeList.add(area.getServiceArea() / sum.served);
+    }
+
+    // Per mmk
+    public void saveStats(Area area, MsqSum[] sum, double lastArrivalTime, double lastCompletionTime) {
+        long numberOfJobsServed = Arrays.stream(sum).mapToLong(s -> s.served).sum();
+        // inter-arrival
+        double lambda = numberOfJobsServed / lastArrivalTime;
+        lambdaList.add(lambda);
+        // mean system population (E[Ns])
+        double meanNodePopulation = area.getNodeArea() / lastCompletionTime;
+        meanSystemPopulationList.add(meanNodePopulation);
+        // mean response time (E[Ts])
+        double meanResponseTime = meanNodePopulation / lambda;
+        meanResponseTimeList.add(meanResponseTime);
+        // mean queue population (E[Nq])
+        double meanQueuePopulation = area.getQueueArea() / lastCompletionTime;
+        meanQueuePopulationList.add(meanQueuePopulation);
+        // mean wait time (E[Tq])
+        double meanQueueTime = meanQueuePopulation / lambda;
+        meanQueueTimeList.add(meanQueueTime);
+        double meanServiceTime = 0.0;
+        int usedServers = 0;
+        for (MsqSum s : sum) {
+            if (s.served > 0) {
+                meanServiceTime += s.service / s.served;
+                usedServers++;
+            }
+        }
+        meanServiceTime /= usedServers;
+        meanServiceTimeList.add(meanServiceTime);
+        double utilization = (lambda * meanServiceTime)/sum.length;
+        meanUtilizationList.add(utilization);
     }
 
 
