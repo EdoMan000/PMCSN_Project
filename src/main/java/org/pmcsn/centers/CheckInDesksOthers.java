@@ -104,16 +104,6 @@ public class CheckInDesksOthers {
         }
     }
 
-    public void saveOneBatchStats(){
-        for (CheckInDesksSingleFlight center : checkInDesksSingleFlights) {
-            center.saveOneBatchStats();
-        }
-    }
-
-    public long getTotalNumberOfJobsServed() {
-        return Arrays.stream(checkInDesksSingleFlights).mapToLong(CheckInDesksSingleFlight::getCompletions).sum();
-    }
-
     public void saveStats(int center) {
         checkInDesksSingleFlights[center].saveStats();
     }

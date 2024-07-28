@@ -19,7 +19,6 @@ public abstract class Multiserver {
     protected String centerName;
     protected boolean approximateServiceAsExponential;
     protected Rngs rngs;
-    public int alreadySaved = 0;
 
     protected MsqSum[] sum;
     protected MsqServer[] servers;
@@ -83,10 +82,6 @@ public abstract class Multiserver {
             numberOfJobsServed += sum[i].served;
         };
         return numberOfJobsServed;
-    }
-
-    public long getTotalNumberOfJobsServed() {
-        return Arrays.stream(sum).mapToLong(s -> s.served).sum();
     }
 
     public Statistics getStatistics(){
@@ -156,11 +151,6 @@ public abstract class Multiserver {
         batchIndex++;
         statistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime, true);
     }
-
-    public void saveOneBatchStats(){
-        statistics.saveOneBatchStats();
-    }
-
     public void writeStats(String simulationType){
         statistics.writeStats(simulationType);
     }

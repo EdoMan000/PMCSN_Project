@@ -25,7 +25,8 @@ public class BatchSimulationRunner {
 
 
     private int BATCH_SIZE_B = 128; // Number of jobs in single batch (B)
-    private int NUM_BATCHES_K = 32; // Number of batches (K)
+    private int NUM_BATCHES_K = 1024; // Number of batches (K)
+    private int WARMUP_THRESHOLD = 45;
 
     public BatchSimulationRunner() {}
 
@@ -82,6 +83,8 @@ public class BatchSimulationRunner {
         long number = 1;
         MsqEvent event;
         long alreadySaved = 0;
+        int numberOfCurrentBatch = 0;
+
         //while (!luggageChecks.isEndOfArrivals()) {
         while (!(luggageChecks.getTotalNumberOfJobsServed() > BATCH_SIZE_B * NUM_BATCHES_K)) {
 
@@ -156,34 +159,27 @@ public class BatchSimulationRunner {
             number = luggageChecks.getNumberOfJobsInNode() + checkInDesksTarget.getNumberOfJobsInNode() + checkInDesksOthers.getNumberOfJobsInNode() + boarding.getNumberOfJobsInNode()
                     + boardingPassScanners.getNumberOfJobsInNode() + securityChecks.getNumberOfJobsInNode() + passportChecks.getNumberOfJobsInNode() + stampsCheck.getNumberOfJobsInNode() + boarding.getNumberOfJobsInNode();
 
-            // Saving statistics for current batch
-            //TODO condizione di scarto (forse?) (es: non contare primi 20/30 batch)
-            long totJobs = luggageChecks.getTotalNumberOfJobsServed();
 
+            long totJobs = luggageChecks.getTotalNumberOfJobsServed();
             // still in the middle of a batch, need to save statistics
-            if((totJobs - alreadySaved) != BATCH_SIZE_B) {
-                luggageChecks.saveStats();
-                checkInDesksTarget.saveStats();
-                checkInDesksOthers.saveStats();
-                boardingPassScanners.saveStats();
-                securityChecks.saveStats();
-                passportChecks.saveStats();
-                stampsCheck.saveStats();
-                boarding.saveStats();
-            } else {
+            if((totJobs - alreadySaved) == BATCH_SIZE_B){
                 // keeping track of the fact that a batch has already been processed
                 alreadySaved += BATCH_SIZE_B;
-                System.out.println(totJobs);
-                //one batch has ended, time to save the statistics for one batch
-                luggageChecks.saveOneBatchStats();
-                checkInDesksTarget.saveOneBatchStats();
-                checkInDesksOthers.saveOneBatchStats();
-                boardingPassScanners.saveOneBatchStats();
-                securityChecks.saveOneBatchStats();
-                passportChecks.saveOneBatchStats();
-                stampsCheck.saveOneBatchStats();
-                boarding.saveOneBatchStats();
+                numberOfCurrentBatch++;
+
+                // saving the statistics of the batch only after the warm-up time period
+                if(numberOfCurrentBatch >= WARMUP_THRESHOLD){
+                    luggageChecks.saveStats();
+                    checkInDesksTarget.saveStats();
+                    checkInDesksOthers.saveStats();
+                    boardingPassScanners.saveStats();
+                    securityChecks.saveStats();
+                    passportChecks.saveStats();
+                    stampsCheck.saveStats();
+                    boarding.saveStats();
+                }
             }
+
         }
 
         String SIMULATION_TYPE;

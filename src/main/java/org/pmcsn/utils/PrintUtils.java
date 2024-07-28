@@ -3,6 +3,7 @@ package org.pmcsn.utils;
 import org.pmcsn.centers.*;
 import org.pmcsn.model.MsqSum;
 
+import java.util.List;
 import java.util.Scanner;
 
 public class PrintUtils {
@@ -67,6 +68,22 @@ public class PrintUtils {
             System.out.println(s);
         }
         System.out.println(YELLOW + "*************************************************" + RESET);
+    }
+
+    public static String formatList(List<Double> list) {
+        if (list.isEmpty()) {
+            return "[]";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        for (int i = 0; i < list.size(); i++) {
+            sb.append(list.get(i));
+            if (i < list.size() - 1) {
+                sb.append(", ");
+            }
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
     public static void printResult(Verification.Result result) {

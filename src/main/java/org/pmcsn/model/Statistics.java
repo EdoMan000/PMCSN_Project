@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.pmcsn.utils.PrintUtils.formatList;
 import static org.pmcsn.utils.StatisticsUtils.computeMean;
 import static org.pmcsn.utils.StatisticsUtils.computeConfidenceInterval;
 
@@ -72,9 +73,15 @@ public class Statistics {
             this.meanQueuePopulation = meanQueuePopulation;
         }
 
-
-        public void setCenterName(String centerName) {
-            this.centerName = centerName;
+        public void  printMeanStatistics(){
+            System.out.println("Center Name: " + centerName);
+            System.out.println("Mean Response Time: " + meanResponseTime);
+            System.out.println("Mean Service Time: " + meanServiceTime);
+            System.out.println("Mean Queue Time: " + meanQueueTime);
+            System.out.println("Lambda: " + lambda);
+            System.out.println("Mean System Population: " + meanSystemPopulation);
+            System.out.println("Mean Utilization: " + meanUtilization);
+            System.out.println("Mean Queue Population: " + meanQueuePopulation);
         }
     }
 
@@ -130,33 +137,7 @@ public class Statistics {
 
     }
 
-    public void saveOneBatchStats(){
 
-        // obtaining the mean of the current batch
-        MeanStatistics ms =  getMeanStatistics();
-
-        lambdaListBatch.add(ms.lambda);
-        meanSystemPopulationListBatch.add(ms.meanSystemPopulation);
-        meanResponseTimeListBatch.add(ms.meanResponseTime);
-        meanQueuePopulationListBatch.add(ms.meanQueuePopulation);
-        meanQueueTimeListBatch.add(ms.meanQueueTime);
-        meanServiceTimeListBatch.add(ms.meanServiceTime);
-        meanUtilizationListBatch.add(ms.meanUtilization);
-
-        //clearing the lists so in the next batch they will be empty
-        reset();
-
-    }
-
-    private void reset(){
-        meanResponseTimeList.clear();
-        meanServiceTimeList.clear();
-        meanQueueTimeList.clear();
-        lambdaList.clear();
-        meanSystemPopulationList.clear();
-        meanUtilizationList.clear();
-        meanQueuePopulationList.clear();
-    }
 
     public void writeStats(String simulationType) {
         File file = new File("csvFiles/"+simulationType+"/results/" );
@@ -170,37 +151,20 @@ public class Statistics {
             String DELIMITER = "\n";
             String COMMA = ",";
             int run;
+            String name = simulationType.contains("BATCH")? "#Batch": "#Run";
 
-            if(simulationType.contains("BATCH")) {
-                fileWriter.append("#Batch, E[Ts], E[Tq], E[s], E[Ns], E[Nq], ρ, λ").append(DELIMITER);
+            fileWriter.append(name).append(", E[Ts], E[Tq], E[s], E[Ns], E[Nq], ρ, λ").append(DELIMITER);
 
-                for (run = 0; run < meanResponseTimeListBatch.size(); run++) {
-                    fileWriter.append(String.valueOf(run + 1)).append(COMMA)
-                            .append(String.valueOf(meanResponseTimeListBatch.get(run))).append(COMMA)
-                            .append(String.valueOf(meanQueueTimeListBatch.get(run))).append(COMMA)
-                            .append(String.valueOf(meanServiceTimeListBatch.get(run))).append(COMMA)
-                            .append(String.valueOf(meanSystemPopulationListBatch.get(run))).append(COMMA)
-                            .append(String.valueOf(meanQueueTimeListBatch.get(run))).append(COMMA)
-                            .append(String.valueOf(meanUtilizationListBatch.get(run))).append(COMMA)
-                            .append(String.valueOf(lambdaListBatch.get(run))).append(DELIMITER);
-                }
+            for (run = 0; run < meanResponseTimeList.size(); run++) {
 
-
-            } else {
-
-                fileWriter.append("#Run, E[Ts], E[Tq], E[s], E[Ns], E[Nq], ρ, λ").append(DELIMITER);
-
-                for (run = 0; run < meanResponseTimeList.size(); run++) {
-
-                    fileWriter.append(String.valueOf(run + 1)).append(COMMA)
-                            .append(String.valueOf(meanResponseTimeList.get(run))).append(COMMA)
-                            .append(String.valueOf(meanQueueTimeList.get(run))).append(COMMA)
-                            .append(String.valueOf(meanServiceTimeList.get(run))).append(COMMA)
-                            .append(String.valueOf(meanSystemPopulationList.get(run))).append(COMMA)
-                            .append(String.valueOf(meanQueueTimeList.get(run))).append(COMMA)
-                            .append(String.valueOf(meanUtilizationList.get(run))).append(COMMA)
-                            .append(String.valueOf(lambdaList.get(run))).append(DELIMITER);
-                }
+                fileWriter.append(String.valueOf(run + 1)).append(COMMA)
+                        .append(String.valueOf(meanResponseTimeList.get(run))).append(COMMA)
+                        .append(String.valueOf(meanQueueTimeList.get(run))).append(COMMA)
+                        .append(String.valueOf(meanServiceTimeList.get(run))).append(COMMA)
+                        .append(String.valueOf(meanSystemPopulationList.get(run))).append(COMMA)
+                        .append(String.valueOf(meanQueueTimeList.get(run))).append(COMMA)
+                        .append(String.valueOf(meanUtilizationList.get(run))).append(COMMA)
+                        .append(String.valueOf(lambdaList.get(run))).append(DELIMITER);
             }
 
 
@@ -241,5 +205,15 @@ public class Statistics {
         } catch (IOException e) {
             //ignore
         }
+    }
+
+    public void printLists() {
+        System.out.println("Mean Response Time List: " + formatList(meanResponseTimeList));
+        System.out.println("Mean Service Time List: " + formatList(meanServiceTimeList));
+        System.out.println("Mean Queue Time List: " + formatList(meanQueueTimeList));
+        System.out.println("Lambda List: " + formatList(lambdaList));
+        System.out.println("Mean System Population List: " + formatList(meanSystemPopulationList));
+        System.out.println("Mean Utilization List: " + formatList(meanUtilizationList));
+        System.out.println("Mean Queue Population List: " + formatList(meanQueuePopulationList));
     }
 }
