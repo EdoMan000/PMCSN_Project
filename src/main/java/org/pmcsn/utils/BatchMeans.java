@@ -13,8 +13,8 @@ public class BatchMeans {
 
     public static void main(String[] args) throws Exception {
 
-        int numBatch_k = 4096;
-        int batchSize_K = 64;
+        int numBatch_k = 10000;
+        int batchSize_K = 256;
 
         BatchSimulationRunner batchRunner = new BatchSimulationRunner(numBatch_k, batchSize_K);
 
@@ -94,8 +94,7 @@ public class BatchMeans {
 //        for (j = 1; j < SIZE; j++)
 //            System.out.println("  " + j + "          " + g.format(cosum[j] / cosum[0]));
 
-        // TODO: non ho capito se l'autocorrelazione deve essere solo del LAG 1?????????????????
-        System.out.println("  j (lag)   r[j] (autocorrelation)");
+        System.out.println("  LAG    autocorrelation");
         System.out.println("  " + j + "          " + g.format(cosum[1] / cosum[0]));
     }
 
