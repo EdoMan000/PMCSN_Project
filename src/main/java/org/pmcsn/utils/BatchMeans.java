@@ -13,17 +13,18 @@ public class BatchMeans {
 
     public static void main(String[] args) throws Exception {
 
-        int numBatch_k = 32;
+        int numBatch_k = 4096;
+        int batchSize_K = 64;
 
-        BatchSimulationRunner batchRunner = new BatchSimulationRunner(numBatch_k, 64);
+        BatchSimulationRunner batchRunner = new BatchSimulationRunner(numBatch_k, batchSize_K);
 
         List<Statistics> statisticsList = batchRunner.runBatchSimulation(true);
 
         for (Statistics statistics : statisticsList) {
 
-            computeAutocorrelation(statistics.meanResponseTimeListBatch, numBatch_k, statistics.centerName, "E[Ts]");
-            computeAutocorrelation(statistics.meanQueueTimeListBatch, numBatch_k, statistics.centerName, "E[Tq]");
-            computeAutocorrelation(statistics.meanServiceTimeListBatch, numBatch_k, statistics.centerName, "E[s]");
+            computeAutocorrelation(statistics.meanResponseTimeList, numBatch_k, statistics.centerName, "E[Ts]");
+            computeAutocorrelation(statistics.meanQueueTimeList, numBatch_k, statistics.centerName, "E[Tq]");
+            computeAutocorrelation(statistics.meanServiceTimeList, numBatch_k, statistics.centerName, "E[s]");
 
         }
 
@@ -44,14 +45,16 @@ public class BatchMeans {
         for (j = 0; j < SIZE; j++)
             cosum[j] = 0.0;
 
-
-        while(i < SIZE-1) {
-            for (double x : values) {   /* the first K + 1 data values initialize the hold array with */
+        /* initialize the hold array with the first K + 1 data values */
+        for (double x : values) {
+            while (i < SIZE - 1) {
                 sum += x;
                 hold[i] = x;
+                ;
                 i++;
             }
         }
+
 
         /* x is the current x[i] data point */
         for (double x : values) {
@@ -77,16 +80,23 @@ public class BatchMeans {
         for (j = 0; j <= K; j++)
             cosum[j] = (cosum[j] / (n - j)) - (mean * mean);
 
-        DecimalFormat f = new DecimalFormat("###0.00");
-        DecimalFormat g = new DecimalFormat("###0.000");
+        System.out.println("------------------------------------------------------");
+        System.out.println("            "+centerName+"     "+metrics+"            ");
+        System.out.println("------------------------------------------------------");
+        System.out.println("for " + n + " data points");
 
-        System.out.println("for " + n + " data points");
-        System.out.println("for " + n + " data points");
-        System.out.println("the mean is ... " + f.format(mean));
-        System.out.println("the stdev is .. " + f.format(Math.sqrt(cosum[0])) +"\n");
+//        DecimalFormat f = new DecimalFormat("###0.00");
+        DecimalFormat g = new DecimalFormat("###0.000");
+//        System.out.println("for " + n + " data points");
+//        System.out.println("the mean is ... " + f.format(mean));
+//        System.out.println("the stdev is .. " + f.format(Math.sqrt(cosum[0])) +"\n");
+//        System.out.println("  j (lag)   r[j] (autocorrelation)");
+//        for (j = 1; j < SIZE; j++)
+//            System.out.println("  " + j + "          " + g.format(cosum[j] / cosum[0]));
+
+        // TODO: non ho capito se l'autocorrelazione deve essere solo del LAG 1?????????????????
         System.out.println("  j (lag)   r[j] (autocorrelation)");
-        for (j = 1; j < SIZE; j++)
-            System.out.println("  " + j + "          " + g.format(cosum[j] / cosum[0]));
+        System.out.println("  " + j + "          " + g.format(cosum[1] / cosum[0]));
     }
 
 }

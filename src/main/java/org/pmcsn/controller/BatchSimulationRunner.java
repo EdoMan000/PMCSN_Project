@@ -26,7 +26,7 @@ public class BatchSimulationRunner {
 
     private int BATCH_SIZE_B = 128; // Number of jobs in single batch (B)
     private int NUM_BATCHES_K = 1024; // Number of batches (K)
-    private int WARMUP_THRESHOLD = 45;
+    private int WARMUP_THRESHOLD = 45; // L'ho visto empiricamente perchè fino al batch 45 il boarding aveva infinity tra le statistiche
 
     public BatchSimulationRunner() {}
 

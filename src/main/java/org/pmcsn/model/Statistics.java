@@ -31,15 +31,6 @@ public class Statistics {
     public List<Double> meanUtilizationList = new ArrayList<Double>();
     public List<Double> meanQueuePopulationList = new ArrayList<Double>();
 
-
-    public List<Double> meanResponseTimeListBatch = new ArrayList<Double>();
-    public List<Double> meanServiceTimeListBatch = new ArrayList<Double>();
-    public List<Double> meanQueueTimeListBatch = new ArrayList<Double>();
-    public List<Double> lambdaListBatch = new ArrayList<Double>();
-    public List<Double> meanSystemPopulationListBatch = new ArrayList<Double>();
-    public List<Double> meanUtilizationListBatch = new ArrayList<Double>();
-    public List<Double> meanQueuePopulationListBatch = new ArrayList<Double>();
-
     public static class MeanStatistics {
         public String centerName;
         public double meanResponseTime;
@@ -73,16 +64,6 @@ public class Statistics {
             this.meanQueuePopulation = meanQueuePopulation;
         }
 
-        public void  printMeanStatistics(){
-            System.out.println("Center Name: " + centerName);
-            System.out.println("Mean Response Time: " + meanResponseTime);
-            System.out.println("Mean Service Time: " + meanServiceTime);
-            System.out.println("Mean Queue Time: " + meanQueueTime);
-            System.out.println("Lambda: " + lambda);
-            System.out.println("Mean System Population: " + meanSystemPopulation);
-            System.out.println("Mean Utilization: " + meanUtilization);
-            System.out.println("Mean Queue Population: " + meanQueuePopulation);
-        }
     }
 
     public MeanStatistics getMeanStatistics() {
