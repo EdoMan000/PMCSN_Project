@@ -183,37 +183,9 @@ public class LuggageChecks {
         return new MeanStatistics("LUGGAGE CHECK", meanResponseTime, meanServiceTime, meanQueueTime, lambda, meanSystemPopulation, meanUtilization, meanQueuePopulation);
     }
 
-    private static class LuggageChecksSingleEntrance extends SingleServer{
-
-        int centerID;
-
-        public LuggageChecksSingleEntrance(int centerID, int centerIndex, double meanServiceTime, boolean approximateServiceAsExponential) {
-
-            super("LUGGAGE_CHECK_"+centerID, meanServiceTime, centerIndex, approximateServiceAsExponential);
-            this.centerID = centerID;
-
+    public void updateObservations(List<Observations> observationsList, int run) {
+        for (int i = 0; i < luggageChecksSingleEntrances.length; ++i) {
+            luggageChecksSingleEntrances[i].updateObservations(observationsList.get(i), run);
         }
-
-        protected void spawnNextCenterEvent(MsqTime time, EventQueue queue) {
-            EventType type = EventType.ARRIVAL_CHECK_IN_OTHERS;
-            if(isTargetFlight(rngs, CENTER_INDEX + 2)){
-                type = EventType.ARRIVAL_CHECK_IN_TARGET;
-            }
-            MsqEvent event = new MsqEvent(type, time.current);
-            queue.add(event);
-        }
-
-        protected void spawnCompletionEvent(MsqTime time, EventQueue queue) {
-            double service = getService(CENTER_INDEX);
-            MsqEvent event = new MsqEvent(EventType.LUGGAGE_CHECK_DONE, time.current + service, service, 0, centerID);
-            queue.add(event);
-        }
-
-        protected double getService(int streamIndex)
-        {
-            rngs.selectStream(streamIndex);
-            return exponential(meanServiceTime, rngs);
-        }
-
     }
 }

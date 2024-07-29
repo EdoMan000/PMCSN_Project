@@ -1,12 +1,10 @@
 package org.pmcsn.controller;
 
 
+import org.pmcsn.WelchPlot;
 import org.pmcsn.centers.*;
 import org.pmcsn.libraries.Rngs;
-import org.pmcsn.model.EventQueue;
-import org.pmcsn.model.EventType;
-import org.pmcsn.model.MsqEvent;
-import org.pmcsn.model.MsqTime;
+import org.pmcsn.model.*;
 import org.pmcsn.model.Statistics.MeanStatistics;
 import org.pmcsn.utils.Verification.Result;
 
@@ -49,6 +47,10 @@ public class BasicSimulationRunner {
         StampsCheck stampsCheck = new StampsCheck("STAMP_CHECK", 0.1,68, approximateServiceAsExponential);
         Boarding boarding = new Boarding("BOARDING", 4, 2, 72, approximateServiceAsExponential);
 
+        final List<Observations> observationsList = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            observationsList.add(new Observations("LUGGAGE_CHECKS_%d".formatted(i+1), 150, List.of("E[Ts]")));
+        }
         for (int i = 0; i < 150; i++) {
 
             double sarrival = START;
@@ -152,6 +154,9 @@ public class BasicSimulationRunner {
                         break;
                 }
 
+                // Saving observations to compute warm up period boundaries
+                luggageChecks.updateObservations(observationsList, i);
+
                 eventCount++;
 
                 number = luggageChecks.getNumberOfJobsInNode() + checkInDesksTarget.getNumberOfJobsInNode() + checkInDesksOthers.getNumberOfJobsInNode() + boarding.getNumberOfJobsInNode()
@@ -182,6 +187,11 @@ public class BasicSimulationRunner {
         }else{
             SIMULATION_TYPE = "BASIC_SIMULATION";
         }
+
+        // Computing warm up period boundaries
+        WelchPlot.writeObservations(SIMULATION_TYPE, observationsList);
+
+
         // Writing statistics csv with data from all runs
         luggageChecks.writeStats(SIMULATION_TYPE);
         checkInDesksTarget.writeStats(SIMULATION_TYPE);

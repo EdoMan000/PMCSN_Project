@@ -49,14 +49,12 @@ public abstract class Multiserver {
     //********************************** CONCRETE METHODS *********************************************
     public void reset(Rngs rngs) {
         this.rngs = rngs;
-
         // resetting variables
         this.numberOfJobsInNode =0;
         area.reset();
         this.firstArrivalTime = Double.NEGATIVE_INFINITY;
         this.lastArrivalTime = 0;
         this.lastCompletionTime = 0;
-
         for(int i=0; i<SERVERS ; i++){
             sum[i].reset();
             servers[i].reset();

@@ -19,7 +19,7 @@ public abstract class SingleServer {
 
     protected int CENTER_INDEX;
     protected Statistics statistics;
-    protected Area area;
+    protected final Area area = new Area();
     protected double meanServiceTime;
     protected long numberOfJobsInNode = 0;
     protected double firstArrivalTime = Double.NEGATIVE_INFINITY;
@@ -48,14 +48,13 @@ public abstract class SingleServer {
 
     public void reset(Rngs rngs) {
         this.rngs = rngs;
-        this.area = new Area();
+        area.reset();
+        sum.reset();
         // resetting variables
         this.numberOfJobsInNode = 0;
         this.firstArrivalTime = Double.NEGATIVE_INFINITY;
         this.lastArrivalTime = 0;
         this.lastCompletionTime = 0;
-        sum.served = 0;
-        sum.service = 0;
     }
 
     public void resetBatch() {
@@ -130,4 +129,13 @@ public abstract class SingleServer {
         return this.statistics;
     }
 
+    public void updateObservations(Observations observations, int run) {
+        if (lastArrivalTime == 0 || lastCompletionTime == 0) {
+            return;
+        }
+        double lambda = sum.served / lastArrivalTime;
+        double meanNodePopulation = area.getNodeArea() / lastCompletionTime;
+        double meanResponseTime = meanNodePopulation / lambda;
+        observations.saveObservation(run, "E[Ts]", meanResponseTime);
+    }
 }

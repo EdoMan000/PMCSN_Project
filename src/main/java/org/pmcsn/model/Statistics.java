@@ -118,8 +118,6 @@ public class Statistics {
 
     }
 
-
-
     public void writeStats(String simulationType) {
         File file = new File("csvFiles/"+simulationType+"/results/" );
         if (!file.exists()) {
