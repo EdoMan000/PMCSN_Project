@@ -47,46 +47,46 @@ public class BasicSimulationRunner {
             System.out.println("\nRunning Basic Simulation...");
         }
 
-
         //Rng setting the seed
         long[] seeds = new long[1024];
         seeds[0] = SEED;
         Rngs rngs = new Rngs();
 
+        int runsNumber = config.getInt("general", "runsNumber");
+
         final List<Observations> luggageObservations = new ArrayList<>();
         for (int i = 0; i < config.getInt("luggageChecks", "numberOfCenters"); i++) {
-            luggageObservations.add(new Observations("%s_%d".formatted(config.getString("luggageChecks", "centerName"), i+1), 150));
+            luggageObservations.add(new Observations("%s_%d".formatted(config.getString("luggageChecks", "centerName"), i+1), runsNumber));
         }
         final List<Observations> checkInDeskTargetObservations = new ArrayList<>();
         for (int i = 0; i < config.getInt("checkInDeskTarget", "serversNumber"); i++) {
-            checkInDeskTargetObservations.add(new Observations("%s_%d".formatted(config.getString("checkInDeskTarget", "centerName"), i+1), 150));
+            checkInDeskTargetObservations.add(new Observations("%s_%d".formatted(config.getString("checkInDeskTarget", "centerName"), i+1), runsNumber));
         }
         final List<List<Observations>> checkinDeskOthersObservations = new ArrayList<>();
         for (int i = 0; i < config.getInt("checkInDeskOthers", "numberOfCenters"); i++) {
             checkinDeskOthersObservations.add(new ArrayList<>());
             for (int j = 0; j < config.getInt("checkInDeskOthers", "serversNumber"); j++) {
-                checkinDeskOthersObservations.get(i).add(new Observations("%s_%d_%d".formatted(config.getString("checkInDeskOthers", "centerName"), i+1, j+1), 150));
+                checkinDeskOthersObservations.get(i).add(new Observations("%s_%d_%d".formatted(config.getString("checkInDeskOthers", "centerName"), i+1, j+1), runsNumber));
             }
         }
         final List<Observations> boardingPassScannerObservations = new ArrayList<>();
         for (int i = 0; i < config.getInt("boardingPassScanners", "serversNumber"); i++) {
-            boardingPassScannerObservations.add(new Observations("%s_%d".formatted(config.getString("boardingPassScanners", "centerName"), i+1), 150));
+            boardingPassScannerObservations.add(new Observations("%s_%d".formatted(config.getString("boardingPassScanners", "centerName"), i+1), runsNumber));
         }
         final List<Observations> securityCheckObservations = new ArrayList<>();
         for (int i = 0; i < config.getInt("securityChecks", "serversNumber"); i++) {
-            securityCheckObservations.add(new Observations("%s_%d".formatted(config.getString("securityChecks", "centerName"), i+1), 150));
+            securityCheckObservations.add(new Observations("%s_%d".formatted(config.getString("securityChecks", "centerName"), i+1), runsNumber));
         }
         final List<Observations> passportCheckObservations = new ArrayList<>();
         for (int i = 0; i < config.getInt("passportChecks", "serversNumber"); i++) {
-            passportCheckObservations.add(new Observations("%s_%d".formatted(config.getString("passportChecks", "centerName"), i+1), 150));
+            passportCheckObservations.add(new Observations("%s_%d".formatted(config.getString("passportChecks", "centerName"), i+1), runsNumber));
         }
-        Observations stampsCheckObservations = new Observations("STAMPS_CHECK", 150);
+        Observations stampsCheckObservations = new Observations("STAMPS_CHECK", runsNumber);
         final List<Observations> boardingObservations = new ArrayList<>();
         for (int i = 0; i < config.getInt("boarding", "serversNumber"); i++) {
-            boardingObservations.add(new Observations("%s_%d".formatted(config.getString("boarding", "centerName"), i+1), 150));
+            boardingObservations.add(new Observations("%s_%d".formatted(config.getString("boarding", "centerName"), i+1), runsNumber));
         }
-        for (int i = 0; i < 150; i++) {
-
+        for (int i = 0; i < runsNumber; i++) {
             double sarrival = START;
             long number = 1;
 
@@ -115,7 +115,7 @@ public class BasicSimulationRunner {
 
             MsqEvent event;
 
-            int skip = 2;
+            int skip = 1;
             int eventCount = 0;
 
             // need to use OR because both the conditions should be false
@@ -285,7 +285,6 @@ public class BasicSimulationRunner {
         }
 
         //printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boarding);
-
     }
 
 }
