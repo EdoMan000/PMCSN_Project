@@ -14,13 +14,15 @@ import static org.pmcsn.utils.StatisticsUtils.computeMean;
 
 public class CheckInDesksOthers {
     Rngs rngs;
+    private final String name;
     CheckInDesksSingleFlight[] checkInDesksSingleFlights;
     public int numberOfCenters;
 
-    public CheckInDesksOthers(int nodesNumber, int serversNumber, double meanServiceTime, int centerIndex, boolean approximateServiceAsExponential) {
-        this.checkInDesksSingleFlights = new CheckInDesksSingleFlight[nodesNumber];
+    public CheckInDesksOthers(String name, int numberOfCenters, int serversNumber, double meanServiceTime, int centerIndex, boolean approximateServiceAsExponential) {
+        this.name = name;
+        this.checkInDesksSingleFlights = new CheckInDesksSingleFlight[numberOfCenters];
         for (int i = 0; i < checkInDesksSingleFlights.length; i++) {
-            checkInDesksSingleFlights[i] = new CheckInDesksSingleFlight("CHECK_IN_OTHERS", meanServiceTime, serversNumber, centerIndex + (2 * i), i + 1, approximateServiceAsExponential);
+            checkInDesksSingleFlights[i] = new CheckInDesksSingleFlight(name,i + 1, meanServiceTime, serversNumber, centerIndex + (2 * i), approximateServiceAsExponential);
         }
         this.numberOfCenters = checkInDesksSingleFlights.length;
     }
@@ -50,7 +52,7 @@ public class CheckInDesksOthers {
     }
 
     public long getNumberOfJobsInNode() {
-        return Arrays.stream(checkInDesksSingleFlights).mapToLong(Multiserver::getNumberOfJobsInNode).sum();
+        return Arrays.stream(checkInDesksSingleFlights).mapToLong(MultiServer::getNumberOfJobsInNode).sum();
     }
 
     public void resetBatch(int center ) {
@@ -142,14 +144,20 @@ public class CheckInDesksOthers {
         double meanSystemPopulation = computeMean(meanSystemPopulationList);
         double meanUtilization = computeMean(meanUtilizationList);
         double meanQueuePopulation = computeMean(meanQueuePopulationList);
-        return new Statistics.MeanStatistics("CHECK-IN OTHERS", meanResponseTime, meanServiceTime, meanQueueTime, lambda, meanSystemPopulation, meanUtilization, meanQueuePopulation);
+        return new Statistics.MeanStatistics(name, meanResponseTime, meanServiceTime, meanQueueTime, lambda, meanSystemPopulation, meanUtilization, meanQueuePopulation);
     }
 
-    private static class CheckInDesksSingleFlight extends Multiserver {
+    public void updateObservations(List<List<Observations>> observations, int run) {
+        for (int i = 0; i < checkInDesksSingleFlights.length; i++) {
+            checkInDesksSingleFlights[i].updateObservations(observations.get(i), run);
+        }
+    }
+
+    private static class CheckInDesksSingleFlight extends MultiServer {
         private final int nodeId;
 
-        public CheckInDesksSingleFlight(String name, double meanServiceTime, int numOfServers, int centerIndex, int nodeId, boolean approximateServiceAsExponential) {
-            super(name + nodeId, meanServiceTime, numOfServers, centerIndex, approximateServiceAsExponential);
+        public CheckInDesksSingleFlight(String centerName, int nodeId, double meanServiceTime, int numOfServers, int centerIndex, boolean approximateServiceAsExponential) {
+            super(centerName + nodeId, meanServiceTime, numOfServers, centerIndex, approximateServiceAsExponential);
             this.nodeId = nodeId;
         }
 

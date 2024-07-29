@@ -11,10 +11,9 @@ import static org.pmcsn.utils.Probabilities.isTargetFlight;
 class LuggageChecksSingleEntrance extends SingleServer {
     int centerID;
 
-    public LuggageChecksSingleEntrance(int centerID, int centerIndex, double meanServiceTime, boolean approximateServiceAsExponential) {
-
-        super("LUGGAGE_CHECK_"+centerID, meanServiceTime, centerIndex, approximateServiceAsExponential);
-        this.centerID = centerID;
+    public LuggageChecksSingleEntrance(String centerName, int nodeId, int centerIndex, double meanServiceTime, boolean approximateServiceAsExponential) {
+        super("%s_%d".formatted(centerName, nodeId), meanServiceTime, centerIndex, approximateServiceAsExponential);
+        this.centerID = nodeId;
 
     }
 

@@ -1,5 +1,6 @@
 package org.pmcsn.centers;
 
+import org.pmcsn.conf.Config;
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.*;
 import org.pmcsn.model.Statistics.MeanStatistics;
@@ -14,21 +15,25 @@ import static org.pmcsn.utils.Probabilities.isTargetFlight;
 import static org.pmcsn.utils.StatisticsUtils.computeMean;
 
 public class LuggageChecks {
+    private final String centerName;
     Rngs rngs;
     LuggageChecksSingleEntrance[] luggageChecksSingleEntrances;
     private final double interArrivalTime;
     double sarrival;
     // all the times are measured in min
-    int STOP = 1440;
+    int STOP;
     boolean endOfArrivals = false;
     int CENTER_INDEX = 1;
 
-    public LuggageChecks(int numberOfCenters, double interArrivalTime, double meanServiceTime, boolean approximateServiceAsExponential) {
+    public LuggageChecks(String centerName, int numberOfCenters, double interArrivalTime, double meanServiceTime, boolean approximateServiceAsExponential) {
+        this.centerName = centerName;
         this.interArrivalTime = interArrivalTime;
         this.luggageChecksSingleEntrances = new LuggageChecksSingleEntrance[numberOfCenters]; //TODO risistemare CENTER_INDEX
         for (int i = 0; i < luggageChecksSingleEntrances.length; i++) {
-            luggageChecksSingleEntrances[i] = new LuggageChecksSingleEntrance(i + 1, CENTER_INDEX + 3 * i, meanServiceTime, approximateServiceAsExponential);
+            luggageChecksSingleEntrances[i] = new LuggageChecksSingleEntrance(centerName, i + 1, CENTER_INDEX + 3 * i, meanServiceTime, approximateServiceAsExponential);
         }
+        Config config = new Config();
+        STOP = config.getInt("general", "observationTime");
     }
 
     public void reset(Rngs rngs, double sarrival) {
@@ -180,7 +185,7 @@ public class LuggageChecks {
         double meanUtilization = computeMean(meanUtilizationList);
         double meanQueuePopulation = computeMean(meanQueuePopulationList);
 
-        return new MeanStatistics("LUGGAGE CHECK", meanResponseTime, meanServiceTime, meanQueueTime, lambda, meanSystemPopulation, meanUtilization, meanQueuePopulation);
+        return new MeanStatistics(centerName, meanResponseTime, meanServiceTime, meanQueueTime, lambda, meanSystemPopulation, meanUtilization, meanQueuePopulation);
     }
 
     public void updateObservations(List<Observations> observationsList, int run) {

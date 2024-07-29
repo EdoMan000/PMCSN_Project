@@ -1,5 +1,6 @@
 package org.pmcsn.utils;
 
+import org.pmcsn.conf.Config;
 import org.pmcsn.libraries.Rvms;
 
 import java.io.File;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Verification {
+    private static final Config config = new Config();
 
     public static class Result {
         public String name;
@@ -104,25 +106,57 @@ public class Verification {
 
     public static List<Result> modelVerification(String simulationType) {
         List<Result> results = new ArrayList<>();
-        double lambda = 6300.0/(24*60); // mean of 63 flights with 100 passengers each during the whole day
+
+        double lambda = 1.0/config.getDouble("luggageChecks", "interArrivalTime");
 
 
-        results.add(singleServer("LUGGAGE CHECK", lambda / 6, 1));
+        results.add(singleServer(
+                config.getString("luggageChecks", "centerName"),
+                lambda / 6,
+                config.getDouble("luggageChecks", "meanServiceTime")));
 
         double pTarget = 0.0159;
-        results.add(multiServer("CHECK_IN_TARGET", lambda * pTarget, 10, 3));
-        results.add(multiServer("CHECK-IN OTHERS", (lambda * (1 - pTarget)) / 19, 10, 3));
+        results.add(multiServer(
+                config.getString("checkInDeskTarget", "centerName"),
+                lambda * pTarget,
+                config.getDouble("checkInDeskTarget", "meanServiceTime"),
+                config.getInt("checkInDeskTarget", "serversNumber")));
 
-        results.add(multiServer("SCAN_BOARDING_PASS", lambda, 0.3, 3));
+        results.add(multiServer(
+                config.getString("checkInDeskOthers", "centerName"),
+                (lambda * (1 - pTarget)) / 19,
+                config.getDouble("checkInDeskOthers", "meanServiceTime"),
+                config.getInt("checkInDeskOthers", "serversNumber")));
 
-        results.add(multiServer("SECURITY_CHECKS", lambda, 0.9, 8));
+        results.add(multiServer(
+                config.getString("boardingPassScanners", "centerName"),
+                lambda,
+                config.getDouble("boardingPassScanners", "meanServiceTime"),
+                config.getInt("boardingPassScanners", "serversNumber")));
+
+        results.add(multiServer(
+                config.getString("securityChecks", "centerName"),
+                lambda,
+                config.getDouble("securityChecks", "meanServiceTime"),
+                config.getInt("securityChecks", "serversNumber")));
 
         double pCitizen = 0.2;
-        results.add(multiServer("PASSPORT_CHECK", lambda * (1 - pCitizen), 5, 24));
+        results.add(multiServer(
+                config.getString("passportChecks", "centerName"),
+                lambda * (1 - pCitizen),
+                config.getDouble("passportChecks", "meanServiceTime"),
+                config.getInt("passportChecks", "serversNumber")));
 
-        results.add(singleServer("STAMP_CHECK", lambda * (1 - pCitizen), 0.1));
+        results.add(singleServer(
+                config.getString("stampsCheck", "centerName"),
+                lambda * (1 - pCitizen),
+                config.getDouble("stampsCheck", "meanServiceTime")));
 
-        results.add(multiServer("BOARDING", lambda * pTarget, 4, 2));
+        results.add(multiServer(
+                config.getString("boarding", "centerName"),
+                lambda * pTarget,
+                config.getDouble("boarding", "meanServiceTime"),
+                config.getInt("boarding", "serversNumber")));
 
         writeResultsVerification(simulationType, results);
 

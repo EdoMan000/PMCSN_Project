@@ -49,9 +49,9 @@ public class BatchSimulationRunner {
         rngs.plantSeeds(SEED);
 
         // Declare variables for centers
-        LuggageChecks luggageChecks = new LuggageChecks(6, (24 * 60) / 6300.0, 1, approximateServiceAsExponential);
+        LuggageChecks luggageChecks = new LuggageChecks("LUGGAGE_CHECK", 6, (24 * 60) / 6300.0, 1, approximateServiceAsExponential);
         CheckInDesksTarget checkInDesksTarget = new CheckInDesksTarget("CHECK_IN_TARGET", 10, 3, 10, approximateServiceAsExponential);
-        CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers(19, 3, 10, 12, approximateServiceAsExponential);
+        CheckInDesksOthers checkInDesksOthers = new CheckInDesksOthers("CHECK_IN_OTHERS_", 19, 3, 10, 12, approximateServiceAsExponential);
         BoardingPassScanners boardingPassScanners = new BoardingPassScanners("BOARDING_PASS_SCANNERS", 0.3, 3, 50, approximateServiceAsExponential);
         SecurityChecks securityChecks = new SecurityChecks("SECURITY_CHECKS", 0.9, 8, 52, approximateServiceAsExponential);
         PassportChecks passportChecks = new PassportChecks("PASSPORT_CHECK", 5, 24, 57, approximateServiceAsExponential);
@@ -85,7 +85,7 @@ public class BatchSimulationRunner {
         long alreadySaved = 0;
         int numberOfCurrentBatch = 0;
 
-        //while (!luggageChecks.isEndOfArrivals()) {
+
         while (!(luggageChecks.getTotalNumberOfJobsServed() > BATCH_SIZE_B * NUM_BATCHES_K)) {
 
             event = events.pop();

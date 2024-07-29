@@ -136,6 +136,6 @@ public abstract class SingleServer {
         double lambda = sum.served / lastArrivalTime;
         double meanNodePopulation = area.getNodeArea() / lastCompletionTime;
         double meanResponseTime = meanNodePopulation / lambda;
-        observations.saveObservation(run, "E[Ts]", meanResponseTime);
+        observations.saveObservation(run, Observations.INDEX.RESPONSE_TIME, meanResponseTime);
     }
 }

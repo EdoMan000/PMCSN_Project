@@ -3,15 +3,18 @@ package org.pmcsn.model;
 import java.util.*;
 
 public class Observations {
+    public enum INDEX {
+        RESPONSE_TIME;
+    }
     private final String centerName;
     private final int n;
-    private final List<Map<String, List<Double>>> observations;
+    private final List<List<Double>> observations;
 
-    public Observations(String centerName, int runsNumber, List<String> indexes) {
+    public Observations(String centerName, int runsNumber) {
         this.centerName = centerName;
         this.observations = new ArrayList<>(runsNumber);
         for (int i = 0; i < runsNumber; i++) {
-            observations.add(new HashMap<>());
+            observations.add(new ArrayList<>());
         }
         this.n = runsNumber;
     }
@@ -20,14 +23,18 @@ public class Observations {
         return centerName;
     }
 
-    public void saveObservation(int run, String index, double point) {
+    public void saveObservation(int run, INDEX index, double point) {
         observations.get(run)
-                .computeIfAbsent(index, _ -> new ArrayList<>())
                 .add(point);
     }
 
-    public List<Double> welchPlot(String index) {
-        OptionalInt o = observations.stream().mapToInt(i -> i.get(index).size()).min();
+    public List<Double> welchPlot(INDEX index) {
+        OptionalInt o = observations.stream().mapToInt(i -> {
+            if (!i.isEmpty()) {
+                return i.size();
+            }
+            return Integer.MAX_VALUE;
+        }).min();
         if (o.isEmpty()) {
             throw new IllegalArgumentException("index '" + index + "' does not have any observation collected");
         }
@@ -37,11 +44,15 @@ public class Observations {
         // Calculate ensemble averages
         for (int i = 0; i < m; i++) {
             double sum = 0.0;
+            int count = 0;
             for (int j = 0; j < n; j++) {
-                List<Double> Y_ji = observations.get(j).get(index);
-                sum += Y_ji.get(i);
+                if (!observations.get(j).isEmpty()) {
+                    List<Double> Y_ji = observations.get(j);
+                    sum += Y_ji.get(i);
+                    count += 1;
+                }
             }
-            ensembleAverage.add(sum / n);
+            ensembleAverage.add(sum / count);
         }
 
         // Define window size (w)

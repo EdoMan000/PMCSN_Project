@@ -8,9 +8,9 @@ import org.pmcsn.model.MsqTime;
 import static org.pmcsn.utils.Distributions.exponential;
 import static org.pmcsn.utils.Distributions.logNormal;
 
-public class CheckInDesksTarget extends Multiserver {
-    public CheckInDesksTarget(String name, double meanServiceTime, int numOfServers, int centerIndex, boolean approximateServiceAsExponential) {
-        super(name, meanServiceTime, numOfServers, centerIndex, approximateServiceAsExponential);
+public class CheckInDesksTarget extends MultiServer {
+    public CheckInDesksTarget(String centerName, double meanServiceTime, int numOfServers, int centerIndex, boolean approximateServiceAsExponential) {
+        super(centerName, meanServiceTime, numOfServers, centerIndex, approximateServiceAsExponential);
     }
 
     @Override

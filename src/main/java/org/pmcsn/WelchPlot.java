@@ -33,6 +33,11 @@ public class WelchPlot {
         return averages;
     }
 
+    public static void writeObservations(List<List<Observations>> checkinDeskOthersObservations, String simulationType) {
+        for (List<Observations> observations : checkinDeskOthersObservations) {
+            writeObservations(simulationType, observations);
+        }
+    }
 
     public static void writeObservations(String simulationType, List<Observations> observationsList) {
         File file = new File("csvFiles/"+simulationType+"/observations/" );
@@ -42,29 +47,25 @@ public class WelchPlot {
         String DELIMITER = "\n";
         String COMMA = ",";
         for (Observations o : observationsList) {
-            file = new File("csvFiles/"+simulationType+"/observations/" + o.getCenterName()+ ".csv");
+            String path = "csvFiles/"+simulationType+"/observations/" + o.getCenterName()+ ".csv";
+            file = new File(path);
             try(FileWriter fileWriter = new FileWriter(file)) {
-
                 // fileWriter.append("E[Ts], E[Tq], E[s], E[Ns], E[Nq], ρ, λ").append(DELIMITER);
-                fileWriter.append("x,E[Ts]").append(DELIMITER);
-                List<Double> points = o.welchPlot("E[Ts]");
-                int x = 0;
-                for (Double y : points) {
-                    fileWriter.append(COMMA);
-                    fileWriter
-                            .append(String.valueOf(x))
-                            .append(COMMA)
-                            .append(String.valueOf(y)).append(DELIMITER);
-                    x += 1;
+                fileWriter.append("#Observation,E[Ts]").append(DELIMITER);
+                List<Double> points = o.welchPlot(Observations.INDEX.RESPONSE_TIME);
+                if (!points.isEmpty()) {
+                    int x = 0;
+                    for (Double y : points) {
+                        fileWriter
+                                .append(String.valueOf(x))
+                                .append(COMMA)
+                                .append(String.valueOf(y)).append(DELIMITER);
+                        x += 1;
+                    }
+                } else {
+                    System.out.println(path + " è vuoto!");
                 }
-                    //fileWriter.append(observation.centerName).append(COMMA)
-                    //        .append(String.valueOf(observation.Ets)).append(COMMA)
-                    //        .append(String.valueOf(observation.Etq)).append(COMMA)
-                    //        .append(String.valueOf(observation.Es)).append(COMMA)
-                    //        .append(String.valueOf(observation.Ens)).append(COMMA)
-                    //        .append(String.valueOf(observation.Enq)).append(COMMA)
-                    //        .append(String.valueOf(observation.rho)).append(COMMA)
-                    //        .append(String.valueOf(observation.lambda)).append(DELIMITER);
+
                 fileWriter.flush();
             } catch (IOException e) {
                 throw new RuntimeException(e);

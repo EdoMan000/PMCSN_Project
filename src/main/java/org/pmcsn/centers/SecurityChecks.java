@@ -9,9 +9,9 @@ import static org.pmcsn.utils.Distributions.exponential;
 import static org.pmcsn.utils.Distributions.logNormal;
 import static org.pmcsn.utils.Probabilities.*;
 
-public class SecurityChecks extends Multiserver {
-    public SecurityChecks(String name, double meanServiceTime, int serversNumber, int centerIndex, boolean approximateServiceAsExponential) {
-        super(name, meanServiceTime, serversNumber, centerIndex, approximateServiceAsExponential);
+public class SecurityChecks extends MultiServer {
+    public SecurityChecks(String centerName, double meanServiceTime, int serversNumber, int centerIndex, boolean approximateServiceAsExponential) {
+        super(centerName, meanServiceTime, serversNumber, centerIndex, approximateServiceAsExponential);
     }
 
     @Override

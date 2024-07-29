@@ -4,9 +4,9 @@ import org.pmcsn.model.*;
 
 import static org.pmcsn.utils.Distributions.exponential;
 
-public class BoardingPassScanners extends Multiserver {
-    public BoardingPassScanners(String name, double meanServiceTime, int serversNumber, int centerId, boolean approximateServiceAsExponential) {
-        super(name, meanServiceTime, serversNumber, centerId, approximateServiceAsExponential);
+public class BoardingPassScanners extends MultiServer {
+    public BoardingPassScanners(String centerName, double meanServiceTime, int serversNumber, int centerIndex, boolean approximateServiceAsExponential) {
+        super(centerName, meanServiceTime, serversNumber, centerIndex, approximateServiceAsExponential);
     }
 
     @Override

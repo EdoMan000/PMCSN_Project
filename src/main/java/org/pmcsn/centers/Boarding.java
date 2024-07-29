@@ -5,7 +5,7 @@ import org.pmcsn.model.*;
 import static org.pmcsn.utils.Distributions.exponential;
 import static org.pmcsn.utils.Distributions.logNormal;
 
-public class Boarding extends Multiserver {
+public class Boarding extends MultiServer {
     public Boarding(String name, double meanServiceTime, int serversNum, int centerIndex, boolean approximateServiceAsExponential) {
         super(name, meanServiceTime, serversNum, centerIndex, approximateServiceAsExponential);
     }
@@ -19,7 +19,6 @@ public class Boarding extends Multiserver {
 
     @Override
     void spawnNextCenterEvent(MsqTime time, EventQueue events) {
-
     }
 
     @Override

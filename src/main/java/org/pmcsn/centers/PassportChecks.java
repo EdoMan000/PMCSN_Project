@@ -3,14 +3,11 @@ package org.pmcsn.centers;
 
 import org.pmcsn.model.*;
 
-import java.util.Comparator;
-import java.util.List;
-
 import static org.pmcsn.utils.Distributions.exponential;
 
-public class PassportChecks extends Multiserver {
-    public PassportChecks(String name, double meanServiceTime, int numOfServers, int centerIndex, boolean approximateServiceAsExponential) {
-        super(name, meanServiceTime, numOfServers, centerIndex, approximateServiceAsExponential);
+public class PassportChecks extends MultiServer {
+    public PassportChecks(String centerName, double meanServiceTime, int serversNumber, int centerIndex, boolean approximateServiceAsExponential) {
+        super(centerName, meanServiceTime, serversNumber, centerIndex, approximateServiceAsExponential);
     }
 
     @Override
