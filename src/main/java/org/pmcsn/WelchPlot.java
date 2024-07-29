@@ -14,25 +14,6 @@ import java.util.stream.IntStream;
 import static org.pmcsn.utils.StatisticsUtils.computeConfidenceInterval;
 
 public class WelchPlot {
-    public static void main(String[] args) {
-        if (args.length != 2) {
-            System.out.println("Please provide the number of replications (R) and the max number of observations (n)");
-        }
-        final int R = Integer.parseInt(args[0]);
-        final int n = Integer.parseInt(args[1]);
-        List<List<Double>> observations = new ArrayList<>();
-        IntStream.range(0, R).forEach(_ -> observations.add(new ArrayList<>()));
-    }
-
-    private static List<Double> averages(List<List<Double>> observations) {
-        long m = observations.stream().mapToLong(List::size).min().orElseThrow();
-        List<Double> averages = new ArrayList<>();
-        for (List<Double> replication : observations) {
-            averages.add(replication.stream().mapToDouble(d -> d).average().orElseThrow());
-        }
-        return averages;
-    }
-
     public static void writeObservations(List<List<Observations>> checkinDeskOthersObservations, String simulationType) {
         for (List<Observations> observations : checkinDeskOthersObservations) {
             writeObservations(simulationType, observations);
