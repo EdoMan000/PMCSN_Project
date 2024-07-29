@@ -46,7 +46,7 @@ public class WelchPlot {
             try(FileWriter fileWriter = new FileWriter(file)) {
 
                 // fileWriter.append("E[Ts], E[Tq], E[s], E[Ns], E[Nq], ρ, λ").append(DELIMITER);
-                fileWriter.append("E[Ts]").append(DELIMITER);
+                fileWriter.append("x,E[Ts]").append(DELIMITER);
                 List<Double> points = o.welchPlot("E[Ts]");
                 int x = 0;
                 for (Double y : points) {
@@ -55,6 +55,7 @@ public class WelchPlot {
                             .append(String.valueOf(x))
                             .append(COMMA)
                             .append(String.valueOf(y)).append(DELIMITER);
+                    x += 1;
                 }
                     //fileWriter.append(observation.centerName).append(COMMA)
                     //        .append(String.valueOf(observation.Ets)).append(COMMA)
