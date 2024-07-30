@@ -1,5 +1,6 @@
 package org.pmcsn;
 
+import org.pmcsn.conf.Config;
 import org.pmcsn.controller.BasicSimulationRunner;
 import org.pmcsn.controller.BatchSimulationRunner;
 import org.pmcsn.controller.ImprovedModelSimulationRunner;
@@ -11,6 +12,7 @@ import static org.pmcsn.utils.PrintUtils.*;
 public class MenaraAirportSimulator {
 
     public static void main(String[] args) throws Exception {
+        Config config = new Config();
         Scanner scanner = new Scanner(System.in);
         BasicSimulationRunner basicRunner = new BasicSimulationRunner();
         ImprovedModelSimulationRunner improvedRunner = new ImprovedModelSimulationRunner();

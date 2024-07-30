@@ -204,7 +204,6 @@ public class BasicSimulationRunner {
                             boarding.updateObservations(boardingObservations, i);
                         break;
                 }
-
                 // Saving observations to compute warm up period boundaries
                 //luggageChecks.updateObservations(luggageObservations, i);
                 //checkInDesksTarget.updateObservations(checkInDeskTargetObservations, i);
@@ -222,7 +221,7 @@ public class BasicSimulationRunner {
 
             }
 
-            //System.out.println("EVENT COUNT FOR RUN N°"+i+": " + eventCount);
+            System.out.println("EVENT COUNT FOR RUN N°"+i+": " + eventCount);
 
             // Saving statistics for current run
             luggageChecks.saveStats();
@@ -283,7 +282,6 @@ public class BasicSimulationRunner {
 
             compareResults(SIMULATION_TYPE, verificationResults, meanStatisticsList);
         }
-
         //printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boarding);
     }
 
