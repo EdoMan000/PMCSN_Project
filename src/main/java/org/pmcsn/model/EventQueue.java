@@ -1,16 +1,12 @@
 package org.pmcsn.model;
 
+import java.util.AbstractCollection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
 
 public class EventQueue {
-    private static final Comparator<MsqEvent> CMP = new Comparator<MsqEvent>() {
-        @Override
-        public int compare(MsqEvent o1, MsqEvent o2) {
-            return Double.compare(o1.time, o2.time);
-        }
-    };
+    private static final Comparator<MsqEvent> CMP = Comparator.comparingDouble(o -> o.time);
 
     private final List<PriorityQueue<MsqEvent>> priority = List.of(new PriorityQueue<>(CMP), new PriorityQueue<>(CMP));
     private final PriorityQueue<MsqEvent> noPriority = new PriorityQueue<>(CMP);
@@ -25,6 +21,10 @@ public class EventQueue {
         } else {
             priority.getLast().add(event);
         }
+    }
+
+    public boolean isEmpty() {
+        return noPriority.isEmpty() && priority.stream().allMatch(AbstractCollection::isEmpty);
     }
 
     // returns the event with the smallest time among ALL queues and removes it

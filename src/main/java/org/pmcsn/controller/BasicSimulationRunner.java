@@ -116,8 +116,8 @@ public class BasicSimulationRunner {
             int skip = 3;
             int eventCount = 0;
 
-            // need to use OR because both the conditions should be false
-            while (!luggageChecks.isEndOfArrivals() || number != 0) {
+            // need to use OR because all the conditions should be false
+            while (!luggageChecks.isEndOfArrivals() || !queue.isEmpty() || number != 0) {
 
                 event = queue.pop();
                 msqTime.next = event.time;
