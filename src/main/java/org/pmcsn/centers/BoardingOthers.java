@@ -27,6 +27,12 @@ public class BoardingOthers {
         Arrays.stream(boardingSingleFlightArray).forEach(s -> s.setArea(time));
     }
 
+    public void saveBatch(int batchSize, int batchesNumber) {
+        for(BoardingOtherSingleFlight other : boardingSingleFlightArray){
+            other.saveBatch(batchSize, batchesNumber);
+        }
+    }
+
     public long[] getNumberOfJobsPerCenter() {
         return Arrays.stream(boardingSingleFlightArray).mapToLong(MultiServer::getJobsServed).toArray();
     }

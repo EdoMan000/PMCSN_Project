@@ -128,6 +128,15 @@ public abstract class SingleServer {
         return this.statistics;
     }
 
+    public void saveBatch(int batchSize, int batchesNumber) {
+        if(getJobsServed() == batchSize && statistics.meanResponseTimeList.size() < batchesNumber){
+            System.out.println("Center " + centerName + " has served another " + getJobsServed() + " jobs!! Saving stats for batch N°" + (getStatistics().meanResponseTimeList.size()+1));
+            saveStats();
+            resetBatch();
+            System.out.println("********************************************************************************************************");
+        }
+    }
+
     public void updateObservations(Observations observations, int run) {
         if (lastArrivalTime == 0 || lastCompletionTime == 0) {
             return;

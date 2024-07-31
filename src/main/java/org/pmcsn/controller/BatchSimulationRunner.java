@@ -35,27 +35,26 @@ public class BatchSimulationRunner {
     private StampsCheck stampsCheck;
     private BoardingTarget boardingTarget;
     private BoardingOthers boardingOthers;
-    private boolean approximateServiceAsExponential;
 
     // let's assume K=400 (after discarding warmup) -> we have 400 mean values registered.
     // We need to compute autocorrelation on the series
-
-
-    private long BATCH_SIZE_B; // Number of jobs in single batch (B)
-    private long NUM_BATCHES_K; // Number of batches (K)
-    private int WARMUP_THRESHOLD; // L'ho visto empiricamente perchè fino al batch 45 il boarding aveva infinity tra le statistiche
+    // Number of jobs in single batch (B)
+    private final int batchSize;
+    // Number of batches (K >= 40)
+    private final int batchesNumber;
+    private final int warmupThreshold;
 
     public BatchSimulationRunner() {
         Config config = new Config();
-        BATCH_SIZE_B = config.getInt("general", "batchSize");
-        NUM_BATCHES_K = config.getInt("general", "numBatches");
-        WARMUP_THRESHOLD = config.getInt("general", "warmup");
+        batchSize = config.getInt("general", "batchSize");
+        batchesNumber = config.getInt("general", "numBatches");
+        warmupThreshold = config.getInt("general", "warmup");
     }
 
-    public BatchSimulationRunner(int numBatch_k, int batchSize_b, int warmup) {
-        this.BATCH_SIZE_B = batchSize_b;
-        this.NUM_BATCHES_K = numBatch_k;
-        WARMUP_THRESHOLD = warmup;
+    public BatchSimulationRunner(int batchesNumber, int batchSize, int warmupThreshold) {
+        this.batchSize = batchSize;
+        this.batchesNumber = batchesNumber;
+        this.warmupThreshold = warmupThreshold;
     }
 
     public List<Statistics> runBatchSimulation(boolean approximateServiceAsExponential) throws Exception {
@@ -102,29 +101,14 @@ public class BatchSimulationRunner {
         boardingTarget.reset(rngs);
         boardingOthers.reset(rngs);
 
-        MsqEvent event;
-        long alreadySaved = 0;
-        int numberOfCurrentBatch = 0;
 
-        while(checkEndOfBatchSimulation((NUM_BATCHES_K * BATCH_SIZE_B) - WARMUP_THRESHOLD)){
-
-            event = events.pop();
+        boolean isWarmingUp = true;
+        while(checkEndOfBatchSimulation((batchesNumber * batchSize) - warmupThreshold)){
+            MsqEvent event = events.pop();
             msqTime.next = event.time;
-
-            // Updating the areas
-            luggageChecks.setAreaForAll(msqTime);
-            checkInDesksTarget.setArea(msqTime);
-            checkInDesksOthers.setAreaForAll(msqTime);
-            boardingPassScanners.setArea(msqTime);
-            securityChecks.setArea(msqTime);
-            passportChecks.setArea(msqTime);
-            stampsCheck.setArea(msqTime);
-            boardingTarget.setArea(msqTime);
-            boardingOthers.setAreaForAll(msqTime);
-
+            updateAreas(msqTime);
             // Advancing the clock
             msqTime.current = msqTime.next;
-
             // Processing the event based on its type
             switch (event.type) {
                 case ARRIVAL_LUGGAGE_CHECK:
@@ -182,9 +166,9 @@ public class BatchSimulationRunner {
                     boardingOthers.processCompletion(event, msqTime, events);
                     break;
             }
-
             long n = getMinimumNumberOfJobsServedByCenters();
-            if (n <= WARMUP_THRESHOLD) {
+            if (n >= warmupThreshold && isWarmingUp) {
+                System.out.println("WARMUP COMPLETED..STARTING MEASUREMENTS COLLECTION");
                 luggageChecks.resetBatch();
                 checkInDesksTarget.resetBatch();
                 checkInDesksOthers.resetBatch();
@@ -194,38 +178,30 @@ public class BatchSimulationRunner {
                 stampsCheck.resetBatch();
                 boardingTarget.resetBatch();
                 boardingOthers.resetBatch();
+                isWarmingUp = false;
+            }
+            if (!isWarmingUp) {
+                // saving the statistics of the batch only after the warm-up time period
+                luggageChecks.saveBatch(batchSize, batchesNumber);
+                checkInDesksTarget.saveBatch(batchSize, batchesNumber);
+                checkInDesksOthers.saveBatch(batchSize, batchesNumber);
+                boardingPassScanners.saveBatch(batchSize, batchesNumber);
+                securityChecks.saveBatch(batchSize, batchesNumber);
+                passportChecks.saveBatch(batchSize, batchesNumber);
+                stampsCheck.saveBatch(batchSize, batchesNumber);
+                boardingTarget.saveBatch(batchSize, batchesNumber);
+                boardingOthers.saveBatch(batchSize, batchesNumber);
             }
         }
 
-        // saving the statistics of the batch only after the warm-up time period
-        luggageChecks.saveStats();
-        checkInDesksTarget.saveStats();
-        checkInDesksOthers.saveStats();
-        boardingPassScanners.saveStats();
-        securityChecks.saveStats();
-        passportChecks.saveStats();
-        stampsCheck.saveStats();
-        boardingTarget.saveStats();
-        boardingOthers.saveStats();
-
-
-        String SIMULATION_TYPE;
-        if(approximateServiceAsExponential){
-            SIMULATION_TYPE = "BATCH_SIMULATION_EXPONENTIAL";
-        }else{
-            SIMULATION_TYPE = "BATCH_SIMULATION";
+        String simulationType;
+        if (approximateServiceAsExponential) {
+            simulationType = "BATCH_SIMULATION_EXPONENTIAL";
+        } else {
+            simulationType = "BATCH_SIMULATION";
         }
-
         // Writing statistics csv with data from all batches
-        luggageChecks.writeStats(SIMULATION_TYPE);
-        checkInDesksTarget.writeStats(SIMULATION_TYPE);
-        checkInDesksOthers.writeStats(SIMULATION_TYPE);
-        boardingPassScanners.writeStats(SIMULATION_TYPE);
-        securityChecks.writeStats(SIMULATION_TYPE);
-        passportChecks.writeStats(SIMULATION_TYPE);
-        stampsCheck.writeStats(SIMULATION_TYPE);
-        boardingTarget.writeStats(SIMULATION_TYPE);
-        boardingOthers.writeStats(SIMULATION_TYPE);
+        writeStats(simulationType);
 
         List<Statistics> statisticsList = new ArrayList<>();
         statisticsList.addAll(luggageChecks.getStatistics());
@@ -238,48 +214,78 @@ public class BatchSimulationRunner {
         statisticsList.add(boardingTarget.getStatistics());
         statisticsList.addAll(boardingOthers.getStatistics());
 
-        if(approximateServiceAsExponential) {
+        if (approximateServiceAsExponential) {
             // Computing and writing verifications stats csv
-            List<Result> verificationResults = modelVerification(SIMULATION_TYPE);
-
-            // Compare results and verifications and save comparison result
-            List<MeanStatistics> meanStatisticsList = new ArrayList<>();
-            meanStatisticsList.add(luggageChecks.getMeanStatistics());
-            meanStatisticsList.add(checkInDesksTarget.getMeanStatistics());
-            meanStatisticsList.add(checkInDesksOthers.getMeanStatistics());
-            meanStatisticsList.add(boardingPassScanners.getMeanStatistics());
-            meanStatisticsList.add(securityChecks.getMeanStatistics());
-            meanStatisticsList.add(passportChecks.getMeanStatistics());
-            meanStatisticsList.add(stampsCheck.getMeanStatistics());
-            meanStatisticsList.add(boardingTarget.getMeanStatistics());
-            meanStatisticsList.add(boardingOthers.getMeanStatistics());
-
-
-            compareResults(SIMULATION_TYPE, verificationResults, meanStatisticsList);
-
-            // controllo di consistenza sul numero di jobs processati
-            long jobServedEntrances = luggageChecks.getTotalNumberOfJobsServed();
-            System.out.println("TOT Luggage Checks Jobs Served = " + jobServedEntrances);
-
-            long checkInDesksTargetJobsServed = checkInDesksTarget.getJobsServed();
-            //System.out.println("Check-In Desks Target: Jobs Served = " + checkInDesksTargetJobsServed);
-
-            long jobServedCheckIns = checkInDesksTargetJobsServed;
-            for (long l : checkInDesksOthers.getNumberOfJobsPerCenter()) {
-                jobServedCheckIns += l;
-                //System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + jobsServed);
-            }
+            compare(simulationType);
         }
 
-        return statisticsList;
+        // controllo di consistenza sul numero di jobs processati
+        printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boardingTarget, boardingOthers, false);
 
-        //printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boarding);
+        return statisticsList;
+    }
+
+    private void compare(String simulationType) {
+        List<Result> verificationResults = modelVerification(simulationType);
+
+        // Compare results and verifications and save comparison result
+        List<MeanStatistics> meanStatisticsList = new ArrayList<>();
+        meanStatisticsList.add(luggageChecks.getMeanStatistics());
+        meanStatisticsList.add(checkInDesksTarget.getMeanStatistics());
+        meanStatisticsList.add(checkInDesksOthers.getMeanStatistics());
+        meanStatisticsList.add(boardingPassScanners.getMeanStatistics());
+        meanStatisticsList.add(securityChecks.getMeanStatistics());
+        meanStatisticsList.add(passportChecks.getMeanStatistics());
+        meanStatisticsList.add(stampsCheck.getMeanStatistics());
+        meanStatisticsList.add(boardingTarget.getMeanStatistics());
+        meanStatisticsList.add(boardingOthers.getMeanStatistics());
+
+        compareResults(simulationType, verificationResults, meanStatisticsList);
+    }
+
+    private void writeStats(String simulationType) {
+        luggageChecks.writeStats(simulationType);
+        checkInDesksTarget.writeStats(simulationType);
+        checkInDesksOthers.writeStats(simulationType);
+        boardingPassScanners.writeStats(simulationType);
+        securityChecks.writeStats(simulationType);
+        passportChecks.writeStats(simulationType);
+        stampsCheck.writeStats(simulationType);
+        boardingTarget.writeStats(simulationType);
+        boardingOthers.writeStats(simulationType);
+    }
+
+    private void saveStats() {
+        luggageChecks.saveStats();
+        checkInDesksTarget.saveStats();
+        checkInDesksOthers.saveStats();
+        boardingPassScanners.saveStats();
+        securityChecks.saveStats();
+        passportChecks.saveStats();
+        stampsCheck.saveStats();
+        boardingTarget.saveStats();
+        boardingOthers.saveStats();
+    }
+
+    private void updateAreas(MsqTime msqTime) {
+        luggageChecks.setAreaForAll(msqTime);
+        checkInDesksTarget.setArea(msqTime);
+        checkInDesksOthers.setAreaForAll(msqTime);
+        boardingPassScanners.setArea(msqTime);
+        securityChecks.setArea(msqTime);
+        passportChecks.setArea(msqTime);
+        stampsCheck.setArea(msqTime);
+        boardingTarget.setArea(msqTime);
+        boardingOthers.setAreaForAll(msqTime);
     }
 
     private long getMinimumNumberOfJobsServedByCenters() {
         long minimumLuggageChecks = Arrays.stream(luggageChecks.getNumberOfJobsPerCenter()).min().orElseThrow();
+        // System.out.printf("Luggage checks %d%n", minimumLuggageChecks);
         long minimumCheckInDeskOthers = Arrays.stream(checkInDesksOthers.getNumberOfJobsPerCenter()).min().orElseThrow();
-        long minimumBoardingOthers = Arrays.stream(boardingOthers.getNumberOfJobsPerCenter()).sum() ;
+        // System.out.printf("Check In Desk Others %d%n", minimumCheckInDeskOthers);
+        long minimumBoardingOthers = Arrays.stream(boardingOthers.getNumberOfJobsPerCenter()).min().orElseThrow();
+        // System.out.printf("Boarding Others %d%n", minimumBoardingOthers);
         return Stream.of(
                 minimumLuggageChecks,
                 checkInDesksTarget.getJobsServed(),
@@ -292,7 +298,6 @@ public class BatchSimulationRunner {
                 minimumBoardingOthers
         ).min(Long::compare).orElseThrow();
     }
-
 
     private boolean checkEndOfBatchSimulation(long n) {
         return getMinimumNumberOfJobsServedByCenters() < n;

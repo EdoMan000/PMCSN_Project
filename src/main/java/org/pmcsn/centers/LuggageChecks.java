@@ -145,6 +145,12 @@ public class LuggageChecks {
         }
     }
 
+    public void saveBatch(int batchSize, int batchesNumber) {
+        for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
+            center.saveBatch(batchSize, batchesNumber);
+        }
+    }
+
     public void saveStats(int center) {
         luggageChecksSingleEntrances[center].saveStats();
     }

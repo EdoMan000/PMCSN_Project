@@ -90,7 +90,7 @@ public class CheckInDesksOthers {
         return minBatchIndex;
     }
 
-    public void setAreaForAll(MsqTime time){
+    public void saveBatch(int batchSize, int batchesNumber) {
         for(CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray){
             s.setArea(time);
         }
@@ -104,6 +104,12 @@ public class CheckInDesksOthers {
 
     public void saveStats(int center) {
         checkInDesksSingleFlightArray[center].saveStats();
+    }
+
+    public void setAreaForAll(MsqTime time){
+        for(CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray){
+            s.setArea(time);
+        }
     }
 
     public void writeStats(String simulationType){

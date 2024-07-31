@@ -10,9 +10,8 @@ import java.util.List;
 public class BatchMeans {
 
     public static void main(String[] args) throws Exception {
-        int numBatch_k = 1;
-        int batchSize_B = 90;
-        int warmup = 0;
+        Config config = new Config();
+        int batchSize_B = config.getInt("general", "batchSize");
         // 6000(warmup=discard) + 60000(restOfTheSimulation=keep) --> TOT RECCOMMENDED JOBS >= 66000 (K*B with 100<=K<=400)
         while (true) {
             System.out.println("Batch size: " + batchSize_B);
@@ -39,16 +38,16 @@ public class BatchMeans {
         List<Statistics> entrancesStats = statisticsList.stream().filter(x -> x.centerName.contains(centerName)).toList();
         boolean result = true;
         for (Statistics entrance : entrancesStats) {
-            double acs = autocorrlelation(entrance.meanResponseTimeList, entrance.centerName, "E[Ts]");
+            double acs = acs(entrance.meanResponseTimeList);
             result = result && Math.abs(acs) <= v;
             System.out.println("------------------------------------------------------");
-            System.out.println(entrance.centerName + "\t: " + acs);
+            System.out.printf("%s (E[Ts])\t: %f%n", entrance.centerName, acs);
             System.out.println("------------------------------------------------------");
         }
         return result;
     }
 
-    public static double autocorrlelation(List<Double> data, String centerName, String metric) {
+    public static double autocorrlelation(List<Double> data) {
         int k = data.size();
         double mean = 0.0;
 
@@ -68,47 +67,39 @@ public class BatchMeans {
         for (int j = 0; j < k; j++) {
             denominator += Math.pow(data.get(j) - mean, 2);
         }
-
-        double autocorrelationLag1 = numerator / denominator;
-
-        // Print information if needed
-//        System.out.println("------------------------------------------------------");
-//        System.out.println("            " + centerName + "     " + metric + "            ");
-//        System.out.println("------------------------------------------------------");
-//
-//        DecimalFormat f = new DecimalFormat("###0.00");
-//        DecimalFormat g = new DecimalFormat("###0.000");
-//
-//        System.out.println("for " + k + " data points");
-//        System.out.println("the mean is ... " + f.format(mean));
-//        System.out.println("  j (lag)   r[j] (autocorrelation)");
-//        System.out.println("  1          " + g.format(autocorrelationLag1));
-//
-//        System.out.println("------------------------------------------------------\n\n");
-
-        return autocorrelationLag1;
+        return numerator / denominator;
     }
 
-    static int K    = 1;               /* we just need lag-1 autocorrelation*/
-    static int SIZE = K + 1;
+    public static double acs(List<Double> values) {
+        return acs(values, 1);
+    }
 
-    public static double computeTmp(List<Double> values) {
-        int    i = 0;                   /* data point index              */
-        int    j;                       /* lag index                     */
-        int    p = 0;                   /* points to the head of 'hold'  */
-        double x;                       /* current x[i] data point       */
-        double sum = 0.0;               /* sums x[i]                     */
-        long   n;                       /* number of data points         */
+    public static double acs(List<Double> values, int lag) {
+        // data point index
+        int i = 0;
+        // lag index
+        int j;
+        // points to the head of hold
+        int p = 0;
+        // current x[i] data point
+        double x;
+        // sums x[i]
+        double sum = 0.0;
+        // number of data points
+        long n;
         double mean;
-        double hold[]  = new double [SIZE]; /* K + 1 most recent data points */
-        double cosum[] = new double [SIZE]; /* cosum[j] sums x[i] * x[i+j]   */
+        int SIZE = lag + 1;
+        // K + 1 most recent data points
+        double[] hold = new double [SIZE];
+        // cosum[j] sums x[i] * x[i+j]
+        double[] cosum = new double [SIZE];
 
         for (j = 0; j < SIZE; j++)
             cosum[j] = 0.0;
 
         String line;
         StringBuilder s = new StringBuilder();
-        values.stream().forEach(v -> s.append(v).append("\n"));
+        values.forEach(v -> s.append(v).append("\n"));
         StringReader r = new StringReader(s.toString());
         BufferedReader ReadThis = new BufferedReader(r);
         try {                         /* the first K + 1 data values    */
@@ -120,8 +111,7 @@ public class BatchMeans {
                     i++;
                 }
             }
-
-            while ( (line = ReadThis.readLine()) != null ) {
+            while ((line = ReadThis.readLine()) != null) {
                 for (j = 0; j < SIZE; j++)
                     cosum[j] += hold[p] * hold[(p + j) % SIZE];
                 x       = Double.parseDouble(line);
@@ -130,12 +120,8 @@ public class BatchMeans {
                 p       = (p + 1) % SIZE;
                 i++;
             }
-        } catch (EOFException e) {
+        } catch (NumberFormatException | IOException e) {
             System.out.println("Acs: " + e);
-        } catch (NumberFormatException nfe) {
-//      System.out.println("Acs: " + nfe);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
 
         n = i;
@@ -148,7 +134,7 @@ public class BatchMeans {
         }
 
         mean = sum / n;
-        for (j = 0; j <= K; j++)
+        for (j = 0; j <= lag; j++)
             cosum[j] = (cosum[j] / (n - j)) - (mean * mean);
 
 //        DecimalFormat f = new DecimalFormat("###0.00");

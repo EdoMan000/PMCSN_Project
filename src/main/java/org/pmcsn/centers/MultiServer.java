@@ -4,6 +4,7 @@ import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.*;
 import org.pmcsn.model.Statistics;
 
+import java.util.Arrays;
 import java.util.List;
 
 public abstract class MultiServer {
@@ -75,11 +76,7 @@ public abstract class MultiServer {
     }
 
     public long getJobsServed() {
-        long numberOfJobsServed = 0;
-        for(int i=0; i<SERVERS ; i++){
-            numberOfJobsServed += sum[i].served;
-        };
-        return numberOfJobsServed;
+        return Arrays.stream(sum).mapToLong(x -> x.served).sum();
     }
 
     public Statistics getStatistics(){
@@ -93,12 +90,7 @@ public abstract class MultiServer {
     public void setArea(MsqTime time){
         double width = time.next - time.current;
         area.incNodeArea(width * numberOfJobsInNode);
-        long busyServers = 0;
-        for (MsqServer server : servers) {
-            if (server.running) {
-                busyServers += 1;
-            }
-        }
+        long busyServers = Arrays.stream(servers).filter(x -> x.running).count();
         area.incQueueArea(width * (numberOfJobsInNode - busyServers));
         area.incServiceArea(width);
     }
@@ -141,21 +133,31 @@ public abstract class MultiServer {
         while (servers[i].running)       /* find the index of the first available */
             i++;                        /* (idle) server                         */
         s = i;
-        if(s == SERVERS) return s;
+        if (s == SERVERS) return s;
         while (i < SERVERS-1) {         /* now, check the others to find which   */
             i++;                        /* has been idle longest                 */
             if (!servers[i].running && (servers[i].lastCompletionTime < servers[s].lastCompletionTime))
                 s = i;
         }
-        return (s);
+        return s;
     }
 
     public void saveStats() {
         batchIndex++;
         statistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime, true);
     }
+
     public void writeStats(String simulationType){
         statistics.writeStats(simulationType);
+    }
+
+    public void saveBatch(int batchSize, int batchesNumber) {
+        if(getJobsServed() == batchSize && statistics.meanResponseTimeList.size() < batchesNumber){
+            System.out.println("Center " + centerName + " has served another " + getJobsServed() + " jobs!! Saving stats for batch N°" + (getStatistics().meanResponseTimeList.size()+1));
+            saveStats();
+            resetBatch();
+            System.out.println("********************************************************************************************************");
+        }
     }
 
     public Statistics.MeanStatistics getMeanStatistics() {
