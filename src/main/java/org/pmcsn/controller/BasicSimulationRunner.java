@@ -26,25 +26,50 @@ public class BasicSimulationRunner {
     // Constants
     private static final int START = 0;
     private static final long SEED = 123456789L;
-    private final Config config = new Config();
 
+    private final Config config = new Config();
+    private LuggageChecks luggageChecks;
+    private CheckInDesksTarget checkInDesksTarget;
+    private CheckInDesksOthers checkInDesksOthers;
+    private BoardingPassScanners boardingPassScanners;
+    private SecurityChecks securityChecks;
+    private PassportChecks passportChecks;
+    private StampsCheck stampsCheck;
+    private BoardingTarget boardingTarget;
+    private BoardingOthers boardingOthers;
+    private final List<Observations> luggageObservations = new ArrayList<>();
+    private final List<Observations> checkInDeskTargetObservations = new ArrayList<>();
+    private final List<List<Observations>> checkinDeskOthersObservations = new ArrayList<>();
+    private final List<Observations> boardingPassScannerObservations = new ArrayList<>();
+    private final List<Observations> securityCheckObservations = new ArrayList<>();
+    private final List<Observations> passportCheckObservations = new ArrayList<>();
+    private final List<Observations> boardingTargetObservations = new ArrayList<>();
+    private Observations stampsCheckObservations;
+    private final List<List<Observations>> boardingOthersObservations = new ArrayList<>();
+
+    private void initCenters(boolean approximateServiceAsExponential) {
+        CenterFactory factory = new CenterFactory();
+        luggageChecks = factory.createLuggageChecks(approximateServiceAsExponential);
+        checkInDesksTarget = factory.createCheckinDeskTarget(approximateServiceAsExponential);
+        checkInDesksOthers = factory.createCheckinDeskOthers(approximateServiceAsExponential);
+        boardingPassScanners = factory.createBoardingPassScanners(approximateServiceAsExponential);
+        securityChecks = factory.createSecurityChecks(approximateServiceAsExponential);
+        passportChecks = factory.createPassportChecks(approximateServiceAsExponential);
+        stampsCheck = factory.createStampsCheck(approximateServiceAsExponential);
+        boardingTarget = factory.createBoardingTarget(approximateServiceAsExponential);
+        boardingOthers = factory.createBoardingOthers(approximateServiceAsExponential);
+    }
 
     public void runBasicSimulation(boolean approximateServiceAsExponential) throws Exception {
-        CenterFactory factory = new CenterFactory();
+        runBasicSimulation(approximateServiceAsExponential, false);
+    }
 
-        LuggageChecks luggageChecks = factory.createLuggageChecks(approximateServiceAsExponential);
-        CheckInDesksTarget checkInDesksTarget = factory.createCheckinDeskTarget(approximateServiceAsExponential);
-        CheckInDesksOthers checkInDesksOthers = factory.createCheckinDeskOthers(approximateServiceAsExponential);
-        BoardingPassScanners boardingPassScanners = factory.createBoardingPassScanners(approximateServiceAsExponential);
-        SecurityChecks securityChecks = factory.createSecurityChecks(approximateServiceAsExponential);
-        PassportChecks passportChecks = factory.createPassportChecks(approximateServiceAsExponential);
-        StampsCheck stampsCheck = factory.createStampsCheck(approximateServiceAsExponential);
-        BoardingTarget boardingTarget = factory.createBoardingTarget(approximateServiceAsExponential);
-        BoardingOthers boardingOthers = factory.createBoardingOthers(approximateServiceAsExponential);
+    public void runBasicSimulation(boolean approximateServiceAsExponential, boolean shouldTrackObservations) throws Exception {
+        initCenters(approximateServiceAsExponential);
 
         if (approximateServiceAsExponential) {
             System.out.println("\nRunning Basic Simulation with Exponential Service...");
-        }else{
+        } else {
             System.out.println("\nRunning Basic Simulation...");
         }
 
@@ -53,47 +78,11 @@ public class BasicSimulationRunner {
         seeds[0] = SEED;
         Rngs rngs = new Rngs();
 
-        int runsNumber = config.getInt("general", "runsNumber");
+        if (shouldTrackObservations) {
+            initObservations();
+        }
 
-        final List<Observations> luggageObservations = new ArrayList<>();
-        for (int i = 0; i < config.getInt("luggageChecks", "numberOfCenters"); i++) {
-            luggageObservations.add(new Observations("%s_%d".formatted(config.getString("luggageChecks", "centerName"), i+1), runsNumber));
-        }
-        final List<Observations> checkInDeskTargetObservations = new ArrayList<>();
-        for (int i = 0; i < config.getInt("checkInDeskTarget", "serversNumber"); i++) {
-            checkInDeskTargetObservations.add(new Observations("%s_%d".formatted(config.getString("checkInDeskTarget", "centerName"), i+1), runsNumber));
-        }
-        final List<List<Observations>> checkinDeskOthersObservations = new ArrayList<>();
-        for (int i = 0; i < config.getInt("checkInDeskOthers", "numberOfCenters"); i++) {
-            checkinDeskOthersObservations.add(new ArrayList<>());
-            for (int j = 0; j < config.getInt("checkInDeskOthers", "serversNumber"); j++) {
-                checkinDeskOthersObservations.get(i).add(new Observations("%s_%d_%d".formatted(config.getString("checkInDeskOthers", "centerName"), i+1, j+1), runsNumber));
-            }
-        }
-        final List<Observations> boardingPassScannerObservations = new ArrayList<>();
-        for (int i = 0; i < config.getInt("boardingPassScanners", "serversNumber"); i++) {
-            boardingPassScannerObservations.add(new Observations("%s_%d".formatted(config.getString("boardingPassScanners", "centerName"), i+1), runsNumber));
-        }
-        final List<Observations> securityCheckObservations = new ArrayList<>();
-        for (int i = 0; i < config.getInt("securityChecks", "serversNumber"); i++) {
-            securityCheckObservations.add(new Observations("%s_%d".formatted(config.getString("securityChecks", "centerName"), i+1), runsNumber));
-        }
-        final List<Observations> passportCheckObservations = new ArrayList<>();
-        for (int i = 0; i < config.getInt("passportChecks", "serversNumber"); i++) {
-            passportCheckObservations.add(new Observations("%s_%d".formatted(config.getString("passportChecks", "centerName"), i+1), runsNumber));
-        }
-        Observations stampsCheckObservations = new Observations("STAMPS_CHECK", runsNumber);
-        final List<Observations> boardingTargetObservations = new ArrayList<>();
-        for (int i = 0; i < config.getInt("boardingTarget", "serversNumber"); i++) {
-            boardingTargetObservations.add(new Observations("%s_%d".formatted(config.getString("boardingTarget", "centerName"), i+1), runsNumber));
-        }
-        final List<List<Observations>> boardingObservations = new ArrayList<>();
-        for (int i = 0; i < config.getInt("boardingOthers", "numberOfCenters"); i++) {
-            boardingObservations.add(new ArrayList<>());
-            for (int j = 0; j < config.getInt("boardingOthers", "serversNumber"); j++) {
-                boardingObservations.get(i).add(new Observations("%s_%d_%d".formatted(config.getString("boardingOthers", "centerName"), i+1, j+1), runsNumber));
-            }
-        }
+        int runsNumber = config.getInt("general", "runsNumber");
         for (int i = 0; i < runsNumber; i++) {
             double sarrival = START;
             long number = 1;
@@ -133,16 +122,7 @@ public class BasicSimulationRunner {
                 event = queue.pop();
                 msqTime.next = event.time;
 
-                // Updating the areas
-                luggageChecks.setAreaForAll(msqTime);
-                checkInDesksTarget.setArea(msqTime);
-                checkInDesksOthers.setAreaForAll(msqTime);
-                boardingPassScanners.setArea(msqTime);
-                securityChecks.setArea(msqTime);
-                passportChecks.setArea(msqTime);
-                stampsCheck.setArea(msqTime);
-                boardingTarget.setArea(msqTime);
-                boardingOthers.setAreaForAll(msqTime);
+                updateAreas(msqTime);
 
                 // Advancing the clock
                 msqTime.current = msqTime.next;
@@ -219,18 +199,13 @@ public class BasicSimulationRunner {
                     case BOARDING_OTHERS_DONE:
                         boardingOthers.processCompletion(event, msqTime, queue);
                         if (eventCount % skip == 0)
-                            boardingOthers.updateObservations(boardingObservations, i);
+                            boardingOthers.updateObservations(boardingOthersObservations, i);
                         break;
                 }
-                // Saving observations to compute warm up period boundaries
-                //luggageChecks.updateObservations(luggageObservations, i);
-                //checkInDesksTarget.updateObservations(checkInDeskTargetObservations, i);
-                //checkInDesksOthers.updateObservations(checkinDeskOthersObservations, i);
-                //boardingPassScanners.updateObservations(boardingPassScannerObservations, i);
-                //securityChecks.updateObservations(securityCheckObservations, i);
-                //passportChecks.updateObservations(passportCheckObservations, i);
-                //stampsCheck.updateObservations(stampsCheckObservations, i);
-                //boarding.updateObservations(boardingObservations, i);
+
+                if (shouldTrackObservations) {
+                    trackObservations(i);
+                }
 
                 eventCount++;
 
@@ -271,16 +246,9 @@ public class BasicSimulationRunner {
             SIMULATION_TYPE = "BASIC_SIMULATION";
         }
 
-        // Computing warm up period boundaries
-        WelchPlot.writeObservations(SIMULATION_TYPE, luggageObservations);
-        WelchPlot.writeObservations(SIMULATION_TYPE, checkInDeskTargetObservations);
-        WelchPlot.writeObservations(checkinDeskOthersObservations, SIMULATION_TYPE);
-        WelchPlot.writeObservations(boardingObservations, SIMULATION_TYPE);
-        WelchPlot.writeObservations(SIMULATION_TYPE, boardingTargetObservations);
-        WelchPlot.writeObservations(SIMULATION_TYPE, boardingPassScannerObservations);
-        WelchPlot.writeObservations(SIMULATION_TYPE, securityCheckObservations);
-        WelchPlot.writeObservations(SIMULATION_TYPE, passportCheckObservations);
-        WelchPlot.writeObservations(SIMULATION_TYPE, List.of(stampsCheckObservations));
+        if (shouldTrackObservations) {
+            writeObservations(SIMULATION_TYPE);
+        }
 
         // Writing statistics csv with data from all runs
         luggageChecks.writeStats(SIMULATION_TYPE);
@@ -315,4 +283,89 @@ public class BasicSimulationRunner {
         printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boardingTarget, boardingOthers, false);
     }
 
+    private void updateAreas(MsqTime msqTime) {
+        // Updating the areas
+        luggageChecks.setAreaForAll(msqTime);
+        checkInDesksTarget.setArea(msqTime);
+        checkInDesksOthers.setAreaForAll(msqTime);
+        boardingPassScanners.setArea(msqTime);
+        securityChecks.setArea(msqTime);
+        passportChecks.setArea(msqTime);
+        stampsCheck.setArea(msqTime);
+        boardingTarget.setArea(msqTime);
+        boardingOthers.setAreaForAll(msqTime);
+    }
+
+    private void initObservations() {
+        resetObservations();
+        int runsNumber = config.getInt("general", "runsNumber");
+        for (int i = 0; i < config.getInt("luggageChecks", "numberOfCenters"); i++) {
+            luggageObservations.add(new Observations("%s_%d".formatted(config.getString("luggageChecks", "centerName"), i+1), runsNumber));
+        }
+        for (int i = 0; i < config.getInt("checkInDeskTarget", "serversNumber"); i++) {
+            checkInDeskTargetObservations.add(new Observations("%s_%d".formatted(config.getString("checkInDeskTarget", "centerName"), i+1), runsNumber));
+        }
+        for (int i = 0; i < config.getInt("checkInDeskOthers", "numberOfCenters"); i++) {
+            checkinDeskOthersObservations.add(new ArrayList<>());
+            for (int j = 0; j < config.getInt("checkInDeskOthers", "serversNumber"); j++) {
+                checkinDeskOthersObservations.get(i).add(new Observations("%s_%d_%d".formatted(config.getString("checkInDeskOthers", "centerName"), i+1, j+1), runsNumber));
+            }
+        }
+        for (int i = 0; i < config.getInt("boardingPassScanners", "serversNumber"); i++) {
+            boardingPassScannerObservations.add(new Observations("%s_%d".formatted(config.getString("boardingPassScanners", "centerName"), i+1), runsNumber));
+        }
+        for (int i = 0; i < config.getInt("securityChecks", "serversNumber"); i++) {
+            securityCheckObservations.add(new Observations("%s_%d".formatted(config.getString("securityChecks", "centerName"), i+1), runsNumber));
+        }
+        for (int i = 0; i < config.getInt("passportChecks", "serversNumber"); i++) {
+            passportCheckObservations.add(new Observations("%s_%d".formatted(config.getString("passportChecks", "centerName"), i+1), runsNumber));
+        }
+        stampsCheckObservations = new Observations("STAMPS_CHECK", runsNumber);
+        for (int i = 0; i < config.getInt("boardingTarget", "serversNumber"); i++) {
+            boardingTargetObservations.add(new Observations("%s_%d".formatted(config.getString("boardingTarget", "centerName"), i+1), runsNumber));
+        }
+        for (int i = 0; i < config.getInt("boardingOthers", "numberOfCenters"); i++) {
+            boardingOthersObservations.add(new ArrayList<>());
+            for (int j = 0; j < config.getInt("boardingOthers", "serversNumber"); j++) {
+                boardingOthersObservations.get(i).add(new Observations("%s_%d_%d".formatted(config.getString("boardingOthers", "centerName"), i+1, j+1), runsNumber));
+            }
+        }
+    }
+
+    private void trackObservations(int i) {
+        luggageChecks.updateObservations(luggageObservations, i);
+        checkInDesksTarget.updateObservations(checkInDeskTargetObservations, i);
+        checkInDesksOthers.updateObservations(checkinDeskOthersObservations, i);
+        boardingPassScanners.updateObservations(boardingPassScannerObservations, i);
+        securityChecks.updateObservations(securityCheckObservations, i);
+        passportChecks.updateObservations(passportCheckObservations, i);
+        stampsCheck.updateObservations(stampsCheckObservations, i);
+        boardingOthers.updateObservations(boardingOthersObservations, i);
+        boardingTarget.updateObservations(boardingTargetObservations, i);
+    }
+
+    private void resetObservations() {
+        luggageObservations.clear();
+        checkInDeskTargetObservations.clear();
+        checkinDeskOthersObservations.clear();
+        boardingPassScannerObservations.clear();
+        securityCheckObservations.clear();
+        passportCheckObservations.clear();
+        stampsCheckObservations = null;
+        boardingTargetObservations.clear();
+        boardingOthersObservations.clear();
+    }
+
+    private void writeObservations(String simulationType) {
+        // Computing warm up period boundaries
+        WelchPlot.writeObservations(simulationType, luggageObservations);
+        WelchPlot.writeObservations(simulationType, checkInDeskTargetObservations);
+        WelchPlot.writeObservations(checkinDeskOthersObservations, simulationType);
+        WelchPlot.writeObservations(boardingOthersObservations, simulationType);
+        WelchPlot.writeObservations(simulationType, boardingTargetObservations);
+        WelchPlot.writeObservations(simulationType, boardingPassScannerObservations);
+        WelchPlot.writeObservations(simulationType, securityCheckObservations);
+        WelchPlot.writeObservations(simulationType, passportCheckObservations);
+        WelchPlot.writeObservations(simulationType, List.of(stampsCheckObservations));
+    }
 }

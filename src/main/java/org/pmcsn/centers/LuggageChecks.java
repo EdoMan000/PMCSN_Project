@@ -114,12 +114,9 @@ public class LuggageChecks {
 
     public List<Statistics> getStatistics(){
         List<Statistics> statistics = new ArrayList<>();
-        for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
-
-            statistics.add(center.getStatistics());
-
+        for (LuggageChecksSingleEntrance s : luggageChecksSingleEntrances) {
+            statistics.add(s.getStatistics());
         }
-
         return statistics;
     }
 
@@ -167,7 +164,6 @@ public class LuggageChecks {
         List<Double> meanUtilizationList = new ArrayList<Double>();
         List<Double> meanQueuePopulationList = new ArrayList<Double>();
         MeanStatistics ms;
-
         // obtaining the mean for all centers
         for(LuggageChecksSingleEntrance c : luggageChecksSingleEntrances){
             ms = c.getMeanStatistics();
@@ -179,7 +175,6 @@ public class LuggageChecks {
             meanUtilizationList.add(ms.meanUtilization);
             meanQueuePopulationList.add(ms.meanQueuePopulation);
         }
-
         double meanResponseTime = computeMean(meanResponseTimeList);
         double meanServiceTime = computeMean(meanServiceTimeList);
         double meanQueueTime = computeMean(meanQueueTimeList);
@@ -187,7 +182,6 @@ public class LuggageChecks {
         double meanSystemPopulation = computeMean(meanSystemPopulationList);
         double meanUtilization = computeMean(meanUtilizationList);
         double meanQueuePopulation = computeMean(meanQueuePopulationList);
-
         return new MeanStatistics(centerName, meanResponseTime, meanServiceTime, meanQueueTime, lambda, meanSystemPopulation, meanUtilization, meanQueuePopulation);
     }
 

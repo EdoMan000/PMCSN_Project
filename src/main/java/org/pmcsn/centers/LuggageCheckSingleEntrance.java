@@ -14,7 +14,6 @@ class LuggageChecksSingleEntrance extends SingleServer {
     public LuggageChecksSingleEntrance(String centerName, int nodeId, int centerIndex, double meanServiceTime, boolean approximateServiceAsExponential) {
         super("%s_%d".formatted(centerName, nodeId), meanServiceTime, centerIndex, approximateServiceAsExponential);
         this.centerID = nodeId;
-
     }
 
     @Override

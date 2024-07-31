@@ -31,9 +31,9 @@ public class CheckInDesksTarget extends MultiServer {
     public double getService(int streamIndex)
     {
         rngs.selectStream(streamIndex);
-        if(approximateServiceAsExponential){
+        if (approximateServiceAsExponential) {
             return exponential(meanServiceTime, rngs);
         }
-        return (logNormal(meanServiceTime, meanServiceTime*0.2, rngs));
+        return logNormal(meanServiceTime, meanServiceTime*0.2, rngs);
     }
 }

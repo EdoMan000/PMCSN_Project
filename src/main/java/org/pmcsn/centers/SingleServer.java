@@ -75,7 +75,6 @@ public abstract class SingleServer {
     }
 
     public void setArea(MsqTime time) {
-        // TODO: il controllo per l'aggiornamento di area dovrebbe avvenire nel loop principale
         if (numberOfJobsInNode > 0) {
             double width = time.next - time.current;
             area.incNodeArea(width * numberOfJobsInNode);
@@ -89,7 +88,7 @@ public abstract class SingleServer {
         numberOfJobsInNode++;
 
         // Updating the first arrival time (we will use it in the statistics)
-        if(firstArrivalTime == Double.NEGATIVE_INFINITY){
+        if(firstArrivalTime == Double.NEGATIVE_INFINITY) {
             firstArrivalTime = arrival.time;
         }
         lastArrivalTime = arrival.time;

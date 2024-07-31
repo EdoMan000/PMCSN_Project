@@ -73,12 +73,9 @@ public class BoardingOthers {
 
     public List<Statistics> getStatistics(){
         List<Statistics> statistics = new ArrayList<>();
-        for (int i = 1; i < boardingSingleFlightArray.length; i++) {
-
-            statistics.add(boardingSingleFlightArray[i].getStatistics());
-
+        for (BoardingOtherSingleFlight s : boardingSingleFlightArray) {
+            statistics.add(s.getStatistics());
         }
-
         return statistics;
     }
 
@@ -98,8 +95,8 @@ public class BoardingOthers {
     }
 
     public void saveStats() {
-        for(BoardingOtherSingleFlight other : boardingSingleFlightArray){
-            other.saveStats();
+        for(BoardingOtherSingleFlight s : boardingSingleFlightArray){
+            s.saveStats();
         }
     }
 
@@ -108,8 +105,8 @@ public class BoardingOthers {
     }
 
     public void writeStats(String simulationType){
-        for (BoardingOtherSingleFlight c : boardingSingleFlightArray){
-            c.writeStats(simulationType);
+        for (BoardingOtherSingleFlight s : boardingSingleFlightArray){
+            s.writeStats(simulationType);
         }
     }
 
@@ -122,7 +119,6 @@ public class BoardingOthers {
         List<Double> meanUtilizationList = new ArrayList<>();
         List<Double> meanQueuePopulationList = new ArrayList<>();
         Statistics.MeanStatistics ms;
-
         // obtaining the mean for all centers
         for(BoardingOtherSingleFlight c : boardingSingleFlightArray){
             ms = c.getMeanStatistics();
@@ -145,7 +141,7 @@ public class BoardingOthers {
     }
 
     public void updateObservations(List<List<Observations>> observations, int run) {
-        for (int i = 0; i < boardingSingleFlightArray.length; i++) {
+        for (int i = 0; i < observations.size(); i++) {
             boardingSingleFlightArray[i].updateObservations(observations.get(i), run);
         }
     }

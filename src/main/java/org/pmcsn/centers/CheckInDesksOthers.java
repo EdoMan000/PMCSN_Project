@@ -25,8 +25,8 @@ public class CheckInDesksOthers {
 
     public void reset(Rngs rngs) {
         this.rngs = rngs;
-        for (CheckInDesksOtherSingleFlight checkInDesksSingleFlight : checkInDesksSingleFlightArray) {
-            checkInDesksSingleFlight.reset(rngs);
+        for (CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray) {
+            s.reset(rngs);
         }
     }
 
@@ -69,12 +69,9 @@ public class CheckInDesksOthers {
 
     public List<Statistics> getStatistics(){
         List<Statistics> statistics = new ArrayList<>();
-        for (int i = 1; i < checkInDesksSingleFlightArray.length; i++) {
-
-            statistics.add(checkInDesksSingleFlightArray[i].getStatistics());
-
+        for (CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray) {
+            statistics.add(s.getStatistics());
         }
-
         return statistics;
     }
 
@@ -94,14 +91,14 @@ public class CheckInDesksOthers {
     }
 
     public void setAreaForAll(MsqTime time){
-        for(CheckInDesksOtherSingleFlight singleFlight : checkInDesksSingleFlightArray){
-            singleFlight.setArea(time);
+        for(CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray){
+            s.setArea(time);
         }
     }
 
     public void saveStats() {
-        for (CheckInDesksOtherSingleFlight c : checkInDesksSingleFlightArray){
-            c.saveStats();
+        for (CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray){
+            s.saveStats();
         }
     }
 
@@ -110,8 +107,8 @@ public class CheckInDesksOthers {
     }
 
     public void writeStats(String simulationType){
-        for (CheckInDesksOtherSingleFlight c : checkInDesksSingleFlightArray){
-            c.writeStats(simulationType);
+        for (CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray){
+            s.writeStats(simulationType);
         }
     }
 
@@ -124,7 +121,6 @@ public class CheckInDesksOthers {
         List<Double> meanUtilizationList = new ArrayList<>();
         List<Double> meanQueuePopulationList = new ArrayList<>();
         Statistics.MeanStatistics ms;
-
         // obtaining the mean for all centers
         for(CheckInDesksOtherSingleFlight c : checkInDesksSingleFlightArray){
             ms = c.getMeanStatistics();

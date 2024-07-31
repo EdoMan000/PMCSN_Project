@@ -40,6 +40,6 @@ public class SecurityChecks extends MultiServer {
         if(approximateServiceAsExponential){
             return exponential(meanServiceTime, rngs);
         }
-        return (logNormal(meanServiceTime, meanServiceTime*0.2, rngs));
+        return logNormal(meanServiceTime, meanServiceTime*0.2, rngs);
     }
 }

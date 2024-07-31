@@ -26,6 +26,6 @@ public class PassportChecks extends MultiServer {
     public double getService(int streamIndex)
     {
         rngs.selectStream(streamIndex);
-        return (exponential(meanServiceTime,  rngs));
+        return exponential(meanServiceTime,  rngs);
     }
 }

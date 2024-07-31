@@ -32,10 +32,10 @@ public class StampsCheck extends SingleServer{
     public double getService(int streamIndex)
     {
         rngs.selectStream(streamIndex);
-        if(approximateServiceAsExponential){
+        if (approximateServiceAsExponential) {
             return exponential(meanServiceTime, rngs);
         }
-        return (uniform(meanServiceTime-0.5 , meanServiceTime+0.5, rngs));
+        return uniform(meanServiceTime-0.5 , meanServiceTime+0.5, rngs);
     }
 
 }
