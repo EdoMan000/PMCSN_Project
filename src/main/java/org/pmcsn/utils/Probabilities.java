@@ -16,37 +16,20 @@ public class Probabilities {
         return generateProbability(0.4, rngs, streamIndex);
     }
 
-    // TODO: perché non ritornare direttamente un numero casuale intero in [0,5]??
-    public static int getEntrance(Rngs rngs, int streamIndex) {
-        double prob = 1.0 / 6.0;
+    public static int getRandomValueUpToMax(Rngs rngs, int streamIndex, int maxValue) {
+        double prob = 1.0 / maxValue;
         rngs.selectStream(streamIndex);
         double random = rngs.random();
 
-        // Mappa il valore casuale a un numero intero tra 1 e 6
-        for (int i = 1; i <= 6; i++) {
+        // Mappa il valore casuale a un numero intero tra 1 e maxValue
+        for (int i = 1; i <= maxValue; i++) {
             if (random < i * prob) {
                 return i;
             }
         }
 
         // Questo punto non dovrebbe mai essere raggiunto, ma è qui come fallback
-        return 6;
-    }
-
-    public static int getCheckInDesks(Rngs rngs, int streamIndex) {
-        double prob = 1.0 / 19.0;
-        rngs.selectStream(streamIndex);
-        double random = rngs.random();
-
-        // Mappa il valore casuale a un numero intero tra 1 e 19
-        for (int i = 1; i <= 19; i++) {
-            if (random < i * prob) {
-                return i;
-            }
-        }
-
-        // Questo punto non dovrebbe mai essere raggiunto, ma è qui come fallback
-        return 19;
+        return maxValue;
     }
 
     private static boolean generateProbability(double beta, Rngs rngs, int streamIndex) {

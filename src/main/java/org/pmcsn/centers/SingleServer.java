@@ -70,7 +70,7 @@ public abstract class SingleServer {
         return numberOfJobsInNode;
     }
 
-    public long getCompletions(){
+    public long getJobsServed(){
         return sum.served;
     }
 

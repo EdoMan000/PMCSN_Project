@@ -10,11 +10,11 @@ import org.pmcsn.model.*;
 import org.pmcsn.model.Statistics.MeanStatistics;
 import org.pmcsn.utils.Verification.Result;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.pmcsn.utils.Comparison.compareResults;
+import static org.pmcsn.utils.PrintUtils.printJobsServedByNodes;
 import static org.pmcsn.utils.Verification.modelVerification;
 
 public class BasicSimulationRunner {
@@ -39,7 +39,8 @@ public class BasicSimulationRunner {
         SecurityChecks securityChecks = factory.createSecurityChecks(approximateServiceAsExponential);
         PassportChecks passportChecks = factory.createPassportChecks(approximateServiceAsExponential);
         StampsCheck stampsCheck = factory.createStampsCheck(approximateServiceAsExponential);
-        Boarding boarding = factory.createBoarding(approximateServiceAsExponential);
+        BoardingTarget boardingTarget = factory.createBoardingTarget(approximateServiceAsExponential);
+        BoardingOthers boardingOthers = factory.createBoardingOthers(approximateServiceAsExponential);
 
         if (approximateServiceAsExponential) {
             System.out.println("\nRunning Basic Simulation with Exponential Service...");
@@ -82,9 +83,16 @@ public class BasicSimulationRunner {
             passportCheckObservations.add(new Observations("%s_%d".formatted(config.getString("passportChecks", "centerName"), i+1), runsNumber));
         }
         Observations stampsCheckObservations = new Observations("STAMPS_CHECK", runsNumber);
-        final List<Observations> boardingObservations = new ArrayList<>();
-        for (int i = 0; i < config.getInt("boarding", "serversNumber"); i++) {
-            boardingObservations.add(new Observations("%s_%d".formatted(config.getString("boarding", "centerName"), i+1), runsNumber));
+        final List<Observations> boardingTargetObservations = new ArrayList<>();
+        for (int i = 0; i < config.getInt("boardingTarget", "serversNumber"); i++) {
+            boardingTargetObservations.add(new Observations("%s_%d".formatted(config.getString("boardingTarget", "centerName"), i+1), runsNumber));
+        }
+        final List<List<Observations>> boardingObservations = new ArrayList<>();
+        for (int i = 0; i < config.getInt("boardingOthers", "numberOfCenters"); i++) {
+            boardingObservations.add(new ArrayList<>());
+            for (int j = 0; j < config.getInt("boardingOthers", "serversNumber"); j++) {
+                boardingObservations.get(i).add(new Observations("%s_%d_%d".formatted(config.getString("boardingOthers", "centerName"), i+1, j+1), runsNumber));
+            }
         }
         for (int i = 0; i < runsNumber; i++) {
             double sarrival = START;
@@ -111,11 +119,12 @@ public class BasicSimulationRunner {
             securityChecks.reset(rngs);
             passportChecks.reset(rngs);
             stampsCheck.reset(rngs);
-            boarding.reset(rngs);
+            boardingTarget.reset(rngs);
+            boardingOthers.reset(rngs);
 
             MsqEvent event;
 
-            int skip = 1;
+            int skip = 3;
             int eventCount = 0;
 
             // need to use OR because both the conditions should be false
@@ -125,14 +134,15 @@ public class BasicSimulationRunner {
                 msqTime.next = event.time;
 
                 // Updating the areas
-                luggageChecks.setArea(msqTime);
+                luggageChecks.setAreaForAll(msqTime);
                 checkInDesksTarget.setArea(msqTime);
-                checkInDesksOthers.updateArea(msqTime);
+                checkInDesksOthers.setAreaForAll(msqTime);
                 boardingPassScanners.setArea(msqTime);
                 securityChecks.setArea(msqTime);
                 passportChecks.setArea(msqTime);
                 stampsCheck.setArea(msqTime);
-                boarding.setArea(msqTime);
+                boardingTarget.setArea(msqTime);
+                boardingOthers.setAreaForAll(msqTime);
 
                 // Advancing the clock
                 msqTime.current = msqTime.next;
@@ -184,7 +194,7 @@ public class BasicSimulationRunner {
                         break;
                     case PASSPORT_CHECK_DONE:
                         passportChecks.processCompletion(event, msqTime, queue);
-                        passportChecks.updateObservations(passportCheckObservations, i);
+                        if (eventCount % skip == 0)
                             passportChecks.updateObservations(passportCheckObservations, i);
                         break;
                     case ARRIVAL_STAMP_CHECK:
@@ -192,16 +202,24 @@ public class BasicSimulationRunner {
                         break;
                     case STAMP_CHECK_DONE:
                         stampsCheck.processCompletion(event, msqTime, queue);
-                        passportChecks.updateObservations(passportCheckObservations, i);
+                        if (eventCount % skip == 0)
                             stampsCheck.updateObservations(stampsCheckObservations, i);
                         break;
-                    case ARRIVAL_BOARDING:
-                        boarding.processArrival(event, msqTime, queue);
+                    case ARRIVAL_BOARDING_TARGET:
+                        boardingTarget.processArrival(event, msqTime, queue);
                         break;
-                    case BOARDING_DONE:
-                        boarding.processCompletion(event, msqTime, queue);
-                        passportChecks.updateObservations(passportCheckObservations, i);
-                            boarding.updateObservations(boardingObservations, i);
+                    case BOARDING_TARGET_DONE:
+                        boardingTarget.processCompletion(event, msqTime, queue);
+                        if (eventCount % skip == 0)
+                            boardingTarget.updateObservations(boardingTargetObservations, i);
+                        break;
+                    case ARRIVAL_BOARDING_OTHERS:
+                        boardingOthers.processArrival(event, msqTime, queue);
+                        break;
+                    case BOARDING_OTHERS_DONE:
+                        boardingOthers.processCompletion(event, msqTime, queue);
+                        if (eventCount % skip == 0)
+                            boardingOthers.updateObservations(boardingObservations, i);
                         break;
                 }
                 // Saving observations to compute warm up period boundaries
@@ -216,12 +234,19 @@ public class BasicSimulationRunner {
 
                 eventCount++;
 
-                number = luggageChecks.getNumberOfJobsInNode() + checkInDesksTarget.getNumberOfJobsInNode() + checkInDesksOthers.getNumberOfJobsInNode() + boarding.getNumberOfJobsInNode()
-                        + boardingPassScanners.getNumberOfJobsInNode() + securityChecks.getNumberOfJobsInNode() + passportChecks.getNumberOfJobsInNode() + stampsCheck.getNumberOfJobsInNode() + boarding.getNumberOfJobsInNode();
+                number = luggageChecks.getTotalNumberOfJobsInNode() +
+                        checkInDesksTarget.getNumberOfJobsInNode() +
+                        checkInDesksOthers.getTotalNumberOfJobsInNode() +
+                        boardingPassScanners.getNumberOfJobsInNode() +
+                        securityChecks.getNumberOfJobsInNode() +
+                        passportChecks.getNumberOfJobsInNode() +
+                        stampsCheck.getNumberOfJobsInNode() +
+                        boardingTarget.getNumberOfJobsInNode() +
+                        boardingOthers.getTotalNumberOfJobsInNode();
 
             }
 
-            System.out.println("EVENT COUNT FOR RUN N°"+i+": " + eventCount);
+            //System.out.println("EVENT COUNT FOR RUN N°"+i+": " + eventCount);
 
             // Saving statistics for current run
             luggageChecks.saveStats();
@@ -231,7 +256,8 @@ public class BasicSimulationRunner {
             securityChecks.saveStats();
             passportChecks.saveStats();
             stampsCheck.saveStats();
-            boarding.saveStats();
+            boardingTarget.saveStats();
+            boardingOthers.saveStats();
 
             // Generating next seed
             rngs.selectStream(255);
@@ -249,7 +275,8 @@ public class BasicSimulationRunner {
         WelchPlot.writeObservations(SIMULATION_TYPE, luggageObservations);
         WelchPlot.writeObservations(SIMULATION_TYPE, checkInDeskTargetObservations);
         WelchPlot.writeObservations(checkinDeskOthersObservations, SIMULATION_TYPE);
-        WelchPlot.writeObservations(SIMULATION_TYPE, boardingObservations);
+        WelchPlot.writeObservations(boardingObservations, SIMULATION_TYPE);
+        WelchPlot.writeObservations(SIMULATION_TYPE, boardingTargetObservations);
         WelchPlot.writeObservations(SIMULATION_TYPE, boardingPassScannerObservations);
         WelchPlot.writeObservations(SIMULATION_TYPE, securityCheckObservations);
         WelchPlot.writeObservations(SIMULATION_TYPE, passportCheckObservations);
@@ -263,7 +290,8 @@ public class BasicSimulationRunner {
         securityChecks.writeStats(SIMULATION_TYPE);
         passportChecks.writeStats(SIMULATION_TYPE);
         stampsCheck.writeStats(SIMULATION_TYPE);
-        boarding.writeStats(SIMULATION_TYPE);
+        boardingTarget.writeStats(SIMULATION_TYPE);
+        boardingOthers.writeStats(SIMULATION_TYPE);
 
         if(approximateServiceAsExponential) {
             // Computing and writing verifications stats csv
@@ -278,11 +306,13 @@ public class BasicSimulationRunner {
             meanStatisticsList.add(securityChecks.getMeanStatistics());
             meanStatisticsList.add(passportChecks.getMeanStatistics());
             meanStatisticsList.add(stampsCheck.getMeanStatistics());
-            meanStatisticsList.add(boarding.getMeanStatistics());
+            meanStatisticsList.add(boardingTarget.getMeanStatistics());
+            meanStatisticsList.add(boardingOthers.getMeanStatistics());
 
             compareResults(SIMULATION_TYPE, verificationResults, meanStatisticsList);
         }
-        //printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boarding);
+
+        printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boardingTarget, boardingOthers, false);
     }
 
 }

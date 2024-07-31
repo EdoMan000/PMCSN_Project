@@ -18,10 +18,9 @@ public class StampsCheck extends SingleServer{
 
 
     public void spawnNextCenterEvent(MsqTime time, EventQueue queue){
-        if(isTargetFlight(rngs, CENTER_INDEX+2)) {
-            MsqEvent event = new MsqEvent(EventType.ARRIVAL_BOARDING, time.current, isPriority(rngs, CENTER_INDEX + 3));
-            queue.addPriority(event);
-        }
+        boolean isPriority = isPriority(rngs, CENTER_INDEX + 3);
+        EventType type = isTargetFlight(rngs, CENTER_INDEX+2) ? EventType.ARRIVAL_BOARDING_TARGET : EventType.ARRIVAL_BOARDING_OTHERS;
+        queue.addPriority(new MsqEvent(type, time.current, isPriority));
     }
 
     public void spawnCompletionEvent(MsqTime time, EventQueue queue) {

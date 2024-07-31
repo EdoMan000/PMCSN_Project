@@ -10,8 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.pmcsn.utils.Distributions.exponential;
-import static org.pmcsn.utils.Probabilities.getEntrance;
-import static org.pmcsn.utils.Probabilities.isTargetFlight;
+import static org.pmcsn.utils.Probabilities.getRandomValueUpToMax;
 import static org.pmcsn.utils.StatisticsUtils.computeMean;
 
 public class LuggageChecks {
@@ -45,8 +44,8 @@ public class LuggageChecks {
         }
     }
 
-    public void resetBatch(int center ) {
-        luggageChecksSingleEntrances[center].resetBatch();
+    public void resetBatch() {
+        Arrays.stream(luggageChecksSingleEntrances).forEach(SingleServer::resetBatch);
     }
 
     public void setSTOP(int STOP) {
@@ -58,7 +57,7 @@ public class LuggageChecks {
     }
 
     public void processArrival(MsqEvent arrival, MsqTime time, EventQueue queue) {
-        int index = getEntrance(rngs, 67);
+        int index = getRandomValueUpToMax(rngs, 67, luggageChecksSingleEntrances.length);
         if (index < 1 || index > luggageChecksSingleEntrances.length) {
             throw new IllegalArgumentException("Invalid centerID: " + index);
         }
@@ -91,19 +90,23 @@ public class LuggageChecks {
         return (sarrival);
     }
 
-    public long getNumberOfJobsInNode() {
+    public long getTotalNumberOfJobsInNode() {
         return Arrays.stream(luggageChecksSingleEntrances).mapToLong(c -> c.numberOfJobsInNode).sum();
     }
 
+    public long[] getNumberOfJobsPerCenter() {
+        return Arrays.stream(luggageChecksSingleEntrances).mapToLong(SingleServer::getJobsServed).toArray();
+    }
+
     public long getTotalNumberOfJobsServed() {
-        return Arrays.stream(luggageChecksSingleEntrances).mapToLong(LuggageChecksSingleEntrance::getCompletions).sum();
+        return Arrays.stream(luggageChecksSingleEntrances).mapToLong(LuggageChecksSingleEntrance::getJobsServed).sum();
     }
 
     public int getJobsServed(int center){
-        return (int) luggageChecksSingleEntrances[center].getCompletions();
+        return (int) luggageChecksSingleEntrances[center].getJobsServed();
     }
 
-    public void setArea(MsqTime time){
+    public void setAreaForAll(MsqTime time){
         for (LuggageChecksSingleEntrance singleEntrance : luggageChecksSingleEntrances) {
             singleEntrance.setArea(time);
         }
@@ -111,9 +114,9 @@ public class LuggageChecks {
 
     public List<Statistics> getStatistics(){
         List<Statistics> statistics = new ArrayList<>();
-        for (int i = 1; i < luggageChecksSingleEntrances.length; i++) {
+        for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
 
-            statistics.add(luggageChecksSingleEntrances[i].getStatistics());
+            statistics.add(center.getStatistics());
 
         }
 

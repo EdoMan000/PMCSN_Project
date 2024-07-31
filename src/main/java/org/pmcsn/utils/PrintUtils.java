@@ -20,19 +20,30 @@ public class PrintUtils {
         System.out.println("╩ ╩└─┘┘└┘┴ ┴┴└─┴ ┴╩ ╩┴┴└─┴  └─┘┴└─ ┴   ╚═╝┴┴ ┴└─┘┴─┘┴ ┴ ┴ └─┘┴└─" + RESET);
     }
 
-    public static void printJobsServedByNodes(LuggageChecks luggageChecks, CheckInDesksTarget checkInDesksTarget, CheckInDesksOthers checkInDesksOthers, BoardingPassScanners boardingPassScanners, SecurityChecks securityChecks, PassportChecks passportChecks, StampsCheck stampsCheck, Boarding boarding) {
+    public static void printJobsServedByNodes(LuggageChecks luggageChecks, CheckInDesksTarget checkInDesksTarget, CheckInDesksOthers checkInDesksOthers, BoardingPassScanners boardingPassScanners, SecurityChecks securityChecks, PassportChecks passportChecks, StampsCheck stampsCheck, BoardingTarget boardingTarget, BoardingOthers boardingOthers, boolean includePartialValues) {
         // controllo di consistenza sul numero di jobs processati
-        long jobServedEntrances = luggageChecks.getTotalNumberOfJobsServed();
+        long jobServedEntrances = 0;
+        int i = 1;
+        for (long l : luggageChecks.getNumberOfJobsPerCenter()) {
+            jobServedEntrances += l;
+            if(includePartialValues) {
+                System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + l);
+            }
+            i++;
+        }
         System.out.println("TOT Luggage Checks Jobs Served = " + jobServedEntrances);
 
-        long checkInDesksTargetJobsServed = checkInDesksTarget.getJobsServed();
-        System.out.println("Check-In Desks Target: Jobs Served = " + checkInDesksTargetJobsServed);
-
-        long jobServedCheckIns = checkInDesksTargetJobsServed;
-        for (int i = 0; i < checkInDesksOthers.numberOfCenters; i++) {
-            long jobsServed = checkInDesksOthers.getJobsServed(i);
-            jobServedCheckIns += jobsServed;
-            System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + jobsServed);
+        long jobServedCheckIns = checkInDesksTarget.getJobsServed();
+        if(includePartialValues) {
+            System.out.println("Check-In Desks Target: Jobs Served = " + jobServedCheckIns);
+        }
+        i = 1;
+        for (long l : checkInDesksOthers.getNumberOfJobsPerCenter()) {
+            jobServedCheckIns += l;
+            if (includePartialValues) {
+                System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + l);
+            }
+            i++;
         }
         System.out.println("TOT Check-In Desks Jobs Served = " + jobServedCheckIns);
 
@@ -45,11 +56,24 @@ public class PrintUtils {
         long passportChecksJobsServed = passportChecks.getJobsServed();
         System.out.println("Passport Checks: Jobs Served = " + passportChecksJobsServed);
 
-        long stampsCheckJobsServed = stampsCheck.getCompletions();
+        long stampsCheckJobsServed = stampsCheck.getJobsServed();
         System.out.println("Stamps Check: Jobs Served = " + stampsCheckJobsServed);
 
-        long boardingJobsServed = boarding.getJobsServed();
-        System.out.println("Boarding: Jobs Served = " + boardingJobsServed);
+        long jobServedBoarding = boardingTarget.getJobsServed();
+        if (includePartialValues) {
+            System.out.println("BoardingTarget: Jobs Served = " + jobServedBoarding);
+        }
+
+        i = 1;
+        for (long l : boardingOthers.getNumberOfJobsPerCenter()) {
+            jobServedBoarding += l;
+            if (includePartialValues) {
+                System.out.println("Boarding Others Center " + i + ": Jobs Served = " + l);
+            }
+            i++;
+        }
+
+        System.out.println("TOT Boarding Jobs Served = " + jobServedBoarding);
     }
 
     public static void printStats(String centerName, int numberOfServers, long numberOfJobsServed, double area, MsqSum[] sum, double firstArrivalTime, double lastArrivalTime, double lastCompletionTime) {

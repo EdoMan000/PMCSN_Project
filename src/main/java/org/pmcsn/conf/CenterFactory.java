@@ -2,8 +2,6 @@ package org.pmcsn.conf;
 
 import org.pmcsn.centers.*;
 
-import java.io.IOException;
-
 public class CenterFactory {
     private final Config config = new Config();
 
@@ -97,12 +95,23 @@ public class CenterFactory {
         );
     }
 
-    public Boarding createBoarding(boolean approximateServiceAsExponential) {
-        return new Boarding(
-                config.getString("boarding", "centerName"),
-                config.getDouble("boarding", "meanServiceTime"),
-                config.getInt("boarding", "serversNumber"),
-                config.getInt("boarding", "centerIndex"),
+    public BoardingTarget createBoardingTarget(boolean approximateServiceAsExponential) {
+        return new BoardingTarget(
+                config.getString("boardingTarget", "centerName"),
+                config.getDouble("boardingTarget", "meanServiceTime"),
+                config.getInt("boardingTarget", "serversNumber"),
+                config.getInt("boardingTarget", "centerIndex"),
+                approximateServiceAsExponential
+        );
+    }
+
+    public BoardingOthers createBoardingOthers(boolean approximateServiceAsExponential) {
+        return new BoardingOthers(
+                config.getString("boardingOthers", "centerName"),
+                config.getInt("boardingOthers", "numberOfCenters"),
+                config.getInt("boardingOthers", "serversNumber"),
+                config.getDouble("boardingOthers", "meanServiceTime"),
+                config.getInt("boardingOthers", "centerIndex"),
                 approximateServiceAsExponential
         );
     }

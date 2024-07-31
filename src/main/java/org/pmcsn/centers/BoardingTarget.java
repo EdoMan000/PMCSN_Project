@@ -5,15 +5,15 @@ import org.pmcsn.model.*;
 import static org.pmcsn.utils.Distributions.exponential;
 import static org.pmcsn.utils.Distributions.logNormal;
 
-public class Boarding extends MultiServer {
-    public Boarding(String name, double meanServiceTime, int serversNum, int centerIndex, boolean approximateServiceAsExponential) {
+public class BoardingTarget extends MultiServer {
+    public BoardingTarget(String name, double meanServiceTime, int serversNum, int centerIndex, boolean approximateServiceAsExponential) {
         super(name, meanServiceTime, serversNum, centerIndex, approximateServiceAsExponential);
     }
 
     @Override
     void spawnCompletionEvent(MsqTime time, EventQueue queue, int serverId) {
         double service = getService(CENTER_INDEX+1);
-        MsqEvent event = new MsqEvent(EventType.BOARDING_DONE, time.current + service, service, serverId);
+        MsqEvent event = new MsqEvent(EventType.BOARDING_TARGET_DONE, time.current + service, service, serverId);
         queue.add(event);
     }
 

@@ -124,7 +124,7 @@ public class Verification {
 
         results.add(multiServer(
                 config.getString("checkInDeskOthers", "centerName"),
-                (lambda * (1 - pTarget)) / 19,
+                (lambda * (1 - pTarget)) / config.getInt("checkInDeskOthers", "numberOfCenters"),
                 config.getDouble("checkInDeskOthers", "meanServiceTime"),
                 config.getInt("checkInDeskOthers", "serversNumber")));
 
@@ -153,10 +153,16 @@ public class Verification {
                 config.getDouble("stampsCheck", "meanServiceTime")));
 
         results.add(multiServer(
-                config.getString("boarding", "centerName"),
+                config.getString("boardingTarget", "centerName"),
                 lambda * pTarget,
-                config.getDouble("boarding", "meanServiceTime"),
-                config.getInt("boarding", "serversNumber")));
+                config.getDouble("boardingTarget", "meanServiceTime"),
+                config.getInt("boardingTarget", "serversNumber")));
+
+        results.add(multiServer(
+                config.getString("boardingOthers", "centerName"),
+                (lambda * (1 - pTarget)) / config.getInt("checkInDeskOthers", "numberOfCenters"),
+                config.getDouble("boardingOthers", "meanServiceTime"),
+                config.getInt("boardingOthers", "serversNumber")));
 
         writeResultsVerification(simulationType, results);
 

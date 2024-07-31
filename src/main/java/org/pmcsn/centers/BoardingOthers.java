@@ -10,68 +10,72 @@ import java.util.List;
 import static org.pmcsn.utils.Probabilities.getRandomValueUpToMax;
 import static org.pmcsn.utils.StatisticsUtils.computeMean;
 
-public class CheckInDesksOthers {
+public class BoardingOthers {
     Rngs rngs;
     private final String name;
-    CheckInDesksOtherSingleFlight[] checkInDesksSingleFlightArray;
+    BoardingOtherSingleFlight[] boardingSingleFlightArray;
 
-    public CheckInDesksOthers(String name, int numberOfCenters, int serversNumber, double meanServiceTime, int centerIndex, boolean approximateServiceAsExponential) {
+    public BoardingOthers(String name, int numberOfCenters, int serversNumber, double meanServiceTime, int centerIndex, boolean approximateServiceAsExponential) {
         this.name = name;
-        this.checkInDesksSingleFlightArray = new CheckInDesksOtherSingleFlight[numberOfCenters];
-        for (int i = 0; i < checkInDesksSingleFlightArray.length; i++) {
-            checkInDesksSingleFlightArray[i] = new CheckInDesksOtherSingleFlight(name,i + 1, meanServiceTime, serversNumber, centerIndex + (2 * i), approximateServiceAsExponential);
+        this.boardingSingleFlightArray = new BoardingOtherSingleFlight[numberOfCenters];
+        for (int i = 0; i < boardingSingleFlightArray.length; i++) {
+            boardingSingleFlightArray[i] = new BoardingOtherSingleFlight(name,i + 1, meanServiceTime, serversNumber, centerIndex + (2 * i), approximateServiceAsExponential);
         }
+    }
+
+    public void setAreaForAll(MsqTime time) {
+        Arrays.stream(boardingSingleFlightArray).forEach(s -> s.setArea(time));
+    }
+
+    public long[] getNumberOfJobsPerCenter() {
+        return Arrays.stream(boardingSingleFlightArray).mapToLong(MultiServer::getJobsServed).toArray();
     }
 
     public void reset(Rngs rngs) {
         this.rngs = rngs;
-        for (CheckInDesksOtherSingleFlight checkInDesksSingleFlight : checkInDesksSingleFlightArray) {
-            checkInDesksSingleFlight.reset(rngs);
+        for (BoardingOtherSingleFlight other : boardingSingleFlightArray) {
+            other.reset(rngs);
         }
     }
 
     public void processArrival(MsqEvent arrival, MsqTime time, EventQueue queue) {
-        int index = getRandomValueUpToMax(rngs, 11, checkInDesksSingleFlightArray.length); //TODO sameStreamIndex here???
-        if (index < 1 || index > checkInDesksSingleFlightArray.length) {
+        int index = getRandomValueUpToMax(rngs, 11, boardingSingleFlightArray.length); //TODO same StreamIndex here???
+        if (index < 1 || index > boardingSingleFlightArray.length) {
             throw new IllegalArgumentException("Invalid centerID: " + index);
         }
-        checkInDesksSingleFlightArray[index - 1].processArrival(arrival, time, queue);
+        boardingSingleFlightArray[index - 1].processArrival(arrival, time, queue);
     }
 
 
     public void processCompletion(MsqEvent completion, MsqTime time, EventQueue queue) {
         int index = completion.nodeId;
-        if (index < 1 || index > checkInDesksSingleFlightArray.length) {
+        if (index < 1 || index > boardingSingleFlightArray.length) {
             throw new IllegalArgumentException("Invalid centerID: " + index);
         }
-        checkInDesksSingleFlightArray[index - 1].processCompletion(completion, time, queue);
+        boardingSingleFlightArray[index - 1].processCompletion(completion, time, queue);
     }
 
     public long getTotalNumberOfJobsInNode() {
-        return Arrays.stream(checkInDesksSingleFlightArray).mapToLong(MultiServer::getNumberOfJobsInNode).sum();
+        return Arrays.stream(boardingSingleFlightArray).mapToLong(MultiServer::getNumberOfJobsInNode).sum();
     }
 
     public void resetBatch() {
-        Arrays.stream(checkInDesksSingleFlightArray).forEach(MultiServer::resetBatch);
-    }
-
-    public long[] getNumberOfJobsPerCenter() {
-        return Arrays.stream(checkInDesksSingleFlightArray).mapToLong(MultiServer::getJobsServed).toArray();
+        Arrays.stream(boardingSingleFlightArray).forEach(MultiServer::resetBatch);
     }
 
     public long getJobsServed(int center){
-        return checkInDesksSingleFlightArray[center].getCompletions();
+        return boardingSingleFlightArray[center].getJobsServed();
     }
 
     public int getBatchIndex(int center){
-        return checkInDesksSingleFlightArray[center].batchIndex;
+        return boardingSingleFlightArray[center].batchIndex;
     }
 
     public List<Statistics> getStatistics(){
         List<Statistics> statistics = new ArrayList<>();
-        for (int i = 1; i < checkInDesksSingleFlightArray.length; i++) {
+        for (int i = 1; i < boardingSingleFlightArray.length; i++) {
 
-            statistics.add(checkInDesksSingleFlightArray[i].getStatistics());
+            statistics.add(boardingSingleFlightArray[i].getStatistics());
 
         }
 
@@ -80,37 +84,31 @@ public class CheckInDesksOthers {
 
     public int getMinBatchIndex() {
         // Assume there's at least one center in the array
-        if (checkInDesksSingleFlightArray.length == 0) {
+        if (boardingSingleFlightArray.length == 0) {
             throw new IllegalStateException("No centers available");
         }
 
-        int minBatchIndex = checkInDesksSingleFlightArray[0].batchIndex;
-        for (int i = 1; i < checkInDesksSingleFlightArray.length; i++) {
-            if (checkInDesksSingleFlightArray[i].batchIndex < minBatchIndex) {
-                minBatchIndex = checkInDesksSingleFlightArray[i].batchIndex;
+        int minBatchIndex = boardingSingleFlightArray[0].batchIndex;
+        for (int i = 1; i < boardingSingleFlightArray.length; i++) {
+            if (boardingSingleFlightArray[i].batchIndex < minBatchIndex) {
+                minBatchIndex = boardingSingleFlightArray[i].batchIndex;
             }
         }
         return minBatchIndex;
     }
 
-    public void setAreaForAll(MsqTime time){
-        for(CheckInDesksOtherSingleFlight singleFlight : checkInDesksSingleFlightArray){
-            singleFlight.setArea(time);
-        }
-    }
-
     public void saveStats() {
-        for (CheckInDesksOtherSingleFlight c : checkInDesksSingleFlightArray){
-            c.saveStats();
+        for(BoardingOtherSingleFlight other : boardingSingleFlightArray){
+            other.saveStats();
         }
     }
 
     public void saveStats(int center) {
-        checkInDesksSingleFlightArray[center].saveStats();
+        boardingSingleFlightArray[center].saveStats();
     }
 
     public void writeStats(String simulationType){
-        for (CheckInDesksOtherSingleFlight c : checkInDesksSingleFlightArray){
+        for (BoardingOtherSingleFlight c : boardingSingleFlightArray){
             c.writeStats(simulationType);
         }
     }
@@ -126,7 +124,7 @@ public class CheckInDesksOthers {
         Statistics.MeanStatistics ms;
 
         // obtaining the mean for all centers
-        for(CheckInDesksOtherSingleFlight c : checkInDesksSingleFlightArray){
+        for(BoardingOtherSingleFlight c : boardingSingleFlightArray){
             ms = c.getMeanStatistics();
             meanResponseTimeList.add(ms.meanResponseTime);
             meanServiceTimeList.add(ms.meanServiceTime);
@@ -147,8 +145,8 @@ public class CheckInDesksOthers {
     }
 
     public void updateObservations(List<List<Observations>> observations, int run) {
-        for (int i = 0; i < checkInDesksSingleFlightArray.length; i++) {
-            checkInDesksSingleFlightArray[i].updateObservations(observations.get(i), run);
+        for (int i = 0; i < boardingSingleFlightArray.length; i++) {
+            boardingSingleFlightArray[i].updateObservations(observations.get(i), run);
         }
     }
 }

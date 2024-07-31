@@ -17,11 +17,9 @@ public class SecurityChecks extends MultiServer {
     @Override
     public void spawnNextCenterEvent(MsqTime time, EventQueue queue) {
         if (isCitizen(rngs,CENTER_INDEX + 2)) {
-            if (isTargetFlight(rngs, CENTER_INDEX + 3)) {
-                boolean priority = isPriority(rngs, CENTER_INDEX + 4);
-                MsqEvent event = new MsqEvent(EventType.ARRIVAL_BOARDING, time.current, priority);
-                queue.addPriority(event);
-            }
+            boolean priority = isPriority(rngs, CENTER_INDEX + 4);
+            EventType type = isTargetFlight(rngs, CENTER_INDEX + 3) ? EventType.ARRIVAL_BOARDING_TARGET : EventType.ARRIVAL_BOARDING_OTHERS;
+            queue.addPriority(new MsqEvent(type, time.current, priority));
         } else {
             MsqEvent event = new MsqEvent(EventType.ARRIVAL_PASSPORT_CHECK, time.current);
             queue.add(event);

@@ -169,16 +169,16 @@ public abstract class MultiServer {
         }
     }
 
-    private void updateObservation(Observations observations, int run, int serverNumber) {
+    private void updateObservation(Observations observations, int run, int serverId) {
         long numberOfJobsServed = 0;
         for (MsqSum s : sum) {
             numberOfJobsServed += s.served;
         }
-        if (lastArrivalTime == 0 || numberOfJobsServed == 0 || servers[serverNumber].lastCompletionTime == 0.0) {
+        if (lastArrivalTime == 0 || numberOfJobsServed == 0 || servers[serverId].lastCompletionTime == 0.0) {
             return;
         }
         double lambda = numberOfJobsServed / lastArrivalTime;
-        double meanNodePopulation = area.getNodeArea() / servers[serverNumber].lastCompletionTime;
+        double meanNodePopulation = area.getNodeArea() / servers[serverId].lastCompletionTime;
         double meanResponseTime = meanNodePopulation / lambda;
         observations.saveObservation(run, Observations.INDEX.RESPONSE_TIME, meanResponseTime);
     }
