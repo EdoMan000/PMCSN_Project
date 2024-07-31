@@ -134,7 +134,7 @@ public class BasicSimulationRunner {
                         break;
                     case LUGGAGE_CHECK_DONE:
                         luggageChecks.processCompletion(event, msqTime, queue);
-                        if (eventCount % skip == 0)
+                        if (shouldTrackObservations && eventCount % skip == 0)
                             luggageChecks.updateObservations(luggageObservations, i);
                         break;
                     case ARRIVAL_CHECK_IN_TARGET:
@@ -142,7 +142,7 @@ public class BasicSimulationRunner {
                         break;
                     case CHECK_IN_TARGET_DONE:
                         checkInDesksTarget.processCompletion(event, msqTime, queue);
-                        if (eventCount % skip == 0)
+                        if (shouldTrackObservations && eventCount % skip == 0)
                             checkInDesksTarget.updateObservations(checkInDeskTargetObservations, i);
                         break;
                     case ARRIVAL_CHECK_IN_OTHERS:
@@ -150,7 +150,7 @@ public class BasicSimulationRunner {
                         break;
                     case CHECK_IN_OTHERS_DONE:
                         checkInDesksOthers.processCompletion(event, msqTime, queue);
-                        if (eventCount % skip == 0)
+                        if (shouldTrackObservations && eventCount % skip == 0)
                             checkInDesksOthers.updateObservations(checkinDeskOthersObservations, i);
                         break;
                     case ARRIVAL_BOARDING_PASS_SCANNERS:
@@ -158,7 +158,7 @@ public class BasicSimulationRunner {
                         break;
                     case BOARDING_PASS_SCANNERS_DONE:
                         boardingPassScanners.processCompletion(event, msqTime, queue);
-                        if (eventCount % skip == 0)
+                        if (shouldTrackObservations && eventCount % skip == 0)
                             boardingPassScanners.updateObservations(boardingPassScannerObservations, i);
                         break;
                     case ARRIVAL_SECURITY_CHECK:
@@ -166,7 +166,7 @@ public class BasicSimulationRunner {
                         break;
                     case SECURITY_CHECK_DONE:
                         securityChecks.processCompletion(event, msqTime, queue);
-                        if (eventCount % skip == 0)
+                        if (shouldTrackObservations && eventCount % skip == 0)
                             securityChecks.updateObservations(securityCheckObservations, i);
                         break;
                     case ARRIVAL_PASSPORT_CHECK:
@@ -174,7 +174,7 @@ public class BasicSimulationRunner {
                         break;
                     case PASSPORT_CHECK_DONE:
                         passportChecks.processCompletion(event, msqTime, queue);
-                        if (eventCount % skip == 0)
+                        if (shouldTrackObservations && eventCount % skip == 0)
                             passportChecks.updateObservations(passportCheckObservations, i);
                         break;
                     case ARRIVAL_STAMP_CHECK:
@@ -182,7 +182,7 @@ public class BasicSimulationRunner {
                         break;
                     case STAMP_CHECK_DONE:
                         stampsCheck.processCompletion(event, msqTime, queue);
-                        if (eventCount % skip == 0)
+                        if (shouldTrackObservations && eventCount % skip == 0)
                             stampsCheck.updateObservations(stampsCheckObservations, i);
                         break;
                     case ARRIVAL_BOARDING_TARGET:
@@ -190,7 +190,7 @@ public class BasicSimulationRunner {
                         break;
                     case BOARDING_TARGET_DONE:
                         boardingTarget.processCompletion(event, msqTime, queue);
-                        if (eventCount % skip == 0)
+                        if (shouldTrackObservations && eventCount % skip == 0)
                             boardingTarget.updateObservations(boardingTargetObservations, i);
                         break;
                     case ARRIVAL_BOARDING_OTHERS:
@@ -198,7 +198,7 @@ public class BasicSimulationRunner {
                         break;
                     case BOARDING_OTHERS_DONE:
                         boardingOthers.processCompletion(event, msqTime, queue);
-                        if (eventCount % skip == 0)
+                        if (shouldTrackObservations && eventCount % skip == 0)
                             boardingOthers.updateObservations(boardingOthersObservations, i);
                         break;
                 }
