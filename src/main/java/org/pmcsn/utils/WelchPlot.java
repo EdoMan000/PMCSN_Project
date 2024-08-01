@@ -1,4 +1,4 @@
-package org.pmcsn;
+package org.pmcsn.utils;
 
 import org.pmcsn.model.Observations;
 
@@ -12,6 +12,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class WelchPlot {
+    private final String DELIMITER = "\n";
+    private final String COMMA = ",";
+
+    public static void main(String[] args) throws IOException {
+        WelchPlot.welchPlot("csvFiles/BASIC_SIMULATION_EXPONENTIAL/observations");
+    }
+
     public static void writeObservations(List<List<Observations>> checkinDeskOthersObservations, String simulationType) {
         for (List<Observations> observations : checkinDeskOthersObservations) {
             writeObservations(simulationType, observations);

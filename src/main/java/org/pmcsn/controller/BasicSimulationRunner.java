@@ -3,7 +3,7 @@ package org.pmcsn.controller;
 
 import org.pmcsn.conf.CenterFactory;
 import org.pmcsn.conf.Config;
-import org.pmcsn.WelchPlot;
+import org.pmcsn.utils.WelchPlot;
 import org.pmcsn.centers.*;
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.*;

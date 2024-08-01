@@ -17,12 +17,12 @@ public class BatchMeans {
             System.out.println("Batch size: " + batchSize_B);
             BatchSimulationRunner batchRunner = new BatchSimulationRunner();
             List<Statistics> statisticsList = batchRunner.runBatchSimulation(true);
-            if (!checkEntrance(statisticsList, 0.2)) {
+            if (checkEntrance(statisticsList, 0.2)) {
                 return;
             }
             batchSize_B += batchSize_B / 2;
 
-            if(batchSize_B > 100000) {
+            if(batchSize_B > 2048) {
             System.out.println("BATCH SIZE EXCEEDED... Exiting.");
                 break;
             }
