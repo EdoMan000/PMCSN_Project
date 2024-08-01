@@ -19,6 +19,17 @@ public class Config {
         }
     }
 
+    public boolean getBoolean(String section, String key) {
+        String value = properties.getProperty(section + "." + key);
+        if ("true".equalsIgnoreCase(value)) {
+            return true;
+        } else if ("false".equalsIgnoreCase(value)) {
+            return false;
+        } else {
+            throw new IllegalArgumentException("Key not found: " + section + "." + key);
+        }
+    }
+
     public String getString(String section, String key) {
         String value = properties.getProperty(section + "." + key);
         if (value == null) {

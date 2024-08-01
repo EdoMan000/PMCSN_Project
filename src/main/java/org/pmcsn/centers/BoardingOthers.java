@@ -73,31 +73,12 @@ public class BoardingOthers {
         return boardingSingleFlightArray[center].getJobsServed();
     }
 
-    public int getBatchIndex(int center){
-        return boardingSingleFlightArray[center].batchIndex;
-    }
-
     public List<Statistics> getStatistics(){
         List<Statistics> statistics = new ArrayList<>();
         for (BoardingOtherSingleFlight s : boardingSingleFlightArray) {
             statistics.add(s.getStatistics());
         }
         return statistics;
-    }
-
-    public int getMinBatchIndex() {
-        // Assume there's at least one center in the array
-        if (boardingSingleFlightArray.length == 0) {
-            throw new IllegalStateException("No centers available");
-        }
-
-        int minBatchIndex = boardingSingleFlightArray[0].batchIndex;
-        for (int i = 1; i < boardingSingleFlightArray.length; i++) {
-            if (boardingSingleFlightArray[i].batchIndex < minBatchIndex) {
-                minBatchIndex = boardingSingleFlightArray[i].batchIndex;
-            }
-        }
-        return minBatchIndex;
     }
 
     public void saveStats() {

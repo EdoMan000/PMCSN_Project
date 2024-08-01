@@ -25,11 +25,11 @@ public abstract class SingleServer {
     protected double firstArrivalTime = Double.NEGATIVE_INFINITY;
     protected double lastArrivalTime = 0;
     protected double lastCompletionTime = 0;
-    protected int batchIndex = 0;
     protected String centerName;
     protected Rngs rngs;
     protected MsqSum sum = new MsqSum();
     protected boolean approximateServiceAsExponential;
+    long numberOfJobsAlreadyServed = 0;
 
     public SingleServer(String centerName, double meanServiceTime, int centerIndex, boolean approximateServiceAsExponential) {
         this.centerName = centerName;
@@ -109,8 +109,13 @@ public abstract class SingleServer {
         }
     }
 
+    public void saveStats(int batchesNumber) {
+        MsqSum[] sums = new MsqSum[1];
+        sums[0] = this.sum;
+        statistics.saveStats(area, sums, lastArrivalTime, lastCompletionTime, false, batchesNumber);
+    }
+
     public void saveStats() {
-        batchIndex++;
         MsqSum[] sums = new MsqSum[1];
         sums[0] = this.sum;
         statistics.saveStats(area, sums, lastArrivalTime, lastCompletionTime, false);
@@ -128,12 +133,10 @@ public abstract class SingleServer {
         return this.statistics;
     }
 
-    public void saveBatch(int batchSize, int batchesNumber) {
-        if(getJobsServed() == batchSize && statistics.meanResponseTimeList.size() < batchesNumber){
-            System.out.println("Center " + centerName + " has served another " + getJobsServed() + " jobs!! Saving stats for batch N°" + (getStatistics().meanResponseTimeList.size()+1));
-            saveStats();
-            resetBatch();
-            System.out.println("********************************************************************************************************");
+    public void saveBatchStats(int batchSize, int batchesNumber) {
+        if(getJobsServed() > 0 && getJobsServed() % batchSize == 0){
+            saveStats(batchesNumber);
+            numberOfJobsAlreadyServed = getJobsServed();
         }
     }
 

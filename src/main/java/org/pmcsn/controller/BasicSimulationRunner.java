@@ -47,31 +47,20 @@ public class BasicSimulationRunner {
     private Observations stampsCheckObservations;
     private final List<List<Observations>> boardingOthersObservations = new ArrayList<>();
 
-    private void initCenters(boolean approximateServiceAsExponential) {
-        CenterFactory factory = new CenterFactory();
-        luggageChecks = factory.createLuggageChecks(approximateServiceAsExponential);
-        checkInDesksTarget = factory.createCheckinDeskTarget(approximateServiceAsExponential);
-        checkInDesksOthers = factory.createCheckinDeskOthers(approximateServiceAsExponential);
-        boardingPassScanners = factory.createBoardingPassScanners(approximateServiceAsExponential);
-        securityChecks = factory.createSecurityChecks(approximateServiceAsExponential);
-        passportChecks = factory.createPassportChecks(approximateServiceAsExponential);
-        stampsCheck = factory.createStampsCheck(approximateServiceAsExponential);
-        boardingTarget = factory.createBoardingTarget(approximateServiceAsExponential);
-        boardingOthers = factory.createBoardingOthers(approximateServiceAsExponential);
-    }
-
     public void runBasicSimulation(boolean approximateServiceAsExponential) throws Exception {
-        runBasicSimulation(approximateServiceAsExponential, false);
+        runBasicSimulation(approximateServiceAsExponential, true);
     }
 
     public void runBasicSimulation(boolean approximateServiceAsExponential, boolean shouldTrackObservations) throws Exception {
         initCenters(approximateServiceAsExponential);
 
-        if (approximateServiceAsExponential) {
-            System.out.println("\nRunning Basic Simulation with Exponential Service...");
-        } else {
-            System.out.println("\nRunning Basic Simulation...");
+        String simulationType;
+        if(approximateServiceAsExponential){
+            simulationType = "BASIC_SIMULATION_EXPONENTIAL";
+        }else{
+            simulationType = "BASIC_SIMULATION";
         }
+        System.out.println("\nRUNNING " + simulationType + "...");
 
         //Rng setting the seed
         long[] seeds = new long[1024];
@@ -80,6 +69,7 @@ public class BasicSimulationRunner {
 
         if (shouldTrackObservations) {
             initObservations();
+            WelchPlot.removeObservationFile(simulationType);
         }
 
         int runsNumber = config.getInt("general", "runsNumber");
@@ -101,186 +91,213 @@ public class BasicSimulationRunner {
             double time = luggageChecks.getArrival();
             queue.add(new MsqEvent(EventType.ARRIVAL_LUGGAGE_CHECK, time));
 
-            // Initialize other centers
-            checkInDesksTarget.reset(rngs);
-            checkInDesksOthers.reset(rngs);
-            boardingPassScanners.reset(rngs);
-            securityChecks.reset(rngs);
-            passportChecks.reset(rngs);
-            stampsCheck.reset(rngs);
-            boardingTarget.reset(rngs);
-            boardingOthers.reset(rngs);
+            resetCenters(rngs); // Initialize other centers
 
             MsqEvent event;
-
             int skip = 3;
             int eventCount = 0;
 
             // need to use OR because all the conditions should be false
             while (!luggageChecks.isEndOfArrivals() || !queue.isEmpty() || number != 0) {
-
-                event = queue.pop();
+                event = queue.pop(); // Retrieving next event to be processed
                 msqTime.next = event.time;
+                updateAreas(msqTime); // Updating areas
+                msqTime.current = msqTime.next; // Advancing the clock
 
-                updateAreas(msqTime);
-
-                // Advancing the clock
-                msqTime.current = msqTime.next;
-
-                // Processing the event based on its type
-                switch (event.type) {
-                    case ARRIVAL_LUGGAGE_CHECK:
-                        luggageChecks.processArrival(event, msqTime, queue);
-                        break;
-                    case LUGGAGE_CHECK_DONE:
-                        luggageChecks.processCompletion(event, msqTime, queue);
-                        if (shouldTrackObservations && eventCount % skip == 0)
-                            luggageChecks.updateObservations(luggageObservations, i);
-                        break;
-                    case ARRIVAL_CHECK_IN_TARGET:
-                        checkInDesksTarget.processArrival(event, msqTime, queue);
-                        break;
-                    case CHECK_IN_TARGET_DONE:
-                        checkInDesksTarget.processCompletion(event, msqTime, queue);
-                        if (shouldTrackObservations && eventCount % skip == 0)
-                            checkInDesksTarget.updateObservations(checkInDeskTargetObservations, i);
-                        break;
-                    case ARRIVAL_CHECK_IN_OTHERS:
-                        checkInDesksOthers.processArrival(event, msqTime, queue);
-                        break;
-                    case CHECK_IN_OTHERS_DONE:
-                        checkInDesksOthers.processCompletion(event, msqTime, queue);
-                        if (shouldTrackObservations && eventCount % skip == 0)
-                            checkInDesksOthers.updateObservations(checkinDeskOthersObservations, i);
-                        break;
-                    case ARRIVAL_BOARDING_PASS_SCANNERS:
-                        boardingPassScanners.processArrival(event, msqTime, queue);
-                        break;
-                    case BOARDING_PASS_SCANNERS_DONE:
-                        boardingPassScanners.processCompletion(event, msqTime, queue);
-                        if (shouldTrackObservations && eventCount % skip == 0)
-                            boardingPassScanners.updateObservations(boardingPassScannerObservations, i);
-                        break;
-                    case ARRIVAL_SECURITY_CHECK:
-                        securityChecks.processArrival(event, msqTime, queue);
-                        break;
-                    case SECURITY_CHECK_DONE:
-                        securityChecks.processCompletion(event, msqTime, queue);
-                        if (shouldTrackObservations && eventCount % skip == 0)
-                            securityChecks.updateObservations(securityCheckObservations, i);
-                        break;
-                    case ARRIVAL_PASSPORT_CHECK:
-                        passportChecks.processArrival(event, msqTime, queue);
-                        break;
-                    case PASSPORT_CHECK_DONE:
-                        passportChecks.processCompletion(event, msqTime, queue);
-                        if (shouldTrackObservations && eventCount % skip == 0)
-                            passportChecks.updateObservations(passportCheckObservations, i);
-                        break;
-                    case ARRIVAL_STAMP_CHECK:
-                        stampsCheck.processArrival(event, msqTime, queue);
-                        break;
-                    case STAMP_CHECK_DONE:
-                        stampsCheck.processCompletion(event, msqTime, queue);
-                        if (shouldTrackObservations && eventCount % skip == 0)
-                            stampsCheck.updateObservations(stampsCheckObservations, i);
-                        break;
-                    case ARRIVAL_BOARDING_TARGET:
-                        boardingTarget.processArrival(event, msqTime, queue);
-                        break;
-                    case BOARDING_TARGET_DONE:
-                        boardingTarget.processCompletion(event, msqTime, queue);
-                        if (shouldTrackObservations && eventCount % skip == 0)
-                            boardingTarget.updateObservations(boardingTargetObservations, i);
-                        break;
-                    case ARRIVAL_BOARDING_OTHERS:
-                        boardingOthers.processArrival(event, msqTime, queue);
-                        break;
-                    case BOARDING_OTHERS_DONE:
-                        boardingOthers.processCompletion(event, msqTime, queue);
-                        if (shouldTrackObservations && eventCount % skip == 0)
-                            boardingOthers.updateObservations(boardingOthersObservations, i);
-                        break;
-                }
-
-                if (shouldTrackObservations) {
-                    trackObservations(i);
-                }
+                processCurrentEvent(shouldTrackObservations, event, msqTime, queue, eventCount, skip, i); // Processing the event based on its type
 
                 eventCount++;
 
-                number = luggageChecks.getTotalNumberOfJobsInNode() +
-                        checkInDesksTarget.getNumberOfJobsInNode() +
-                        checkInDesksOthers.getTotalNumberOfJobsInNode() +
-                        boardingPassScanners.getNumberOfJobsInNode() +
-                        securityChecks.getNumberOfJobsInNode() +
-                        passportChecks.getNumberOfJobsInNode() +
-                        stampsCheck.getNumberOfJobsInNode() +
-                        boardingTarget.getNumberOfJobsInNode() +
-                        boardingOthers.getTotalNumberOfJobsInNode();
+                number = getTotalNumberOfJobsInSystem();
+            }
 
+            // Writing observations for current run
+            if (shouldTrackObservations) {
+                writeObservations(simulationType);
+                resetObservations();
             }
 
             //System.out.println("EVENT COUNT FOR RUN N°"+i+": " + eventCount);
 
-            // Saving statistics for current run
-            luggageChecks.saveStats();
-            checkInDesksTarget.saveStats();
-            checkInDesksOthers.saveStats();
-            boardingPassScanners.saveStats();
-            securityChecks.saveStats();
-            passportChecks.saveStats();
-            stampsCheck.saveStats();
-            boardingTarget.saveStats();
-            boardingOthers.saveStats();
+            saveAllStats(); // Saving statistics for current run
 
             // Generating next seed
             rngs.selectStream(255);
             seeds[i + 1] = rngs.getSeed();
         }
 
-        String SIMULATION_TYPE;
-        if(approximateServiceAsExponential){
-            SIMULATION_TYPE = "BASIC_SIMULATION_EXPONENTIAL";
-        }else{
-            SIMULATION_TYPE = "BASIC_SIMULATION";
-        }
+        System.out.println(simulationType + " HAS JUST FINISHED.");
 
         if (shouldTrackObservations) {
-            writeObservations(SIMULATION_TYPE);
+            WelchPlot.welchPlot("csvFiles/BASIC_SIMULATION_EXPONENTIAL/observations");
         }
 
         // Writing statistics csv with data from all runs
-        luggageChecks.writeStats(SIMULATION_TYPE);
-        checkInDesksTarget.writeStats(SIMULATION_TYPE);
-        checkInDesksOthers.writeStats(SIMULATION_TYPE);
-        boardingPassScanners.writeStats(SIMULATION_TYPE);
-        securityChecks.writeStats(SIMULATION_TYPE);
-        passportChecks.writeStats(SIMULATION_TYPE);
-        stampsCheck.writeStats(SIMULATION_TYPE);
-        boardingTarget.writeStats(SIMULATION_TYPE);
-        boardingOthers.writeStats(SIMULATION_TYPE);
+        writeAllStats(simulationType);
 
         if(approximateServiceAsExponential) {
-            // Computing and writing verifications stats csv
-            List<Result> verificationResults = modelVerification(SIMULATION_TYPE);
-
-            // Compare results and verifications and save comparison result
-            List<MeanStatistics> meanStatisticsList = new ArrayList<>();
-            meanStatisticsList.add(luggageChecks.getMeanStatistics());
-            meanStatisticsList.add(checkInDesksTarget.getMeanStatistics());
-            meanStatisticsList.add(checkInDesksOthers.getMeanStatistics());
-            meanStatisticsList.add(boardingPassScanners.getMeanStatistics());
-            meanStatisticsList.add(securityChecks.getMeanStatistics());
-            meanStatisticsList.add(passportChecks.getMeanStatistics());
-            meanStatisticsList.add(stampsCheck.getMeanStatistics());
-            meanStatisticsList.add(boardingTarget.getMeanStatistics());
-            meanStatisticsList.add(boardingOthers.getMeanStatistics());
-
-            compareResults(SIMULATION_TYPE, verificationResults, meanStatisticsList);
+            computeVerificationAndCompare(simulationType); // Computing and writing verifications stats csv
         }
 
         printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boardingTarget, boardingOthers, false);
+    }
+
+
+    private void initCenters(boolean approximateServiceAsExponential) {
+        CenterFactory factory = new CenterFactory();
+        luggageChecks = factory.createLuggageChecks(approximateServiceAsExponential);
+        checkInDesksTarget = factory.createCheckinDeskTarget(approximateServiceAsExponential);
+        checkInDesksOthers = factory.createCheckinDeskOthers(approximateServiceAsExponential);
+        boardingPassScanners = factory.createBoardingPassScanners(approximateServiceAsExponential);
+        securityChecks = factory.createSecurityChecks(approximateServiceAsExponential);
+        passportChecks = factory.createPassportChecks(approximateServiceAsExponential);
+        stampsCheck = factory.createStampsCheck(approximateServiceAsExponential);
+        boardingTarget = factory.createBoardingTarget(approximateServiceAsExponential);
+        boardingOthers = factory.createBoardingOthers(approximateServiceAsExponential);
+    }
+
+    private void resetCenters(Rngs rngs) {
+        checkInDesksTarget.reset(rngs);
+        checkInDesksOthers.reset(rngs);
+        boardingPassScanners.reset(rngs);
+        securityChecks.reset(rngs);
+        passportChecks.reset(rngs);
+        stampsCheck.reset(rngs);
+        boardingTarget.reset(rngs);
+        boardingOthers.reset(rngs);
+    }
+
+    private void processCurrentEvent(boolean shouldTrackObservations, MsqEvent event, MsqTime msqTime, EventQueue queue, int eventCount, int skip, int i) {
+        switch (event.type) {
+            case ARRIVAL_LUGGAGE_CHECK:
+                luggageChecks.processArrival(event, msqTime, queue);
+                break;
+            case LUGGAGE_CHECK_DONE:
+                luggageChecks.processCompletion(event, msqTime, queue);
+                if (shouldTrackObservations && eventCount % skip == 0)
+                    luggageChecks.updateObservations(luggageObservations, i);
+                break;
+            case ARRIVAL_CHECK_IN_TARGET:
+                checkInDesksTarget.processArrival(event, msqTime, queue);
+                break;
+            case CHECK_IN_TARGET_DONE:
+                checkInDesksTarget.processCompletion(event, msqTime, queue);
+                if (shouldTrackObservations && eventCount % skip == 0)
+                    checkInDesksTarget.updateObservations(checkInDeskTargetObservations, i);
+                break;
+            case ARRIVAL_CHECK_IN_OTHERS:
+                checkInDesksOthers.processArrival(event, msqTime, queue);
+                break;
+            case CHECK_IN_OTHERS_DONE:
+                checkInDesksOthers.processCompletion(event, msqTime, queue);
+                if (shouldTrackObservations && eventCount % skip == 0)
+                    checkInDesksOthers.updateObservations(checkinDeskOthersObservations, i);
+                break;
+            case ARRIVAL_BOARDING_PASS_SCANNERS:
+                boardingPassScanners.processArrival(event, msqTime, queue);
+                break;
+            case BOARDING_PASS_SCANNERS_DONE:
+                boardingPassScanners.processCompletion(event, msqTime, queue);
+                if (shouldTrackObservations && eventCount % skip == 0)
+                    boardingPassScanners.updateObservations(boardingPassScannerObservations, i);
+                break;
+            case ARRIVAL_SECURITY_CHECK:
+                securityChecks.processArrival(event, msqTime, queue);
+                break;
+            case SECURITY_CHECK_DONE:
+                securityChecks.processCompletion(event, msqTime, queue);
+                if (shouldTrackObservations && eventCount % skip == 0)
+                    securityChecks.updateObservations(securityCheckObservations, i);
+                break;
+            case ARRIVAL_PASSPORT_CHECK:
+                passportChecks.processArrival(event, msqTime, queue);
+                break;
+            case PASSPORT_CHECK_DONE:
+                passportChecks.processCompletion(event, msqTime, queue);
+                if (shouldTrackObservations && eventCount % skip == 0)
+                    passportChecks.updateObservations(passportCheckObservations, i);
+                break;
+            case ARRIVAL_STAMP_CHECK:
+                stampsCheck.processArrival(event, msqTime, queue);
+                break;
+            case STAMP_CHECK_DONE:
+                stampsCheck.processCompletion(event, msqTime, queue);
+                if (shouldTrackObservations && eventCount % skip == 0)
+                    stampsCheck.updateObservations(stampsCheckObservations, i);
+                break;
+            case ARRIVAL_BOARDING_TARGET:
+                boardingTarget.processArrival(event, msqTime, queue);
+                break;
+            case BOARDING_TARGET_DONE:
+                boardingTarget.processCompletion(event, msqTime, queue);
+                if (shouldTrackObservations && eventCount % skip == 0)
+                    boardingTarget.updateObservations(boardingTargetObservations, i);
+                break;
+            case ARRIVAL_BOARDING_OTHERS:
+                boardingOthers.processArrival(event, msqTime, queue);
+                break;
+            case BOARDING_OTHERS_DONE:
+                boardingOthers.processCompletion(event, msqTime, queue);
+                if (shouldTrackObservations && eventCount % skip == 0)
+                    boardingOthers.updateObservations(boardingOthersObservations, i);
+                break;
+        }
+    }
+
+    private void saveAllStats() {
+        luggageChecks.saveStats();
+        checkInDesksTarget.saveStats();
+        checkInDesksOthers.saveStats();
+        boardingPassScanners.saveStats();
+        securityChecks.saveStats();
+        passportChecks.saveStats();
+        stampsCheck.saveStats();
+        boardingTarget.saveStats();
+        boardingOthers.saveStats();
+    }
+
+    private void computeVerificationAndCompare(String simulationType) {
+        List<Result> verificationResults = modelVerification(simulationType);
+
+        // Compare results and verifications and save comparison result
+        List<MeanStatistics> meanStatisticsList = new ArrayList<>();
+        meanStatisticsList.add(luggageChecks.getMeanStatistics());
+        meanStatisticsList.add(checkInDesksTarget.getMeanStatistics());
+        meanStatisticsList.add(checkInDesksOthers.getMeanStatistics());
+        meanStatisticsList.add(boardingPassScanners.getMeanStatistics());
+        meanStatisticsList.add(securityChecks.getMeanStatistics());
+        meanStatisticsList.add(passportChecks.getMeanStatistics());
+        meanStatisticsList.add(stampsCheck.getMeanStatistics());
+        meanStatisticsList.add(boardingTarget.getMeanStatistics());
+        meanStatisticsList.add(boardingOthers.getMeanStatistics());
+
+        compareResults(simulationType, verificationResults, meanStatisticsList);
+    }
+
+    private void writeAllStats(String simulationType) {
+        System.out.println("Writing csv files with stats for all the centers.");
+
+        luggageChecks.writeStats(simulationType);
+        checkInDesksTarget.writeStats(simulationType);
+        checkInDesksOthers.writeStats(simulationType);
+        boardingPassScanners.writeStats(simulationType);
+        securityChecks.writeStats(simulationType);
+        passportChecks.writeStats(simulationType);
+        stampsCheck.writeStats(simulationType);
+        boardingTarget.writeStats(simulationType);
+        boardingOthers.writeStats(simulationType);
+    }
+
+    private long getTotalNumberOfJobsInSystem() {
+        return luggageChecks.getTotalNumberOfJobsInNode() +
+                checkInDesksTarget.getNumberOfJobsInNode() +
+                checkInDesksOthers.getTotalNumberOfJobsInNode() +
+                boardingPassScanners.getNumberOfJobsInNode() +
+                securityChecks.getNumberOfJobsInNode() +
+                passportChecks.getNumberOfJobsInNode() +
+                stampsCheck.getNumberOfJobsInNode() +
+                boardingTarget.getNumberOfJobsInNode() +
+                boardingOthers.getTotalNumberOfJobsInNode();
     }
 
     private void updateAreas(MsqTime msqTime) {
@@ -297,7 +314,6 @@ public class BasicSimulationRunner {
     }
 
     private void initObservations() {
-        resetObservations();
         int runsNumber = config.getInt("general", "runsNumber");
         for (int i = 0; i < config.getInt("luggageChecks", "numberOfCenters"); i++) {
             luggageObservations.add(new Observations("%s_%d".formatted(config.getString("luggageChecks", "centerName"), i+1), runsNumber));
@@ -332,28 +348,16 @@ public class BasicSimulationRunner {
         }
     }
 
-    private void trackObservations(int i) {
-        luggageChecks.updateObservations(luggageObservations, i);
-        checkInDesksTarget.updateObservations(checkInDeskTargetObservations, i);
-        checkInDesksOthers.updateObservations(checkinDeskOthersObservations, i);
-        boardingPassScanners.updateObservations(boardingPassScannerObservations, i);
-        securityChecks.updateObservations(securityCheckObservations, i);
-        passportChecks.updateObservations(passportCheckObservations, i);
-        stampsCheck.updateObservations(stampsCheckObservations, i);
-        boardingOthers.updateObservations(boardingOthersObservations, i);
-        boardingTarget.updateObservations(boardingTargetObservations, i);
-    }
-
     private void resetObservations() {
-        luggageObservations.clear();
-        checkInDeskTargetObservations.clear();
-        checkinDeskOthersObservations.clear();
-        boardingPassScannerObservations.clear();
-        securityCheckObservations.clear();
-        passportCheckObservations.clear();
-        stampsCheckObservations = null;
-        boardingTargetObservations.clear();
-        boardingOthersObservations.clear();
+        luggageObservations.forEach(Observations::reset);
+        checkInDeskTargetObservations.forEach(Observations::reset);
+        checkinDeskOthersObservations.forEach(x -> x.forEach(Observations::reset));
+        boardingPassScannerObservations.forEach(Observations::reset);
+        securityCheckObservations.forEach(Observations::reset);
+        passportCheckObservations.forEach(Observations::reset);
+        stampsCheckObservations.reset();
+        boardingTargetObservations.forEach(Observations::reset);
+        boardingOthersObservations.forEach(x -> x.forEach(Observations::reset));
     }
 
     private void writeObservations(String simulationType) {

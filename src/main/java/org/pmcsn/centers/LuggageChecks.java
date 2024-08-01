@@ -48,6 +48,10 @@ public class LuggageChecks {
         Arrays.stream(luggageChecksSingleEntrances).forEach(SingleServer::resetBatch);
     }
 
+    public void resetBatch(int center) {
+        luggageChecksSingleEntrances[center].resetBatch();
+    }
+
     public void setSTOP(int STOP) {
         this.STOP = STOP;
     }
@@ -120,34 +124,15 @@ public class LuggageChecks {
         return statistics;
     }
 
-    public int getBatchIndex(int center){
-        return luggageChecksSingleEntrances[center].batchIndex;
-    }
-
-    public int getMinBatchIndex() {
-        // Assume there's at least one center in the array
-        if (luggageChecksSingleEntrances.length == 0) {
-            throw new IllegalStateException("No centers available");
-        }
-
-        int minBatchIndex = luggageChecksSingleEntrances[0].batchIndex;
-        for (int i = 1; i < luggageChecksSingleEntrances.length; i++) {
-            if (luggageChecksSingleEntrances[i].batchIndex < minBatchIndex) {
-                minBatchIndex = luggageChecksSingleEntrances[i].batchIndex;
-            }
-        }
-        return minBatchIndex;
-    }
-
     public void saveStats() {
         for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
             center.saveStats();
         }
     }
 
-    public void saveBatch(int batchSize, int batchesNumber) {
+    public void saveBatchStats(int batchSize, int batchesNumber) {
         for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
-            center.saveBatch(batchSize, batchesNumber);
+            center.saveBatchStats(batchSize, batchesNumber);
         }
     }
 

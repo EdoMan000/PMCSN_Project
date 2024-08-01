@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static org.pmcsn.utils.PrintUtils.printJobsServedByNodes;
 import static org.pmcsn.utils.Verification.modelVerification;
 import static org.pmcsn.utils.Comparison.compareResults;
 
@@ -58,21 +59,15 @@ public class BatchSimulationRunner {
     }
 
     public List<Statistics> runBatchSimulation(boolean approximateServiceAsExponential) throws Exception {
-        CenterFactory factory = new CenterFactory();
-        luggageChecks = factory.createLuggageChecks(approximateServiceAsExponential);
-        checkInDesksTarget = factory.createCheckinDeskTarget(approximateServiceAsExponential);
-        checkInDesksOthers = factory.createCheckinDeskOthers(approximateServiceAsExponential);
-        boardingPassScanners = factory.createBoardingPassScanners(approximateServiceAsExponential);
-        securityChecks = factory.createSecurityChecks(approximateServiceAsExponential);
-        passportChecks = factory.createPassportChecks(approximateServiceAsExponential);
-        stampsCheck = factory.createStampsCheck(approximateServiceAsExponential);
-        boardingTarget = factory.createBoardingTarget(approximateServiceAsExponential);
-        boardingOthers = factory.createBoardingOthers(approximateServiceAsExponential);
+        initCenters(approximateServiceAsExponential);
+
+        String simulationType;
         if (approximateServiceAsExponential) {
-            System.out.println("\nRunning Batch Simulation with Exponential Service...");
-        }else{
-            System.out.println("\nRunning Batch Simulation...");
+            simulationType = "BATCH_SIMULATION_EXPONENTIAL";
+        } else {
+            simulationType = "BATCH_SIMULATION";
         }
+        System.out.println("\nRUNNING " + simulationType + "...");
 
         // Rng setting the seed
         Rngs rngs = new Rngs();
@@ -91,7 +86,58 @@ public class BatchSimulationRunner {
         double time = luggageChecks.getArrival();
         events.add(new MsqEvent(EventType.ARRIVAL_LUGGAGE_CHECK, time));
 
-        // Initialize other centers
+        resetOtherCenters(rngs); // Reset other centers
+
+        MsqEvent event;
+
+        boolean isWarmingUp = true;
+
+        while(checkEndOfBatchSimulation((batchesNumber * batchSize) + warmupThreshold)){
+            event = events.pop(); // Retrieving next event to be processed
+            msqTime.next = event.time;
+            updateAreas(msqTime); // Updating areas
+            msqTime.current = msqTime.next; // Advancing the clock
+
+            processCurrentEvent(event, msqTime, events); // Processing the event based on its type
+
+            if (getMinimumNumberOfJobsServedByCenters() >= warmupThreshold && isWarmingUp) { // Checking if still in warmup period
+                System.out.println("WARMUP COMPLETED... Starting to collect statistics for centers from now on.");
+                isWarmingUp = false;
+            }
+            if (!isWarmingUp) {
+                saveAllBatchStats(); // saving the statistics of the batch only after the warm-up time period
+            }
+        }
+        System.out.println(simulationType + " HAS JUST FINISHED.");
+
+        // Writing statistics csv with data from all batches
+        writeAllStats(simulationType);
+
+        if (approximateServiceAsExponential) {
+            computeVerificationAndCompare(simulationType); // Computing and writing verifications stats csv
+        }
+
+        // controllo di consistenza sul numero di jobs processati
+        printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boardingTarget, boardingOthers, false);
+
+        return getAllStatsInSingleList();
+    }
+
+
+    private void initCenters(boolean approximateServiceAsExponential) {
+        CenterFactory factory = new CenterFactory();
+        luggageChecks = factory.createLuggageChecks(approximateServiceAsExponential);
+        checkInDesksTarget = factory.createCheckinDeskTarget(approximateServiceAsExponential);
+        checkInDesksOthers = factory.createCheckinDeskOthers(approximateServiceAsExponential);
+        boardingPassScanners = factory.createBoardingPassScanners(approximateServiceAsExponential);
+        securityChecks = factory.createSecurityChecks(approximateServiceAsExponential);
+        passportChecks = factory.createPassportChecks(approximateServiceAsExponential);
+        stampsCheck = factory.createStampsCheck(approximateServiceAsExponential);
+        boardingTarget = factory.createBoardingTarget(approximateServiceAsExponential);
+        boardingOthers = factory.createBoardingOthers(approximateServiceAsExponential);
+    }
+
+    private void resetOtherCenters(Rngs rngs) {
         checkInDesksTarget.reset(rngs);
         checkInDesksOthers.reset(rngs);
         boardingPassScanners.reset(rngs);
@@ -100,109 +146,68 @@ public class BatchSimulationRunner {
         stampsCheck.reset(rngs);
         boardingTarget.reset(rngs);
         boardingOthers.reset(rngs);
+    }
 
-
-        boolean isWarmingUp = true;
-        while(checkEndOfBatchSimulation((batchesNumber * batchSize) - warmupThreshold)){
-            MsqEvent event = events.pop();
-            msqTime.next = event.time;
-            updateAreas(msqTime);
-            // Advancing the clock
-            msqTime.current = msqTime.next;
-            // Processing the event based on its type
-            switch (event.type) {
-                case ARRIVAL_LUGGAGE_CHECK:
-                    luggageChecks.processArrival(event, msqTime, events);
-                    break;
-                case LUGGAGE_CHECK_DONE:
-                    luggageChecks.processCompletion(event, msqTime, events);
-                    break;
-                case ARRIVAL_CHECK_IN_TARGET:
-                    checkInDesksTarget.processArrival(event, msqTime, events);
-                    break;
-                case CHECK_IN_TARGET_DONE:
-                    checkInDesksTarget.processCompletion(event, msqTime, events);
-                    break;
-                case ARRIVAL_CHECK_IN_OTHERS:
-                    checkInDesksOthers.processArrival(event, msqTime, events);
-                    break;
-                case CHECK_IN_OTHERS_DONE:
-                    checkInDesksOthers.processCompletion(event, msqTime, events);
-                    break;
-                case ARRIVAL_BOARDING_PASS_SCANNERS:
-                    boardingPassScanners.processArrival(event, msqTime, events);
-                    break;
-                case BOARDING_PASS_SCANNERS_DONE:
-                    boardingPassScanners.processCompletion(event, msqTime, events);
-                    break;
-                case ARRIVAL_SECURITY_CHECK:
-                    securityChecks.processArrival(event, msqTime, events);
-                    break;
-                case SECURITY_CHECK_DONE:
-                    securityChecks.processCompletion(event, msqTime, events);
-                    break;
-                case ARRIVAL_PASSPORT_CHECK:
-                    passportChecks.processArrival(event, msqTime, events);
-                    break;
-                case PASSPORT_CHECK_DONE:
-                    passportChecks.processCompletion(event, msqTime, events);
-                    break;
-                case ARRIVAL_STAMP_CHECK:
-                    stampsCheck.processArrival(event, msqTime, events);
-                    break;
-                case STAMP_CHECK_DONE:
-                    stampsCheck.processCompletion(event, msqTime, events);
-                    break;
-                case ARRIVAL_BOARDING_TARGET:
-                    boardingTarget.processArrival(event, msqTime, events);
-                    break;
-                case BOARDING_TARGET_DONE:
-                    boardingTarget.processCompletion(event, msqTime, events);
-                    break;
-                case ARRIVAL_BOARDING_OTHERS:
-                    boardingOthers.processArrival(event, msqTime, events);
-                    break;
-                case BOARDING_OTHERS_DONE:
-                    boardingOthers.processCompletion(event, msqTime, events);
-                    break;
-            }
-            long n = getMinimumNumberOfJobsServedByCenters();
-            if (n >= warmupThreshold && isWarmingUp) {
-                System.out.println("WARMUP COMPLETED..STARTING MEASUREMENTS COLLECTION");
-                luggageChecks.resetBatch();
-                checkInDesksTarget.resetBatch();
-                checkInDesksOthers.resetBatch();
-                boardingPassScanners.resetBatch();
-                securityChecks.resetBatch();
-                passportChecks.resetBatch();
-                stampsCheck.resetBatch();
-                boardingTarget.resetBatch();
-                boardingOthers.resetBatch();
-                isWarmingUp = false;
-            }
-            if (!isWarmingUp) {
-                // saving the statistics of the batch only after the warm-up time period
-                luggageChecks.saveBatch(batchSize, batchesNumber);
-                checkInDesksTarget.saveBatch(batchSize, batchesNumber);
-                checkInDesksOthers.saveBatch(batchSize, batchesNumber);
-                boardingPassScanners.saveBatch(batchSize, batchesNumber);
-                securityChecks.saveBatch(batchSize, batchesNumber);
-                passportChecks.saveBatch(batchSize, batchesNumber);
-                stampsCheck.saveBatch(batchSize, batchesNumber);
-                boardingTarget.saveBatch(batchSize, batchesNumber);
-                boardingOthers.saveBatch(batchSize, batchesNumber);
-            }
+    private void processCurrentEvent(MsqEvent event, MsqTime msqTime, EventQueue events) {
+        switch (event.type) {
+            case ARRIVAL_LUGGAGE_CHECK:
+                luggageChecks.processArrival(event, msqTime, events);
+                break;
+            case LUGGAGE_CHECK_DONE:
+                luggageChecks.processCompletion(event, msqTime, events);
+                break;
+            case ARRIVAL_CHECK_IN_TARGET:
+                checkInDesksTarget.processArrival(event, msqTime, events);
+                break;
+            case CHECK_IN_TARGET_DONE:
+                checkInDesksTarget.processCompletion(event, msqTime, events);
+                break;
+            case ARRIVAL_CHECK_IN_OTHERS:
+                checkInDesksOthers.processArrival(event, msqTime, events);
+                break;
+            case CHECK_IN_OTHERS_DONE:
+                checkInDesksOthers.processCompletion(event, msqTime, events);
+                break;
+            case ARRIVAL_BOARDING_PASS_SCANNERS:
+                boardingPassScanners.processArrival(event, msqTime, events);
+                break;
+            case BOARDING_PASS_SCANNERS_DONE:
+                boardingPassScanners.processCompletion(event, msqTime, events);
+                break;
+            case ARRIVAL_SECURITY_CHECK:
+                securityChecks.processArrival(event, msqTime, events);
+                break;
+            case SECURITY_CHECK_DONE:
+                securityChecks.processCompletion(event, msqTime, events);
+                break;
+            case ARRIVAL_PASSPORT_CHECK:
+                passportChecks.processArrival(event, msqTime, events);
+                break;
+            case PASSPORT_CHECK_DONE:
+                passportChecks.processCompletion(event, msqTime, events);
+                break;
+            case ARRIVAL_STAMP_CHECK:
+                stampsCheck.processArrival(event, msqTime, events);
+                break;
+            case STAMP_CHECK_DONE:
+                stampsCheck.processCompletion(event, msqTime, events);
+                break;
+            case ARRIVAL_BOARDING_TARGET:
+                boardingTarget.processArrival(event, msqTime, events);
+                break;
+            case BOARDING_TARGET_DONE:
+                boardingTarget.processCompletion(event, msqTime, events);
+                break;
+            case ARRIVAL_BOARDING_OTHERS:
+                boardingOthers.processArrival(event, msqTime, events);
+                break;
+            case BOARDING_OTHERS_DONE:
+                boardingOthers.processCompletion(event, msqTime, events);
+                break;
         }
+    }
 
-        String simulationType;
-        if (approximateServiceAsExponential) {
-            simulationType = "BATCH_SIMULATION_EXPONENTIAL";
-        } else {
-            simulationType = "BATCH_SIMULATION";
-        }
-        // Writing statistics csv with data from all batches
-        writeStats(simulationType);
-
+    private List<Statistics> getAllStatsInSingleList() {
         List<Statistics> statisticsList = new ArrayList<>();
         statisticsList.addAll(luggageChecks.getStatistics());
         statisticsList.add(checkInDesksTarget.getStatistics());
@@ -213,19 +218,34 @@ public class BatchSimulationRunner {
         statisticsList.add(stampsCheck.getStatistics());
         statisticsList.add(boardingTarget.getStatistics());
         statisticsList.addAll(boardingOthers.getStatistics());
-
-        if (approximateServiceAsExponential) {
-            // Computing and writing verifications stats csv
-            compare(simulationType);
-        }
-
-        // controllo di consistenza sul numero di jobs processati
-        printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boardingTarget, boardingOthers, false);
-
         return statisticsList;
     }
 
-    private void compare(String simulationType) {
+    private void resetAllBatchStats() {
+        luggageChecks.resetBatch();
+        checkInDesksTarget.resetBatch();
+        checkInDesksOthers.resetBatch();
+        boardingPassScanners.resetBatch();
+        securityChecks.resetBatch();
+        passportChecks.resetBatch();
+        stampsCheck.resetBatch();
+        boardingTarget.resetBatch();
+        boardingOthers.resetBatch();
+    }
+
+    private void saveAllBatchStats() {
+        luggageChecks.saveBatchStats(batchSize, batchesNumber);
+        checkInDesksTarget.saveBatchStats(batchSize, batchesNumber);
+        checkInDesksOthers.saveBatchStats(batchSize, batchesNumber);
+        boardingPassScanners.saveBatchStats(batchSize, batchesNumber);
+        securityChecks.saveBatchStats(batchSize, batchesNumber);
+        passportChecks.saveBatchStats(batchSize, batchesNumber);
+        stampsCheck.saveBatchStats(batchSize, batchesNumber);
+        boardingTarget.saveBatchStats(batchSize, batchesNumber);
+        boardingOthers.saveBatchStats(batchSize, batchesNumber);
+    }
+
+    private void computeVerificationAndCompare(String simulationType) {
         List<Result> verificationResults = modelVerification(simulationType);
 
         // Compare results and verifications and save comparison result
@@ -243,7 +263,9 @@ public class BatchSimulationRunner {
         compareResults(simulationType, verificationResults, meanStatisticsList);
     }
 
-    private void writeStats(String simulationType) {
+    private void writeAllStats(String simulationType) {
+        System.out.println("Writing csv files with stats for all the centers.");
+
         luggageChecks.writeStats(simulationType);
         checkInDesksTarget.writeStats(simulationType);
         checkInDesksOthers.writeStats(simulationType);
@@ -253,18 +275,6 @@ public class BatchSimulationRunner {
         stampsCheck.writeStats(simulationType);
         boardingTarget.writeStats(simulationType);
         boardingOthers.writeStats(simulationType);
-    }
-
-    private void saveStats() {
-        luggageChecks.saveStats();
-        checkInDesksTarget.saveStats();
-        checkInDesksOthers.saveStats();
-        boardingPassScanners.saveStats();
-        securityChecks.saveStats();
-        passportChecks.saveStats();
-        stampsCheck.saveStats();
-        boardingTarget.saveStats();
-        boardingOthers.saveStats();
     }
 
     private void updateAreas(MsqTime msqTime) {
@@ -300,6 +310,6 @@ public class BatchSimulationRunner {
     }
 
     private boolean checkEndOfBatchSimulation(long n) {
-        return getMinimumNumberOfJobsServedByCenters() < n;
+        return getMinimumNumberOfJobsServedByCenters() <= n;
     }
 }

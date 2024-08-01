@@ -63,10 +63,6 @@ public class CheckInDesksOthers {
         return checkInDesksSingleFlightArray[center].getCompletions();
     }
 
-    public int getBatchIndex(int center){
-        return checkInDesksSingleFlightArray[center].batchIndex;
-    }
-
     public List<Statistics> getStatistics(){
         List<Statistics> statistics = new ArrayList<>();
         for (CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray) {
@@ -75,22 +71,7 @@ public class CheckInDesksOthers {
         return statistics;
     }
 
-    public int getMinBatchIndex() {
-        // Assume there's at least one center in the array
-        if (checkInDesksSingleFlightArray.length == 0) {
-            throw new IllegalStateException("No centers available");
-        }
-
-        int minBatchIndex = checkInDesksSingleFlightArray[0].batchIndex;
-        for (int i = 1; i < checkInDesksSingleFlightArray.length; i++) {
-            if (checkInDesksSingleFlightArray[i].batchIndex < minBatchIndex) {
-                minBatchIndex = checkInDesksSingleFlightArray[i].batchIndex;
-            }
-        }
-        return minBatchIndex;
-    }
-
-    public void saveBatch(int batchSize, int batchesNumber) {
+    public void saveBatchStats(int batchSize, int batchesNumber) {
         for(CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray){
             s.setArea(time);
         }

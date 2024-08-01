@@ -31,6 +31,16 @@ public class Statistics {
     public List<Double> meanUtilizationList = new ArrayList<Double>();
     public List<Double> meanQueuePopulationList = new ArrayList<Double>();
 
+    public void clear() {
+        meanResponseTimeList.clear();
+        meanServiceTimeList.clear();
+        meanQueueTimeList.clear();
+        lambdaList.clear();
+        meanSystemPopulationList.clear();
+        meanUtilizationList.clear();
+        meanQueuePopulationList.clear();
+    }
+
     public static class MeanStatistics {
         public String centerName;
         public double meanResponseTime;
@@ -74,6 +84,49 @@ public class Statistics {
         this.centerName = centerName.toLowerCase();
     }
 
+    public void saveStats(Area area, MsqSum[] sum, double lastArrivalTime, double lastCompletionTime, boolean isMultiServer, int batchesNumber) {
+        long numberOfJobsServed = Arrays.stream(sum).mapToLong(s -> s.served).sum();
+        // inter-arrival
+        double lambda = numberOfJobsServed / lastArrivalTime;
+        appendToBatchWindow(lambdaList, lambda, batchesNumber);
+        // mean system population (E[Ns])
+        double meanSystemPopulation = area.getNodeArea() / lastCompletionTime;
+        appendToBatchWindow(meanSystemPopulationList, meanSystemPopulation, batchesNumber);
+        // mean response time (E[Ts])
+        double meanResponseTime = meanSystemPopulation / lambda;
+        appendToBatchWindow(meanResponseTimeList, meanResponseTime, batchesNumber);
+        // mean queue population (E[Nq])
+        double meanQueuePopulation = area.getQueueArea() / lastCompletionTime;
+        appendToBatchWindow(meanQueuePopulationList, meanQueuePopulation, batchesNumber);
+        // mean wait time (E[Tq])
+        double meanQueueTime = meanQueuePopulation / lambda;
+        appendToBatchWindow(meanQueueTimeList, meanQueueTime, batchesNumber);
+        double meanServiceTime;
+        double utilization;
+        if(isMultiServer) {
+            // mean service time (E[s])
+            meanServiceTime = Arrays.stream(sum)
+                    .filter(s -> s.served > 0)
+                    .mapToDouble(s -> s.service / s.served)
+                    .average().orElse(0);;
+            // mean utilization (ρ)
+            utilization = (lambda * meanServiceTime)/sum.length;
+        } else {
+            // mean service time (E[s])
+            meanServiceTime = area.getServiceArea() / sum[0].served;
+            // mean utilization (ρ)
+            utilization = area.getServiceArea() / lastCompletionTime;
+        }
+        appendToBatchWindow(meanUtilizationList, utilization, batchesNumber);
+        appendToBatchWindow(meanServiceTimeList, meanServiceTime, batchesNumber);
+    }
+
+    private void appendToBatchWindow(List<Double> meanStatsList, double value, int batchesNumber) {
+        meanStatsList.add(value);
+        if (batchesNumber < meanStatsList.size()) {
+            meanStatsList.removeFirst();
+        }
+    }
 
     public void saveStats(Area area, MsqSum[] sum, double lastArrivalTime, double lastCompletionTime, boolean isMultiserver) {
         long numberOfJobsServed = Arrays.stream(sum).mapToLong(s -> s.served).sum();
@@ -115,7 +168,6 @@ public class Statistics {
             // mean service time (E[s])
             meanServiceTimeList.add(area.getServiceArea() / sum[0].served);
         }
-
     }
 
     public void writeStats(String simulationType) {

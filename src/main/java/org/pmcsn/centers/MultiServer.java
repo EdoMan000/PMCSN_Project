@@ -15,11 +15,11 @@ public abstract class MultiServer {
     protected double firstArrivalTime = Double.NEGATIVE_INFINITY;
     protected double lastArrivalTime = 0;
     protected double lastCompletionTime = 0;
-    protected int batchIndex = 0;
     protected double meanServiceTime;
     protected String centerName;
     protected boolean approximateServiceAsExponential;
     protected Rngs rngs;
+    protected long numberOfJobsalreadyServed = 0;
 
     protected MsqSum[] sum;
     protected MsqServer[] servers;
@@ -63,16 +63,7 @@ public abstract class MultiServer {
     }
 
     public void resetBatch() {
-        // resetting variables
-        area.reset();
-        this.firstArrivalTime = Double.NEGATIVE_INFINITY;
-        this.lastArrivalTime = 0;
-        this.lastCompletionTime = 0;
-
-        for(int i=0; i<SERVERS ; i++){
-            sum[i].reset();
-            servers[i].reset();
-        }
+        statistics.clear();
     }
 
     public long getJobsServed() {
@@ -143,20 +134,21 @@ public abstract class MultiServer {
     }
 
     public void saveStats() {
-        batchIndex++;
         statistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime, true);
+    }
+
+    public void saveStats(int batchesNumber) {
+        statistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime, true, batchesNumber);
     }
 
     public void writeStats(String simulationType){
         statistics.writeStats(simulationType);
     }
 
-    public void saveBatch(int batchSize, int batchesNumber) {
-        if(getJobsServed() == batchSize && statistics.meanResponseTimeList.size() < batchesNumber){
-            System.out.println("Center " + centerName + " has served another " + getJobsServed() + " jobs!! Saving stats for batch N°" + (getStatistics().meanResponseTimeList.size()+1));
-            saveStats();
-            resetBatch();
-            System.out.println("********************************************************************************************************");
+    public void saveBatchStats(int batchSize, int batchesNumber) {
+        if(getJobsServed() > 0 && getJobsServed() % batchSize == 0){
+            saveStats(batchesNumber);
+            numberOfJobsalreadyServed = getJobsServed();
         }
     }
 

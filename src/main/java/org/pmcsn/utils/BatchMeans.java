@@ -15,19 +15,19 @@ public class BatchMeans {
         // 6000(warmup=discard) + 60000(restOfTheSimulation=keep) --> TOT RECCOMMENDED JOBS >= 66000 (K*B with 100<=K<=400)
         while (true) {
             System.out.println("Batch size: " + batchSize_B);
-            BatchSimulationRunner batchRunner = new BatchSimulationRunner(numBatch_k, batchSize_B, warmup);
+            BatchSimulationRunner batchRunner = new BatchSimulationRunner();
             List<Statistics> statisticsList = batchRunner.runBatchSimulation(true);
             if (!checkEntrance(statisticsList, 0.2)) {
                 return;
             }
-            batchSize_B += batchSize_B * 0.5;
+            batchSize_B += batchSize_B / 2;
 
             if(batchSize_B > 100000) {
             System.out.println("BATCH SIZE EXCEEDED... Exiting.");
                 break;
             }
         }
-        System.out.println("------------------------------------------------------");
+        System.out.println("\n------------------------------------------------------");
         System.out.println(" FINAL NUMBER OF BATCHES: " + batchSize_B);
         System.out.println("------------------------------------------------------");
     }
@@ -38,9 +38,9 @@ public class BatchMeans {
         List<Statistics> entrancesStats = statisticsList.stream().filter(x -> x.centerName.contains(centerName)).toList();
         boolean result = true;
         for (Statistics entrance : entrancesStats) {
-            double acs = acs(entrance.meanResponseTimeList);
+            double acs = autocorrlelation(entrance.meanResponseTimeList);
             result = result && Math.abs(acs) <= v;
-            System.out.println("------------------------------------------------------");
+            System.out.println("\n------------------------------------------------------");
             System.out.printf("%s (E[Ts])\t: %f%n", entrance.centerName, acs);
             System.out.println("------------------------------------------------------");
         }
