@@ -27,9 +27,9 @@ public class BoardingOthers {
         Arrays.stream(boardingSingleFlightArray).forEach(s -> s.setArea(time));
     }
 
-    public void saveBatch(int batchSize, int batchesNumber) {
+    public void saveBatchStats(int batchSize, int batchesNumber) {
         for(BoardingOtherSingleFlight other : boardingSingleFlightArray){
-            other.saveBatch(batchSize, batchesNumber);
+            other.saveBatchStats(batchSize, batchesNumber);
         }
     }
 
@@ -63,6 +63,10 @@ public class BoardingOthers {
 
     public long getTotalNumberOfJobsInNode() {
         return Arrays.stream(boardingSingleFlightArray).mapToLong(MultiServer::getNumberOfJobsInNode).sum();
+    }
+
+    public void resetBatch(int center) {
+        boardingSingleFlightArray[center].resetBatch();
     }
 
     public void resetBatch() {

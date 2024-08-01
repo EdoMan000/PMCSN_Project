@@ -105,10 +105,10 @@ public class Verification {
     }
 
     public static List<Result> modelVerification(String simulationType) {
+        System.out.println("Computing analytical results for simulation...");
         List<Result> results = new ArrayList<>();
 
         double lambda = 1.0/config.getDouble("luggageChecks", "interArrivalTime");
-
 
         results.add(singleServer(
                 config.getString("luggageChecks", "centerName"),

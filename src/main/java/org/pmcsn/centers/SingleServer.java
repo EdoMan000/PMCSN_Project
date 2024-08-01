@@ -58,12 +58,7 @@ public abstract class SingleServer {
     }
 
     public void resetBatch() {
-        // resetting variables
-        this.firstArrivalTime = Double.NEGATIVE_INFINITY;
-        this.lastArrivalTime = 0;
-        this.lastCompletionTime = 0;
-        sum.reset();
-        area.reset();
+        statistics.clear();
     }
 
     public long getNumberOfJobsInNode() {

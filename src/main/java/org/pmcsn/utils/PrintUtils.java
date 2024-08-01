@@ -21,59 +21,70 @@ public class PrintUtils {
     }
 
     public static void printJobsServedByNodes(LuggageChecks luggageChecks, CheckInDesksTarget checkInDesksTarget, CheckInDesksOthers checkInDesksOthers, BoardingPassScanners boardingPassScanners, SecurityChecks securityChecks, PassportChecks passportChecks, StampsCheck stampsCheck, BoardingTarget boardingTarget, BoardingOthers boardingOthers, boolean includePartialValues) {
-        // controllo di consistenza sul numero di jobs processati
+        System.out.println(BLUE + "\n\n*************************************************");
+        System.out.println("Jobs Served by Nodes");
+        System.out.println("*************************************************" + RESET);
+
+        // Luggage Checks
         long jobServedEntrances = 0;
         int i = 1;
         for (long l : luggageChecks.getNumberOfJobsPerCenter()) {
             jobServedEntrances += l;
             if(includePartialValues) {
-                System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + l);
+                System.out.printf(BLUE + "Luggage Checks Center " + i + ": " + RESET + "%d", l);
             }
             i++;
         }
-        System.out.println("TOT Luggage Checks Jobs Served = " + jobServedEntrances);
+        System.out.printf(YELLOW + "TOT Luggage Checks Jobs Served: " + RESET + "%d\n", jobServedEntrances);
 
+        // Check-In Desks
         long jobServedCheckIns = checkInDesksTarget.getJobsServed();
         if(includePartialValues) {
-            System.out.println("Check-In Desks Target: Jobs Served = " + jobServedCheckIns);
+            System.out.printf(BLUE + "Check-In Desks Target: " + RESET + "%d", jobServedCheckIns);
         }
         i = 1;
         for (long l : checkInDesksOthers.getNumberOfJobsPerCenter()) {
             jobServedCheckIns += l;
             if (includePartialValues) {
-                System.out.println("Check-In Desks Others Center " + i + ": Jobs Served = " + l);
+                System.out.printf(BLUE + "Check-In Desks Others Center " + i + ": " + RESET + "%d", l);
             }
             i++;
         }
-        System.out.println("TOT Check-In Desks Jobs Served = " + jobServedCheckIns);
+        System.out.printf(YELLOW + "TOT Check-In Desks Jobs Served: " + RESET + "%d\n", jobServedCheckIns);
 
+        // Boarding Pass Scanners
         long boardingPassScannersJobsServed = boardingPassScanners.getJobsServed();
-        System.out.println("Boarding Pass Scanners: Jobs Served = " + boardingPassScannersJobsServed);
+        System.out.printf(BLUE + "Boarding Pass Scanners: " + RESET + "%d\n", boardingPassScannersJobsServed);
 
+        // Security Checks
         long securityChecksJobsServed = securityChecks.getJobsServed();
-        System.out.println("Security Checks: Jobs Served = " + securityChecksJobsServed);
+        System.out.printf(BLUE + "Security Checks: " + RESET + "%d\n", securityChecksJobsServed);
 
+        // Passport Checks
         long passportChecksJobsServed = passportChecks.getJobsServed();
-        System.out.println("Passport Checks: Jobs Served = " + passportChecksJobsServed);
+        System.out.printf(BLUE + "Passport Checks: " + RESET + "%d\n", passportChecksJobsServed);
 
+        // Stamps Check
         long stampsCheckJobsServed = stampsCheck.getJobsServed();
-        System.out.println("Stamps Check: Jobs Served = " + stampsCheckJobsServed);
+        System.out.printf(BLUE + "Stamps Check: " + RESET + "%d\n", stampsCheckJobsServed);
 
+        // Boarding
         long jobServedBoarding = boardingTarget.getJobsServed();
         if (includePartialValues) {
-            System.out.println("BoardingTarget: Jobs Served = " + jobServedBoarding);
+            System.out.printf(BLUE + "BoardingTarget: " + RESET + "%d", jobServedBoarding);
         }
 
         i = 1;
         for (long l : boardingOthers.getNumberOfJobsPerCenter()) {
             jobServedBoarding += l;
             if (includePartialValues) {
-                System.out.println("Boarding Others Center " + i + ": Jobs Served = " + l);
+                System.out.printf(BLUE + "Boarding Others Center " + i + ": " + RESET + "%d", l);
             }
             i++;
         }
 
-        System.out.println("TOT Boarding Jobs Served = " + jobServedBoarding);
+        System.out.printf(YELLOW + "TOT Boarding Jobs Served: " + RESET + "%d\n", jobServedBoarding);
+        System.out.println(BLUE + "*************************************************" + RESET);
     }
 
     public static void printStats(String centerName, int numberOfServers, long numberOfJobsServed, double area, MsqSum[] sum, double firstArrivalTime, double lastArrivalTime, double lastCompletionTime) {
@@ -199,5 +210,11 @@ public class PrintUtils {
 
     public static void printError(String errorMessage){
         System.out.println(RED + errorMessage + RESET);
+    }
+    public static void printSuccess(String successMessage){
+        System.out.println(BLUE + successMessage + RESET);
+    }
+    public static void printWarning(String warningMessage){
+        System.out.println(YELLOW + warningMessage + RESET);
     }
 }

@@ -30,6 +30,14 @@ public class CheckInDesksOthers {
         }
     }
 
+    public void resetBatch(int center) {
+        checkInDesksSingleFlightArray[center].resetBatch();
+    }
+
+    public void resetBatch() {
+        Arrays.stream(checkInDesksSingleFlightArray).forEach(MultiServer::resetBatch);
+    }
+
     public void processArrival(MsqEvent arrival, MsqTime time, EventQueue queue) {
         int index = getRandomValueUpToMax(rngs, 11, checkInDesksSingleFlightArray.length); //TODO sameStreamIndex here???
         if (index < 1 || index > checkInDesksSingleFlightArray.length) {
@@ -51,10 +59,6 @@ public class CheckInDesksOthers {
         return Arrays.stream(checkInDesksSingleFlightArray).mapToLong(MultiServer::getNumberOfJobsInNode).sum();
     }
 
-    public void resetBatch() {
-        Arrays.stream(checkInDesksSingleFlightArray).forEach(MultiServer::resetBatch);
-    }
-
     public long[] getNumberOfJobsPerCenter() {
         return Arrays.stream(checkInDesksSingleFlightArray).mapToLong(MultiServer::getJobsServed).toArray();
     }
@@ -73,7 +77,7 @@ public class CheckInDesksOthers {
 
     public void saveBatchStats(int batchSize, int batchesNumber) {
         for(CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray){
-            s.setArea(time);
+            s.saveBatchStats(batchSize, batchesNumber);
         }
     }
 

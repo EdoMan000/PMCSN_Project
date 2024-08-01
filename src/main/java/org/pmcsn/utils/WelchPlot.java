@@ -25,6 +25,20 @@ public class WelchPlot {
         }
     }
 
+    public static void removeObservationFile(String simulationType) {
+        String parent = "csvFiles/%s/observations/".formatted(simulationType);
+        File file = new File(parent, "observations.csv");
+        if (file.exists()) {
+            if (file.delete()) {
+                System.out.println("File " + file.getPath() + " deleted successfully.");
+            } else {
+                System.out.println("Failed to delete the file " + file.getPath() + ".");
+            }
+        } else {
+            System.out.println("File " + file.getPath() + " does not exist.");
+        }
+    }
+
     public static void writeObservations(String simulationType, List<Observations> observationsList) {
         String parent = "csvFiles/%s/observations/".formatted(simulationType);
         File directory = new File(parent);

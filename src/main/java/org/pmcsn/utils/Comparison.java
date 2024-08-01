@@ -36,7 +36,7 @@ public class Comparison {
     }
 
     public static List<ComparisonResult> compareResults(String simulationType, List<Result> verificationResults, List<MeanStatistics> meanStatisticsList) {
-        System.out.println("STARTING COMPARISON...");
+        System.out.println("Starting comparison with analytical results...");
         List<ComparisonResult> comparisonResults = new ArrayList<>();
 
         for (Result result : verificationResults) {
