@@ -9,8 +9,8 @@ import static org.pmcsn.utils.Distributions.exponential;
 import static org.pmcsn.utils.Distributions.logNormal;
 
 public class CheckInDesksTarget extends MultiServer {
-    public CheckInDesksTarget(String centerName, double meanServiceTime, int numOfServers, int centerIndex, boolean approximateServiceAsExponential) {
-        super(centerName, meanServiceTime, numOfServers, centerIndex, approximateServiceAsExponential);
+    public CheckInDesksTarget(String centerName, double meanServiceTime, int numOfServers, int streamIndex, boolean approximateServiceAsExponential) {
+        super(centerName, meanServiceTime, numOfServers, streamIndex, approximateServiceAsExponential);
     }
 
     @Override
@@ -21,7 +21,7 @@ public class CheckInDesksTarget extends MultiServer {
 
     @Override
     public void spawnCompletionEvent(MsqTime time, EventQueue queue, int serverId) {
-        double service = getService(CENTER_INDEX + 1);
+        double service = getService(streamIndex);
         MsqEvent event = new MsqEvent(EventType.CHECK_IN_TARGET_DONE, time.current + service, service, serverId);
         queue.add(event);
     }

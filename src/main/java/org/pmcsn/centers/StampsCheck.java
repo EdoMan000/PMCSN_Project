@@ -18,13 +18,13 @@ public class StampsCheck extends SingleServer{
 
 
     public void spawnNextCenterEvent(MsqTime time, EventQueue queue){
-        boolean isPriority = isPriority(rngs, CENTER_INDEX + 3);
-        EventType type = isTargetFlight(rngs, CENTER_INDEX+2) ? EventType.ARRIVAL_BOARDING_TARGET : EventType.ARRIVAL_BOARDING_OTHERS;
+        boolean isPriority = isPriority(rngs, streamindex + 1);
+        EventType type = isTargetFlight(rngs, streamindex + 2) ? EventType.ARRIVAL_BOARDING_TARGET : EventType.ARRIVAL_BOARDING_OTHERS;
         queue.addPriority(new MsqEvent(type, time.current, isPriority));
     }
 
     public void spawnCompletionEvent(MsqTime time, EventQueue queue) {
-        double service = getService(CENTER_INDEX);
+        double service = getService(streamindex);
         MsqEvent event = new MsqEvent(EventType.STAMP_CHECK_DONE, time.current + service, service);
         queue.add(event);
     }

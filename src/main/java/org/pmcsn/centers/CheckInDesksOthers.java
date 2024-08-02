@@ -13,6 +13,7 @@ import static org.pmcsn.utils.StatisticsUtils.computeMean;
 public class CheckInDesksOthers {
     Rngs rngs;
     private final String name;
+    private final int streamIndex;
     CheckInDesksOtherSingleFlight[] checkInDesksSingleFlightArray;
 
     public CheckInDesksOthers(String name, int numberOfCenters, int serversNumber, double meanServiceTime, int streamIndex, boolean approximateServiceAsExponential) {
@@ -41,7 +42,7 @@ public class CheckInDesksOthers {
     }
 
     public void processArrival(MsqEvent arrival, MsqTime time, EventQueue queue) {
-        int index = getRandomValueUpToMax(rngs, 11, checkInDesksSingleFlightArray.length); //TODO sameStreamIndex here???
+        int index = getRandomValueUpToMax(rngs, streamIndex, checkInDesksSingleFlightArray.length);
         if (index < 1 || index > checkInDesksSingleFlightArray.length) {
             throw new IllegalArgumentException("Invalid centerID: " + index);
         }

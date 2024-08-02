@@ -11,8 +11,8 @@ import static org.pmcsn.utils.Distributions.logNormal;
 public class BoardingOtherSingleFlight extends MultiServer {
     private final int nodeId;
 
-    public BoardingOtherSingleFlight(String centerName, int nodeId, double meanServiceTime, int serversNum, int centerIndex, boolean approximateServiceAsExponential) {
-        super(centerName + nodeId, meanServiceTime, serversNum, centerIndex, approximateServiceAsExponential);
+    public BoardingOtherSingleFlight(String centerName, int nodeId, double meanServiceTime, int serversNum, int streamIndex, boolean approximateServiceAsExponential) {
+        super(centerName + nodeId, meanServiceTime, serversNum, streamIndex, approximateServiceAsExponential);
         this.nodeId = nodeId;
     }
 

@@ -21,7 +21,7 @@ public abstract class SingleServer {
      */
 
 
-    protected int CENTER_INDEX;
+    protected int streamindex;
     protected Statistics statistics;
     protected final Area area = new Area();
     protected double meanServiceTime;
@@ -45,7 +45,7 @@ public abstract class SingleServer {
         batchesNumber = config.getInt("general", "numBatches");
         this.centerName = centerName;
         this.meanServiceTime = meanServiceTime;
-        this.CENTER_INDEX = centerIndex;
+        this.streamindex = streamIndex;
         this.statistics = new Statistics(centerName);
         this.approximateServiceAsExponential = approximateServiceAsExponential;
     }

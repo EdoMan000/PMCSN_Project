@@ -26,7 +26,7 @@ public abstract class MultiServer {
 
     protected Statistics statistics;
 
-    public MultiServer(String centerName, double meanServiceTime, int serversNumber, int centerIndex, boolean approximateServiceAsExponential) {
+    public MultiServer(String centerName, double meanServiceTime, int serversNumber, int streamIndex, boolean approximateServiceAsExponential) {
         this.centerName = centerName;
         this.meanServiceTime = meanServiceTime;
         this.SERVERS = serversNumber;

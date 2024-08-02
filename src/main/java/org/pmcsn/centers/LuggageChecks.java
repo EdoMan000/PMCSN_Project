@@ -22,14 +22,16 @@ public class LuggageChecks {
     // all the times are measured in min
     int STOP;
     boolean endOfArrivals = false;
-    int CENTER_INDEX = 1;
+    private final int streamIndex;
 
-    public LuggageChecks(String centerName, int numberOfCenters, double interArrivalTime, double meanServiceTime, boolean approximateServiceAsExponential) {
+    public LuggageChecks(String centerName, int numberOfCenters, double interArrivalTime, double meanServiceTime, int streamIndex, boolean approximateServiceAsExponential) {
         this.centerName = centerName;
         this.interArrivalTime = interArrivalTime;
-        this.luggageChecksSingleEntrances = new LuggageChecksSingleEntrance[numberOfCenters]; //TODO risistemare CENTER_INDEX
+        this.luggageChecksSingleEntrances = new LuggageChecksSingleEntrance[numberOfCenters];
+        this.streamIndex = streamIndex;
+        streamIndex+=2; // General class uses 2
         for (int i = 0; i < luggageChecksSingleEntrances.length; i++) {
-            luggageChecksSingleEntrances[i] = new LuggageChecksSingleEntrance(centerName, i + 1, CENTER_INDEX + 3 * i, meanServiceTime, approximateServiceAsExponential);
+            luggageChecksSingleEntrances[i] = new LuggageChecksSingleEntrance(centerName, i + 1, streamIndex + (2 * i), meanServiceTime, approximateServiceAsExponential);
         }
         Config config = new Config();
         STOP = config.getInt("general", "observationTime");
@@ -89,7 +91,7 @@ public class LuggageChecks {
     }
 
     public double getArrival() {
-        rngs.selectStream(77);
+        rngs.selectStream(streamIndex + 1);
         sarrival += exponential(interArrivalTime, rngs);
         return (sarrival);
     }

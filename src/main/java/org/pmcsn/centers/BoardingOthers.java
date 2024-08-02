@@ -13,13 +13,16 @@ import static org.pmcsn.utils.StatisticsUtils.computeMean;
 public class BoardingOthers {
     Rngs rngs;
     private final String name;
+    private final int streamIndex;
     BoardingOtherSingleFlight[] boardingSingleFlightArray;
 
-    public BoardingOthers(String name, int numberOfCenters, int serversNumber, double meanServiceTime, int centerIndex, boolean approximateServiceAsExponential) {
+    public BoardingOthers(String name, int numberOfCenters, int serversNumber, double meanServiceTime, int streamIndex, boolean approximateServiceAsExponential) {
         this.name = name;
         this.boardingSingleFlightArray = new BoardingOtherSingleFlight[numberOfCenters];
+        this.streamIndex = streamIndex;
+        streamIndex++; // General class uses 1
         for (int i = 0; i < boardingSingleFlightArray.length; i++) {
-            boardingSingleFlightArray[i] = new BoardingOtherSingleFlight(name,i + 1, meanServiceTime, serversNumber, centerIndex + (2 * i), approximateServiceAsExponential);
+            boardingSingleFlightArray[i] = new BoardingOtherSingleFlight(name,i + 1, meanServiceTime, serversNumber, streamIndex + i, approximateServiceAsExponential);
         }
     }
 
@@ -45,7 +48,7 @@ public class BoardingOthers {
     }
 
     public void processArrival(MsqEvent arrival, MsqTime time, EventQueue queue) {
-        int index = getRandomValueUpToMax(rngs, 11, boardingSingleFlightArray.length); //TODO same StreamIndex here???
+        int index = getRandomValueUpToMax(rngs, streamIndex, boardingSingleFlightArray.length);
         if (index < 1 || index > boardingSingleFlightArray.length) {
             throw new IllegalArgumentException("Invalid centerID: " + index);
         }

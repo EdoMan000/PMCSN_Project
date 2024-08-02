@@ -121,7 +121,7 @@ public class BasicSimulationRunner {
             saveAllStats(); // Saving statistics for current run
 
             // Generating next seed
-            rngs.selectStream(255);
+            rngs.selectStream(config.getInt("general", "seedStreamIndex"));
             seeds[i + 1] = rngs.getSeed();
         }
 

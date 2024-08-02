@@ -1,6 +1,7 @@
 package org.pmcsn.utils;
 
 import org.pmcsn.centers.*;
+import org.pmcsn.conf.Config;
 import org.pmcsn.model.MsqSum;
 
 import java.util.List;
@@ -204,6 +205,13 @@ public class PrintUtils {
             }
         } catch (Exception e) {
             System.out.println("Error clearing the console: " + e.getMessage());
+        }
+    }
+
+    public static void printf(String string){
+        Config config = new Config();
+        if(config.getBoolean("general", "debugInfo")){
+            System.out.println(string);
         }
     }
 

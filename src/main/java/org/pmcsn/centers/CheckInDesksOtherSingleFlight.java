@@ -13,8 +13,8 @@ import static org.pmcsn.utils.Distributions.logNormal;
 class CheckInDesksOtherSingleFlight extends MultiServer {
     private final int nodeId;
 
-    public CheckInDesksOtherSingleFlight(String centerName, int nodeId, double meanServiceTime, int numOfServers, int centerIndex, boolean approximateServiceAsExponential) {
-        super(centerName + nodeId, meanServiceTime, numOfServers, centerIndex, approximateServiceAsExponential);
+    public CheckInDesksOtherSingleFlight(String centerName, int nodeId, double meanServiceTime, int numOfServers, int streamIndex, boolean approximateServiceAsExponential) {
+        super(centerName + nodeId, meanServiceTime, numOfServers, streamIndex, approximateServiceAsExponential);
         this.nodeId = nodeId;
     }
 

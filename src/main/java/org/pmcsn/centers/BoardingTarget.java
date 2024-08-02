@@ -6,13 +6,13 @@ import static org.pmcsn.utils.Distributions.exponential;
 import static org.pmcsn.utils.Distributions.logNormal;
 
 public class BoardingTarget extends MultiServer {
-    public BoardingTarget(String name, double meanServiceTime, int serversNum, int centerIndex, boolean approximateServiceAsExponential) {
-        super(name, meanServiceTime, serversNum, centerIndex, approximateServiceAsExponential);
+    public BoardingTarget(String name, double meanServiceTime, int serversNum, int streamIndex, boolean approximateServiceAsExponential) {
+        super(name, meanServiceTime, serversNum, streamIndex, approximateServiceAsExponential);
     }
 
     @Override
     void spawnCompletionEvent(MsqTime time, EventQueue queue, int serverId) {
-        double service = getService(CENTER_INDEX+1);
+        double service = getService(streamIndex);
         MsqEvent event = new MsqEvent(EventType.BOARDING_TARGET_DONE, time.current + service, service, serverId);
         queue.add(event);
     }
