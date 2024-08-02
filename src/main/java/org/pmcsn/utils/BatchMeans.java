@@ -5,19 +5,40 @@ import org.pmcsn.controller.BatchSimulationRunner;
 import org.pmcsn.model.Statistics;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class BatchMeans {
 
+    public static List<Double> convertDatFileToList(String filePath) {
+        List<Double> doubleList = new ArrayList<>();
+        try (Scanner scanner = new Scanner(new File(filePath))) {
+            while (scanner.hasNext()) {
+                if (scanner.hasNextDouble()) {
+                    doubleList.add(scanner.nextDouble());
+                } else {
+                    scanner.next(); // Skip non-double tokens
+                }
+            }
+        } catch (FileNotFoundException e) {
+            System.err.println("File not found: " + e.getMessage());
+        }
+        return doubleList;
+    }
+
     public static void main(String[] args) throws Exception {
+        //String path = "/home/francesco/Documents/Università/PMCSN/PMCSN_Project/src/main/java/org/pmcsn/libraries/Acs2.dat";
+        //List<Double> doubleList = convertDatFileToList(path);
+        //System.out.println(autocorrlelation(doubleList));
+        //System.exit(1);
         Config config = new Config();
         int batchSize_B = config.getInt("general", "batchSize");
-        // 6000(warmup=discard) + 60000(restOfTheSimulation=keep) --> TOT RECCOMMENDED JOBS >= 66000 (K*B with 100<=K<=400)
         while (true) {
             System.out.println("Batch size: " + batchSize_B);
             BatchSimulationRunner batchRunner = new BatchSimulationRunner();
             List<Statistics> statisticsList = batchRunner.runBatchSimulation(true);
-            if (checkEntrance(statisticsList, 0.2)) {
+            if (!checkEntrance(statisticsList, 0.2)) {
                 return;
             }
             batchSize_B += batchSize_B / 2;
@@ -38,7 +59,7 @@ public class BatchMeans {
         List<Statistics> entrancesStats = statisticsList.stream().filter(x -> x.centerName.contains(centerName)).toList();
         boolean result = true;
         for (Statistics entrance : entrancesStats) {
-            double acs = autocorrlelation(entrance.meanResponseTimeList);
+            double acs = acs(entrance.meanResponseTimeList);
             result = result && Math.abs(acs) <= v;
             System.out.println("\n------------------------------------------------------");
             System.out.printf("%s (E[Ts])\t: %f%n", entrance.centerName, acs);

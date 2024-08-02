@@ -15,27 +15,18 @@ public class WelchPlot {
     private final String DELIMITER = "\n";
     private final String COMMA = ",";
 
-    public static void main(String[] args) throws IOException {
-        WelchPlot.welchPlot("csvFiles/BASIC_SIMULATION_EXPONENTIAL/observations");
-    }
-
     public static void writeObservations(List<List<Observations>> checkinDeskOthersObservations, String simulationType) {
         for (List<Observations> observations : checkinDeskOthersObservations) {
             writeObservations(simulationType, observations);
         }
     }
 
-    public static void removeObservationFile(String simulationType) {
-        String parent = "csvFiles/%s/observations/".formatted(simulationType);
-        File file = new File(parent, "observations.csv");
-        if (file.exists()) {
-            if (file.delete()) {
-                System.out.println("File " + file.getPath() + " deleted successfully.");
-            } else {
-                System.out.println("Failed to delete the file " + file.getPath() + ".");
+    public static void clearObservationsDirectory(String simulationType) {
+        File root = new File("csvFiles/%s/observations/".formatted(simulationType));
+        if (root.exists() && root.isDirectory() && root.listFiles() != null) {
+            for (File file : root.listFiles()) {
+                file.delete();
             }
-        } else {
-            System.out.println("File " + file.getPath() + " does not exist.");
         }
     }
 
@@ -44,6 +35,8 @@ public class WelchPlot {
         File directory = new File(parent);
         if (!directory.exists()) {
             directory.mkdirs();
+        } else {
+            clearObservationsDirectory(simulationType);
         }
         for (Observations o : observationsList) {
             File file = new File(parent, "%s.data".formatted(o.getCenterName()));

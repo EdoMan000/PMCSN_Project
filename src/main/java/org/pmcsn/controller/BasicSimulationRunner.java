@@ -69,7 +69,6 @@ public class BasicSimulationRunner {
 
         if (shouldTrackObservations) {
             initObservations();
-            WelchPlot.removeObservationFile(simulationType);
         }
 
         int runsNumber = config.getInt("general", "runsNumber");
@@ -141,7 +140,6 @@ public class BasicSimulationRunner {
 
         printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boardingTarget, boardingOthers, false);
     }
-
 
     private void initCenters(boolean approximateServiceAsExponential) {
         CenterFactory factory = new CenterFactory();
@@ -314,6 +312,7 @@ public class BasicSimulationRunner {
     }
 
     private void initObservations() {
+
         int runsNumber = config.getInt("general", "runsNumber");
         for (int i = 0; i < config.getInt("luggageChecks", "numberOfCenters"); i++) {
             luggageObservations.add(new Observations("%s_%d".formatted(config.getString("luggageChecks", "centerName"), i+1), runsNumber));

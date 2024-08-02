@@ -29,7 +29,7 @@ public abstract class SingleServer {
     protected Rngs rngs;
     protected MsqSum sum = new MsqSum();
     protected boolean approximateServiceAsExponential;
-    long numberOfJobsAlreadyServed = 0;
+    long lastJobsServed = 0;
 
     public SingleServer(String centerName, double meanServiceTime, int centerIndex, boolean approximateServiceAsExponential) {
         this.centerName = centerName;
@@ -51,6 +51,7 @@ public abstract class SingleServer {
         area.reset();
         sum.reset();
         // resetting variables
+        lastJobsServed = 0;
         this.numberOfJobsInNode = 0;
         this.firstArrivalTime = Double.NEGATIVE_INFINITY;
         this.lastArrivalTime = 0;
@@ -129,9 +130,9 @@ public abstract class SingleServer {
     }
 
     public void saveBatchStats(int batchSize, int batchesNumber) {
-        if(getJobsServed() > 0 && getJobsServed() % batchSize == 0){
+        if(getJobsServed() > 0 && getJobsServed() > lastJobsServed && getJobsServed() % batchSize == 0){
             saveStats(batchesNumber);
-            numberOfJobsAlreadyServed = getJobsServed();
+            lastJobsServed = getJobsServed();
         }
     }
 

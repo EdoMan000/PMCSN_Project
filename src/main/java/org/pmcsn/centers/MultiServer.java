@@ -19,7 +19,7 @@ public abstract class MultiServer {
     protected String centerName;
     protected boolean approximateServiceAsExponential;
     protected Rngs rngs;
-    protected long numberOfJobsalreadyServed = 0;
+    protected long lastJobsServed = 0;
 
     protected MsqSum[] sum;
     protected MsqServer[] servers;
@@ -51,6 +51,7 @@ public abstract class MultiServer {
     public void reset(Rngs rngs) {
         this.rngs = rngs;
         // resetting variables
+        lastJobsServed = 0;
         this.numberOfJobsInNode =0;
         area.reset();
         this.firstArrivalTime = Double.NEGATIVE_INFINITY;
@@ -146,9 +147,9 @@ public abstract class MultiServer {
     }
 
     public void saveBatchStats(int batchSize, int batchesNumber) {
-        if(getJobsServed() > 0 && getJobsServed() % batchSize == 0){
+        if(getJobsServed() > 0 && getJobsServed() > lastJobsServed && getJobsServed() % batchSize == 0){
             saveStats(batchesNumber);
-            numberOfJobsalreadyServed = getJobsServed();
+            lastJobsServed = getJobsServed();
         }
     }
 

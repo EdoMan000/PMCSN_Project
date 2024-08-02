@@ -12,7 +12,6 @@ import static org.pmcsn.utils.PrintUtils.*;
 public class MenaraAirportSimulator {
 
     public static void main(String[] args) throws Exception {
-        Config config = new Config();
         Scanner scanner = new Scanner(System.in);
         BasicSimulationRunner basicRunner = new BasicSimulationRunner();
         ImprovedModelSimulationRunner improvedRunner = new ImprovedModelSimulationRunner();
@@ -48,10 +47,11 @@ public class MenaraAirportSimulator {
         printStartSimulationOptions();
         int simulationType = scanner.nextInt();
         scanner.nextLine();  // Consume newline
-
+        Config config = new Config();
+        boolean shouldTrackObservations = config.getBoolean("general", "shouldTrackObservations");
         switch (simulationType) {
             case 1:
-                basicRunner.runBasicSimulation(false);
+                basicRunner.runBasicSimulation(false, shouldTrackObservations);
                 break;
             case 2:
                 improvedRunner.runImprovedModelSimulation();
@@ -60,7 +60,7 @@ public class MenaraAirportSimulator {
                 batchRunner.runBatchSimulation(false);
                 break;
             case 4:
-                basicRunner.runBasicSimulation(true);
+                basicRunner.runBasicSimulation(true, shouldTrackObservations);
                 break;
             case 5:
                 batchRunner.runBatchSimulation(true);
