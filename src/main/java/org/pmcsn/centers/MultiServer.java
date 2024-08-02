@@ -10,7 +10,7 @@ import java.util.List;
 public abstract class MultiServer {
     protected long numberOfJobsInNode = 0;
     protected int SERVERS;
-    protected int CENTER_INDEX;
+    protected int streamIndex;
     protected Area area;
     protected double firstArrivalTime = Double.NEGATIVE_INFINITY;
     protected double lastArrivalTime = 0;
@@ -30,7 +30,7 @@ public abstract class MultiServer {
         this.centerName = centerName;
         this.meanServiceTime = meanServiceTime;
         this.SERVERS = serversNumber;
-        this.CENTER_INDEX = centerIndex;
+        this.streamIndex = streamIndex;
         this.sum =  new MsqSum[SERVERS];
         this.servers = new MsqServer[SERVERS];
         for(int i=0; i<SERVERS ; i++){

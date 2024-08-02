@@ -18,7 +18,7 @@ public class PassportChecks extends MultiServer {
 
     @Override
     public void spawnCompletionEvent(MsqTime time, EventQueue queue, int serverId) {
-        double service = getService(CENTER_INDEX+1);
+        double service = getService(streamIndex);
         MsqEvent event = new MsqEvent(EventType.PASSPORT_CHECK_DONE, time.current + service, service, serverId);
         queue.add(event);
     }

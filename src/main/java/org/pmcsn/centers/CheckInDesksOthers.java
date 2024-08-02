@@ -15,11 +15,13 @@ public class CheckInDesksOthers {
     private final String name;
     CheckInDesksOtherSingleFlight[] checkInDesksSingleFlightArray;
 
-    public CheckInDesksOthers(String name, int numberOfCenters, int serversNumber, double meanServiceTime, int centerIndex, boolean approximateServiceAsExponential) {
+    public CheckInDesksOthers(String name, int numberOfCenters, int serversNumber, double meanServiceTime, int streamIndex, boolean approximateServiceAsExponential) {
         this.name = name;
         this.checkInDesksSingleFlightArray = new CheckInDesksOtherSingleFlight[numberOfCenters];
+        this.streamIndex = streamIndex;
+        streamIndex++; // General class uses one
         for (int i = 0; i < checkInDesksSingleFlightArray.length; i++) {
-            checkInDesksSingleFlightArray[i] = new CheckInDesksOtherSingleFlight(name,i + 1, meanServiceTime, serversNumber, centerIndex + (2 * i), approximateServiceAsExponential);
+            checkInDesksSingleFlightArray[i] = new CheckInDesksOtherSingleFlight(name,i + 1, meanServiceTime, serversNumber, streamIndex + i, approximateServiceAsExponential);
         }
     }
 

@@ -61,7 +61,7 @@ public class LuggageChecks {
     }
 
     public void processArrival(MsqEvent arrival, MsqTime time, EventQueue queue) {
-        int index = getRandomValueUpToMax(rngs, 67, luggageChecksSingleEntrances.length);
+        int index = getRandomValueUpToMax(rngs, streamIndex, luggageChecksSingleEntrances.length);
         if (index < 1 || index > luggageChecksSingleEntrances.length) {
             throw new IllegalArgumentException("Invalid centerID: " + index);
         }
@@ -134,6 +134,12 @@ public class LuggageChecks {
         for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
             center.saveBatchStats(batchSize, batchesNumber);
         }
+    }
+
+    public List<List<Double>> getMeans() {
+        List<List<Double>> means = new ArrayList<>();
+        Arrays.stream(luggageChecksSingleEntrances).forEach(s -> means.add(s.getMeanResponseTimeListBatch()));
+        return means;
     }
 
     public void saveStats(int center) {

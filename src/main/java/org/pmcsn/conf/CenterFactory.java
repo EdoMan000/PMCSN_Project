@@ -8,10 +8,6 @@ public class CenterFactory {
     public CenterFactory() {
     }
 
-    //LuggageChecks(6,
-    // (24 * 60) / 6300.0,
-    // 1,
-    // approximateServiceAsExponential);
     public LuggageChecks createLuggageChecks(boolean approximateServiceAsExponential) {
         return new LuggageChecks(
                 config.getString("luggageChecks", "centerName"),

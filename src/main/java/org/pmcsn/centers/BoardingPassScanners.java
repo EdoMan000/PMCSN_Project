@@ -11,7 +11,7 @@ public class BoardingPassScanners extends MultiServer {
 
     @Override
     void spawnCompletionEvent(MsqTime time, EventQueue queue, int serverId) {
-        double service = getService(CENTER_INDEX);
+        double service = getService(streamIndex);
         MsqEvent event = new MsqEvent(EventType.BOARDING_PASS_SCANNERS_DONE, time.current + service, service, serverId);
         queue.add(event);
     }

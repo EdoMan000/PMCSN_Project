@@ -12,8 +12,8 @@ import static org.pmcsn.utils.Probabilities.isTargetFlight;
 
 public class StampsCheck extends SingleServer{
 
-    public StampsCheck(String centerName, double meanServiceTime, int centerIndex, boolean approximateServiceAsExponential) {
-        super(centerName, meanServiceTime, centerIndex, approximateServiceAsExponential);
+    public StampsCheck(String centerName, double meanServiceTime, int streamIndex, boolean approximateServiceAsExponential) {
+        super(centerName, meanServiceTime, streamIndex, approximateServiceAsExponential);
     }
 
 

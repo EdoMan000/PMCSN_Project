@@ -29,7 +29,7 @@ class CheckInDesksOtherSingleFlight extends MultiServer {
     }
 
     public void spawnCompletionEvent(MsqTime time, EventQueue queue, int serverId) {
-        double service = getService(CENTER_INDEX+1);
+        double service = getService(streamIndex);
         MsqEvent event = new MsqEvent(EventType.CHECK_IN_OTHERS_DONE, time.current + service, service, serverId, nodeId);
         queue.add(event);
     }

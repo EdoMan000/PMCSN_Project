@@ -58,7 +58,7 @@ public class BatchSimulationRunner {
         this.warmupThreshold = warmupThreshold;
     }
 
-    public List<Statistics> runBatchSimulation(boolean approximateServiceAsExponential) throws Exception {
+    public List<List<Double>> runBatchSimulation(boolean approximateServiceAsExponential) throws Exception {
         initCenters(approximateServiceAsExponential);
 
         String simulationType;
@@ -118,9 +118,10 @@ public class BatchSimulationRunner {
         }
 
         // controllo di consistenza sul numero di jobs processati
-        printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boardingTarget, boardingOthers, false);
+         printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boardingTarget, boardingOthers, false);
 
-        return getAllStatsInSingleList();
+        return luggageChecks.getMeans();
+        //return getAllStatsInSingleList();
     }
 
 

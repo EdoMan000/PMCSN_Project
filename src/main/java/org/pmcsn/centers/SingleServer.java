@@ -1,8 +1,12 @@
 package org.pmcsn.centers;
 
+import org.pmcsn.conf.Config;
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.*;
 import org.pmcsn.model.Statistics;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class SingleServer {
 
@@ -30,8 +34,15 @@ public abstract class SingleServer {
     protected MsqSum sum = new MsqSum();
     protected boolean approximateServiceAsExponential;
     long lastJobsServed = 0;
+    private final List<Double> batchPoints = new ArrayList<>();
+    private final List<Double> meanResponseTimeListBatch = new ArrayList<>();
+    private int batchSize;
+    private int batchesNumber;
 
-    public SingleServer(String centerName, double meanServiceTime, int centerIndex, boolean approximateServiceAsExponential) {
+    public SingleServer(String centerName, double meanServiceTime, int streamIndex, boolean approximateServiceAsExponential) {
+        Config config  = new Config();
+        batchSize = config.getInt("general", "batchSize");
+        batchesNumber = config.getInt("general", "numBatches");
         this.centerName = centerName;
         this.meanServiceTime = meanServiceTime;
         this.CENTER_INDEX = centerIndex;
@@ -99,9 +110,30 @@ public abstract class SingleServer {
         sum.served++;
         sum.service += completion.service;
         lastCompletionTime = completion.time;
+        saveBatch();
         spawnNextCenterEvent(time, queue);
         if (numberOfJobsInNode > 0) {
             spawnCompletionEvent(time, queue);
+        }
+    }
+
+    public List<Double> getMeanResponseTimeListBatch() {
+        return meanResponseTimeListBatch;
+    }
+
+    private void saveBatch() {
+        double meanSystemPopulation = area.getNodeArea() / lastCompletionTime;
+        batchPoints.add(meanSystemPopulation);
+        if (batchPoints.size() == batchSize) {
+            double average = batchPoints.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+            appendToBatch(meanResponseTimeListBatch, average);
+            batchPoints.clear();
+        }
+    }
+
+    private void appendToBatch(List<Double> batch, double value) {
+        if (batch.size() < batchesNumber) {
+            batch.add(value);
         }
     }
 

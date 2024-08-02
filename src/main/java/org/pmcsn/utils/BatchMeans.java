@@ -5,6 +5,7 @@ import org.pmcsn.controller.BatchSimulationRunner;
 import org.pmcsn.model.Statistics;
 
 import java.io.*;
+import java.security.Key;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -28,29 +29,42 @@ public class BatchMeans {
     }
 
     public static void main(String[] args) throws Exception {
-        //String path = "/home/francesco/Documents/Università/PMCSN/PMCSN_Project/src/main/java/org/pmcsn/libraries/Acs2.dat";
-        //List<Double> doubleList = convertDatFileToList(path);
-        //System.out.println(autocorrlelation(doubleList));
-        //System.exit(1);
         Config config = new Config();
-        int batchSize_B = config.getInt("general", "batchSize");
+        int batchesNumber = config.getInt("general", "numBatches");
+        int batchSize = config.getInt("general", "batchSize");
+        int warmup = config.getInt("general", "warmup");
         while (true) {
-            System.out.println("Batch size: " + batchSize_B);
-            BatchSimulationRunner batchRunner = new BatchSimulationRunner();
-            List<Statistics> statisticsList = batchRunner.runBatchSimulation(true);
-            if (!checkEntrance(statisticsList, 0.2)) {
+            System.out.println("Batch size: " + batchSize);
+            BatchSimulationRunner batchRunner = new BatchSimulationRunner(batchesNumber, batchSize, warmup);
+            List<List<Double>> means = batchRunner.runBatchSimulation(true);
+            if (!check(means, 0.2, batchesNumber)) {
                 return;
             }
-            batchSize_B += batchSize_B / 2;
+            batchSize += batchSize / 2;
 
-            if(batchSize_B > 2048) {
-            System.out.println("BATCH SIZE EXCEEDED... Exiting.");
+            if (batchSize > 4096) {
+                System.out.println("BATCH SIZE EXCEEDED... Exiting.");
                 break;
             }
         }
         System.out.println("\n------------------------------------------------------");
-        System.out.println(" FINAL NUMBER OF BATCHES: " + batchSize_B);
+        System.out.println(" FINAL NUMBER OF BATCHES: " + batchSize);
         System.out.println("------------------------------------------------------");
+    }
+
+    private static boolean check(List<List<Double>> meanList, double v, int k) {
+        boolean result = true;
+        for (int i = 0; i < meanList.size(); i++) {
+            List<Double> means = meanList.get(i);
+            assert means.size() == k;
+            double acs = acs(means);
+            double acf = autocorrlelation(means);
+            result = result && Math.abs(acs) <= v;
+            System.out.println("\n------------------------------------------------------");
+            System.out.printf("luggage_check_%d (E[Ts])\t: %f\t%f%n", i+1, acs, acf);
+            System.out.println("------------------------------------------------------");
+        }
+        return result;
     }
 
     private static boolean checkEntrance(List<Statistics> statisticsList, double v) {

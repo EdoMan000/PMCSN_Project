@@ -5,10 +5,12 @@ import org.pmcsn.model.EventType;
 import org.pmcsn.model.MsqEvent;
 import org.pmcsn.model.MsqTime;
 
+import java.util.logging.*;
+
 import static org.pmcsn.utils.Distributions.exponential;
 import static org.pmcsn.utils.Probabilities.isTargetFlight;
 
-class LuggageChecksSingleEntrance extends SingleServer {
+public class LuggageChecksSingleEntrance extends SingleServer {
     int centerID;
 
     public LuggageChecksSingleEntrance(String centerName, int nodeId, int centerIndex, double meanServiceTime, boolean approximateServiceAsExponential) {
