@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import static org.pmcsn.utils.StatisticsUtils.computeMean;
+
 public class BatchMeans {
 
     public static List<Double> convertDatFileToList(String filePath) {
@@ -36,7 +38,8 @@ public class BatchMeans {
         while (true) {
             System.out.println("Batch size: " + batchSize);
             BatchSimulationRunner batchRunner = new BatchSimulationRunner(batchesNumber, batchSize, warmup);
-            List<List<Double>> means = batchRunner.runBatchSimulation(true);
+            var means = batchRunner.runBatchSimulation(true);
+            var results = new ArrayList<Verification.Result>();
             if (!check(means, 0.2, batchesNumber)) {
                 return;
             }
@@ -57,11 +60,11 @@ public class BatchMeans {
         for (int i = 0; i < meanList.size(); i++) {
             List<Double> means = meanList.get(i);
             assert means.size() == k;
+            double acf = acf(means);
             double acs = acs(means);
-            double acf = autocorrlelation(means);
-            result = result && Math.abs(acs) <= v;
+            result = result && Math.abs(acf) <= v;
             System.out.println("\n------------------------------------------------------");
-            System.out.printf("luggage_check_%d (E[Ts])\t: %f\t%f%n", i+1, acs, acf);
+            System.out.printf("luggage_check_%d (E[Ts])\t:\t%f\t%f%n", i+1, acf, acs);
             System.out.println("------------------------------------------------------");
         }
         return result;
@@ -73,16 +76,17 @@ public class BatchMeans {
         List<Statistics> entrancesStats = statisticsList.stream().filter(x -> x.centerName.contains(centerName)).toList();
         boolean result = true;
         for (Statistics entrance : entrancesStats) {
+            double acf = acf(entrance.meanResponseTimeList);
             double acs = acs(entrance.meanResponseTimeList);
-            result = result && Math.abs(acs) <= v;
+            result = result && Math.abs(acf) <= v;
             System.out.println("\n------------------------------------------------------");
-            System.out.printf("%s (E[Ts])\t: %f%n", entrance.centerName, acs);
+            System.out.printf("%s (E[Ts])\t: %f %f%n", entrance.centerName, acf, acs);
             System.out.println("------------------------------------------------------");
         }
         return result;
     }
 
-    public static double autocorrlelation(List<Double> data) {
+    public static double acf(List<Double> data) {
         int k = data.size();
         double mean = 0.0;
 
@@ -106,7 +110,7 @@ public class BatchMeans {
     }
 
     public static double acs(List<Double> values) {
-        return acs(values, 1);
+        return acs(values, 50);
     }
 
     public static double acs(List<Double> values, int lag) {

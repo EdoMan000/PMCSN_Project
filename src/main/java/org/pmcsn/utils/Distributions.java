@@ -5,6 +5,8 @@ import org.pmcsn.libraries.Rngs;
 import java.rmi.server.RMIClassLoader;
 
 public class Distributions {
+    private final int EXPONENTIAL_STREAM_INDEX = 1;
+
 
     public static double erlang(long k, double b, Rngs rngs)
         /* ==================================================

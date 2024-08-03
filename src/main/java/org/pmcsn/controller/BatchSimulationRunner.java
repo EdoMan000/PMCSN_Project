@@ -37,13 +37,14 @@ public class BatchSimulationRunner {
     private BoardingTarget boardingTarget;
     private BoardingOthers boardingOthers;
 
-    // let's assume K=400 (after discarding warmup) -> we have 400 mean values registered.
     // We need to compute autocorrelation on the series
     // Number of jobs in single batch (B)
     private final int batchSize;
     // Number of batches (K >= 40)
     private final int batchesNumber;
     private final int warmupThreshold;
+    private boolean isWarmingUp = true;
+    private int[] eventsCounter = new int[6];
 
     public BatchSimulationRunner() {
         Config config = new Config();
@@ -90,9 +91,7 @@ public class BatchSimulationRunner {
 
         MsqEvent event;
 
-        boolean isWarmingUp = true;
-
-        while(checkEndOfBatchSimulation((batchesNumber * batchSize) + warmupThreshold)){
+        while(checkEndOfBatchSimulation((batchesNumber * batchSize))) {
             event = events.pop(); // Retrieving next event to be processed
             msqTime.next = event.time;
             updateAreas(msqTime); // Updating areas
@@ -121,7 +120,6 @@ public class BatchSimulationRunner {
          printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boardingTarget, boardingOthers, false);
 
         return luggageChecks.getMeans();
-        //return getAllStatsInSingleList();
     }
 
 
@@ -155,6 +153,12 @@ public class BatchSimulationRunner {
                 luggageChecks.processArrival(event, msqTime, events);
                 break;
             case LUGGAGE_CHECK_DONE:
+                if (!isWarmingUp) {
+                    ++eventsCounter[event.nodeId-1];
+                    if (eventsCounter[event.nodeId-1] >= batchesNumber * batchSize) {
+                        System.out.printf("DONE for %d%n", event.nodeId);
+                    }
+                }
                 luggageChecks.processCompletion(event, msqTime, events);
                 break;
             case ARRIVAL_CHECK_IN_TARGET:
@@ -297,17 +301,18 @@ public class BatchSimulationRunner {
         // System.out.printf("Check In Desk Others %d%n", minimumCheckInDeskOthers);
         long minimumBoardingOthers = Arrays.stream(boardingOthers.getNumberOfJobsPerCenter()).min().orElseThrow();
         // System.out.printf("Boarding Others %d%n", minimumBoardingOthers);
-        return Stream.of(
-                minimumLuggageChecks,
-                checkInDesksTarget.getJobsServed(),
-                minimumCheckInDeskOthers,
-                boardingPassScanners.getJobsServed(),
-                securityChecks.getJobsServed(),
-                passportChecks.getJobsServed(),
-                stampsCheck.getJobsServed(),
-                boardingTarget.getJobsServed(),
-                minimumBoardingOthers
-        ).min(Long::compare).orElseThrow();
+//        return Stream.of(
+//                minimumLuggageChecks,
+//                checkInDesksTarget.getJobsServed(),
+//                minimumCheckInDeskOthers,
+//                boardingPassScanners.getJobsServed(),
+//                securityChecks.getJobsServed(),
+//                passportChecks.getJobsServed(),
+//                stampsCheck.getJobsServed(),
+//                boardingTarget.getJobsServed(),
+//                minimumBoardingOthers
+//        ).min(Long::compare).orElseThrow();
+        return Arrays.stream(eventsCounter).min().orElseThrow();
     }
 
     private boolean checkEndOfBatchSimulation(long n) {

@@ -22,7 +22,7 @@ public class BoardingOthers {
         this.streamIndex = streamIndex;
         streamIndex++; // General class uses 1
         for (int i = 0; i < boardingSingleFlightArray.length; i++) {
-            boardingSingleFlightArray[i] = new BoardingOtherSingleFlight(name,i + 1, meanServiceTime, serversNumber, streamIndex + i, approximateServiceAsExponential);
+            boardingSingleFlightArray[i] = new BoardingOtherSingleFlight(name,i + 1, meanServiceTime, serversNumber, streamIndex, approximateServiceAsExponential);
         }
     }
 

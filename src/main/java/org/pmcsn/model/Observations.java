@@ -7,13 +7,11 @@ public class Observations {
         RESPONSE_TIME;
     }
     private final String centerName;
-    private final int n;
     private final List<Double> observations;
 
     public Observations(String centerName, int runsNumber) {
         this.centerName = centerName;
         this.observations = new ArrayList<>();
-        this.n = runsNumber;
     }
 
     public String getCenterName() {

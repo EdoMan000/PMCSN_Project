@@ -22,7 +22,7 @@ public class CheckInDesksOthers {
         this.streamIndex = streamIndex;
         streamIndex++; // General class uses one
         for (int i = 0; i < checkInDesksSingleFlightArray.length; i++) {
-            checkInDesksSingleFlightArray[i] = new CheckInDesksOtherSingleFlight(name,i + 1, meanServiceTime, serversNumber, streamIndex + i, approximateServiceAsExponential);
+            checkInDesksSingleFlightArray[i] = new CheckInDesksOtherSingleFlight(name,i + 1, meanServiceTime, serversNumber, streamIndex, approximateServiceAsExponential);
         }
     }
 

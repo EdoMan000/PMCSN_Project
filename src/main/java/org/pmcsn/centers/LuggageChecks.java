@@ -31,7 +31,7 @@ public class LuggageChecks {
         this.streamIndex = streamIndex;
         streamIndex+=2; // General class uses 2
         for (int i = 0; i < luggageChecksSingleEntrances.length; i++) {
-            luggageChecksSingleEntrances[i] = new LuggageChecksSingleEntrance(centerName, i + 1, streamIndex + (2 * i), meanServiceTime, approximateServiceAsExponential);
+            luggageChecksSingleEntrances[i] = new LuggageChecksSingleEntrance(centerName, i + 1, streamIndex, meanServiceTime, approximateServiceAsExponential);
         }
         Config config = new Config();
         STOP = config.getInt("general", "observationTime");
@@ -140,7 +140,7 @@ public class LuggageChecks {
 
     public List<List<Double>> getMeans() {
         List<List<Double>> means = new ArrayList<>();
-        Arrays.stream(luggageChecksSingleEntrances).forEach(s -> means.add(s.getMeanResponseTimeListBatch()));
+        Arrays.stream(luggageChecksSingleEntrances).forEach(s -> means.add(s.getMeanSystemPopulationList()));
         return means;
     }
 
