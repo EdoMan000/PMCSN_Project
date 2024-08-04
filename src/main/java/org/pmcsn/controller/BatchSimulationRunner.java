@@ -16,8 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-import static org.pmcsn.utils.PrintUtils.printFinalResults;
-import static org.pmcsn.utils.PrintUtils.printJobsServedByNodes;
+import static org.pmcsn.utils.PrintUtils.*;
 import static org.pmcsn.utils.AnalyticalComputation.computeAnalyticalResults;
 import static org.pmcsn.utils.Comparison.compareResults;
 import static org.pmcsn.utils.Verification.verifyConfidenceIntervals;
@@ -107,6 +106,7 @@ public class BatchSimulationRunner {
             if (getMinimumNumberOfJobsServedByCenters() >= warmupThreshold && isWarmingUp) { // Checking if still in warmup period
                 System.out.println("WARMUP COMPLETED... Starting to collect statistics for centers from now on.");
                 isWarmingUp = false;
+                Arrays.fill(eventsCounter, 0);
             }
             if (!isWarmingUp) {
                 saveAllBatchStats(msqTime); // saving the statistics of the batch only after the warm-up time period
@@ -158,9 +158,7 @@ public class BatchSimulationRunner {
                 luggageChecks.processArrival(event, msqTime, events);
                 break;
             case LUGGAGE_CHECK_DONE:
-                if (!isWarmingUp) {
-                    ++eventsCounter[event.nodeId-1];
-                }
+                eventsCounter[event.nodeId-1]++;
                 luggageChecks.processCompletion(event, msqTime, events);
                 break;
             case ARRIVAL_CHECK_IN_TARGET:
@@ -238,7 +236,7 @@ public class BatchSimulationRunner {
 
         List<Verification.VerificationResult> verificationResultList = verifyConfidenceIntervals(simulationType, comparisonResultList, confidenceIntervalsList);
 
-        printFinalResults(comparisonResultList, verificationResultList);
+        printFinalResults(verificationResultList);
     }
 
     private List<MeanStatistics> aggregateBatchMeanStatistics() {

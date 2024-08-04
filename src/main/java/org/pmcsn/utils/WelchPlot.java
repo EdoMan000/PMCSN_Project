@@ -56,7 +56,6 @@ public class WelchPlot {
         for (Path file : files) {
             List<List<Double>> matrix = new ArrayList<>();
             for (String line : Files.readAllLines(file)) {
-                List<Double> row = new ArrayList<>();
                 matrix.add(Arrays.stream(line.trim().split(","))
                         .mapToDouble(Double::parseDouble)
                         .boxed()

@@ -1,5 +1,6 @@
 package org.pmcsn.utils;
 
+import org.pmcsn.conf.Config;
 import org.pmcsn.libraries.Rvms;
 
 import java.util.List;
@@ -21,8 +22,9 @@ public class StatisticsUtils {
         int K = values.size();
         // Compute confidence intervals
         Rvms rvms = new Rvms();
-        // for 95% confidence interval
-        double alpha = 0.05;
+
+        Config config = new Config();
+        double alpha = config.getDouble("general", "alpha");
         // t* in the formula
         double criticalValue = rvms.idfStudent(K - 1, 1 - alpha / 2);
 

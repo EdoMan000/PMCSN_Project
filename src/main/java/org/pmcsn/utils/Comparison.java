@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.pmcsn.utils.PrintUtils.printComparisonResult;
 
 public class Comparison {
 

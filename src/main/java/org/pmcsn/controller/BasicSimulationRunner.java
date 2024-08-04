@@ -16,8 +16,8 @@ import java.util.List;
 
 import static org.pmcsn.utils.Comparison.compareResults;
 import static org.pmcsn.utils.PrintUtils.printFinalResults;
-import static org.pmcsn.utils.PrintUtils.printJobsServedByNodes;
 import static org.pmcsn.utils.AnalyticalComputation.computeAnalyticalResults;
+import static org.pmcsn.utils.PrintUtils.printJobsServedByNodes;
 import static org.pmcsn.utils.Verification.verifyConfidenceIntervals;
 
 public class BasicSimulationRunner {
@@ -269,7 +269,7 @@ public class BasicSimulationRunner {
 
         List<Verification.VerificationResult> verificationResultList = verifyConfidenceIntervals(simulationType, comparisonResultList, confidenceIntervalsList);
 
-        printFinalResults(comparisonResultList, verificationResultList);
+        printFinalResults(verificationResultList);
     }
 
     private List<MeanStatistics> aggregateMeanStatistics() {

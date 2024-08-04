@@ -73,7 +73,6 @@ public class BatchMeans {
         String centerName = config.getString("luggageChecks", "centerName");
         List<BatchStatistics> entrancesStats = statisticsList.stream().filter(x -> x.getCenterName().contains(centerName)).toList();
         boolean result = true;
-        assert statisticsList.stream().allMatch(x -> x.lambdaList.size() == statisticsList.size());
         for (BatchStatistics entrance : entrancesStats) {
             double acf = acf(entrance.meanResponseTimeList);
             // double acs = acs(entrance.meanResponseTimeList);

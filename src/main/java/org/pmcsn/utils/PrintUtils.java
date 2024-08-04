@@ -136,38 +136,38 @@ public class PrintUtils {
         System.out.println(YELLOW + "*************************************************" + RESET);
     }
 
-    public static void printFinalResults(List<Comparison.ComparisonResult> comparisonResultList, List<Verification.VerificationResult> verificationResultList) {
-        for (Comparison.ComparisonResult comparisonResult : comparisonResultList) {
-            for (Verification.VerificationResult verificationResult : verificationResultList) {
-                if (comparisonResult.name.equals(verificationResult.name)) {
-                    System.out.println(BLUE + "\n\n********************************************");
-                    System.out.println("FINAL RESULTS FOR " + comparisonResult.name.toUpperCase()); //TODO aggiungere nome completo
-                    System.out.println("********************************************" + RESET);
-
-                    printComparisonResult(comparisonResult);
-                    printVerificationResult(verificationResult);
-
-                    System.out.println(BLUE + "********************************************" + RESET);
-                }
+    public static void printFinalResults(List<Verification.VerificationResult> verificationResultList) {
+        String alreadyDoneCenterName = "";
+        int centerIndex = 1;
+        for (Verification.VerificationResult verificationResult : verificationResultList) {
+            String centerName = verificationResult.name.toUpperCase();
+            if(alreadyDoneCenterName.equalsIgnoreCase(centerName)){
+                centerIndex++;
+                centerName = centerName+"_"+centerIndex;
+            }else{
+                centerIndex = 1;
+                centerName = centerName+"_"+centerIndex;
             }
+            System.out.println(BLUE + "\n\n********************************************");
+            System.out.println("FINAL RESULTS FOR " + centerName);
+            System.out.println("********************************************" + RESET);
+            printVerificationResult(verificationResult);
+            System.out.println(BLUE + "********************************************" + RESET);
+            alreadyDoneCenterName = verificationResult.name.toUpperCase();
         }
     }
 
-    public static void printComparisonResult(Comparison.ComparisonResult comparisonResult) {
-        // Print results with color based on the value
-        System.out.println("E[Ts]_Diff: " + getColor(comparisonResult.responseTimeDiff) + comparisonResult.responseTimeDiff + RESET);
-        System.out.println("E[Tq]_Diff: " + getColor(comparisonResult.queueTimeDiff) + comparisonResult.queueTimeDiff + RESET);
-        System.out.println("E[s]_Diff: " + getColor(comparisonResult.serviceTimeDiff) + comparisonResult.serviceTimeDiff + RESET);
-        System.out.println("E[Ns]_Diff: " + getColor(comparisonResult.systemPopulationDiff) + comparisonResult.systemPopulationDiff + RESET);
-        System.out.println("E[Nq]_Diff: " + getColor(comparisonResult.queuePopulationDiff) + comparisonResult.queuePopulationDiff + RESET);
-        System.out.println("rho_Diff: " + getColor(comparisonResult.utilizationDiff) + comparisonResult.utilizationDiff + RESET);
-        System.out.println("lambda_Diff: " + getColor(comparisonResult.lambdaDiff) + comparisonResult.lambdaDiff + RESET);
-    }
-
     private static void printVerificationResult(Verification.VerificationResult result) {
-        String withinIntervalText = result.withinInterval ? "within" : "outside";
-        String color = result.withinInterval ? GREEN : RED;
-        System.out.println(result.metric + ": " + color + "ABS[Analytical Value - Mean Value]: " + result.diffValue + " is " + withinIntervalText + " the Confidence Interval: ±" + result.confidenceInterval + RESET);
+        String within = GREEN + "within";
+        String outside = RED + "outside";
+
+        System.out.println("E[Ts]: " + getColor(result.responseTimeDiff) + result.responseTimeDiff + RESET + " is " + (result.responseTimeWithinInterval ? within : outside) + " the interval ±" + result.responseTimeCI + RESET);
+        System.out.println("E[Tq]: " + getColor(result.queueTimeDiff) + result.queueTimeDiff + RESET + " is " + (result.queueTimeWithinInterval ? within : outside) + " the interval ±" + result.queueTimeCI + RESET);
+        System.out.println("E[s]: " + getColor(result.serviceTimeDiff) + result.serviceTimeDiff + RESET + " is " + (result.serviceTimeWithinInterval ? within : outside) + " the interval ±" + result.serviceTimeCI + RESET);
+        System.out.println("E[Ns]: " + getColor(result.systemPopulationDiff) + result.systemPopulationDiff + RESET + " is " + (result.systemPopulationWithinInterval ? within : outside) + " the interval ±" + result.systemPopulationCI + RESET);
+        System.out.println("E[Nq]: " + getColor(result.queuePopulationDiff) + result.queuePopulationDiff + RESET + " is " + (result.queuePopulationWithinInterval ? within : outside) + " the interval ±" + result.queuePopulationCI + RESET);
+        System.out.println("ρ: " + getColor(result.utilizationDiff) + result.utilizationDiff + RESET + " is " + (result.utilizationWithinInterval ? within : outside) + " the interval ±" + result.utilizationCI + RESET);
+        System.out.println("λ: " + getColor(result.lambdaDiff) + result.lambdaDiff + RESET + " is " + (result.lambdaWithinInterval ? within : outside) + " the interval ±" + result.lambdaCI + RESET);
     }
 
     private static String getColor(double value) {
