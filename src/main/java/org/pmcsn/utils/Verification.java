@@ -1,6 +1,7 @@
 package org.pmcsn.utils;
 
 import org.pmcsn.model.ConfidenceIntervals;
+import org.pmcsn.model.MeanStatistics;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -12,83 +13,36 @@ public class Verification {
 
     public static class VerificationResult {
         public String name;
-        public double responseTimeDiff;
-        public double queueTimeDiff;
-        public double serviceTimeDiff;
-        public double systemPopulationDiff;
-        public double queuePopulationDiff;
-        public double utilizationDiff;
-        public double lambdaDiff;
-        public double responseTimeCI;
-        public double queueTimeCI;
-        public double serviceTimeCI;
-        public double systemPopulationCI;
-        public double queuePopulationCI;
-        public double utilizationCI;
-        public double lambdaCI;
-        public boolean responseTimeWithinInterval;
-        public boolean queueTimeWithinInterval;
-        public boolean serviceTimeWithinInterval;
-        public boolean systemPopulationWithinInterval;
-        public boolean queuePopulationWithinInterval;
-        public boolean utilizationWithinInterval;
-        public boolean lambdaWithinInterval;
+        public Comparison.ComparisonResult comparisonResult;
+        public ConfidenceIntervals confidenceIntervals;
+        public MeanStatistics meanStatistics;
 
-        public VerificationResult(String name,
-                                  double responseTimeDiff, double responseTimeCI, boolean responseTimeWithinInterval,
-                                  double queueTimeDiff, double queueTimeCI, boolean queueTimeWithinInterval,
-                                  double serviceTimeDiff, double serviceTimeCI, boolean serviceTimeWithinInterval,
-                                  double systemPopulationDiff, double systemPopulationCI, boolean systemPopulationWithinInterval,
-                                  double queuePopulationDiff, double queuePopulationCI, boolean queuePopulationWithinInterval,
-                                  double utilizationDiff, double utilizationCI, boolean utilizationWithinInterval,
-                                  double lambdaDiff, double lambdaCI, boolean lambdaWithinInterval) {
+        public VerificationResult(String name, Comparison.ComparisonResult comparisonResult, ConfidenceIntervals confidenceIntervals, MeanStatistics meanStatistics) {
             this.name = name;
-            this.responseTimeDiff = responseTimeDiff;
-            this.responseTimeCI = responseTimeCI;
-            this.responseTimeWithinInterval = responseTimeWithinInterval;
-            this.queueTimeDiff = queueTimeDiff;
-            this.queueTimeCI = queueTimeCI;
-            this.queueTimeWithinInterval = queueTimeWithinInterval;
-            this.serviceTimeDiff = serviceTimeDiff;
-            this.serviceTimeCI = serviceTimeCI;
-            this.serviceTimeWithinInterval = serviceTimeWithinInterval;
-            this.systemPopulationDiff = systemPopulationDiff;
-            this.systemPopulationCI = systemPopulationCI;
-            this.systemPopulationWithinInterval = systemPopulationWithinInterval;
-            this.queuePopulationDiff = queuePopulationDiff;
-            this.queuePopulationCI = queuePopulationCI;
-            this.queuePopulationWithinInterval = queuePopulationWithinInterval;
-            this.utilizationDiff = utilizationDiff;
-            this.utilizationCI = utilizationCI;
-            this.utilizationWithinInterval = utilizationWithinInterval;
-            this.lambdaDiff = lambdaDiff;
-            this.lambdaCI = lambdaCI;
-            this.lambdaWithinInterval = lambdaWithinInterval;
+            this.comparisonResult = comparisonResult;
+            this.confidenceIntervals = confidenceIntervals;
+            this.meanStatistics = meanStatistics;
+        }
+
+        public boolean isWithinInterval(double diff, double ci) {
+            return diff <= ci;
         }
     }
 
-    public static List<VerificationResult> verifyConfidenceIntervals(String simulationType, List<Comparison.ComparisonResult> comparisonResultList, List<ConfidenceIntervals> confidenceIntervalsList) {
+    public static List<VerificationResult> verifyConfidenceIntervals(String simulationType, List<MeanStatistics> meanStatisticsList, List<Comparison.ComparisonResult> comparisonResultList, List<ConfidenceIntervals> confidenceIntervalsList) {
         List<VerificationResult> verificationResults = new ArrayList<>();
 
-        if (comparisonResultList.size() != confidenceIntervalsList.size()) {
-            System.out.println("Mismatch in the size of comparison results and confidence intervals lists");
+        if (comparisonResultList.size() != confidenceIntervalsList.size() || comparisonResultList.size() != meanStatisticsList.size()) {
+            System.out.println("Mismatch in the size of comparison results, confidence intervals, and mean statistics lists");
             return verificationResults;
         }
 
         for (int i = 0; i < comparisonResultList.size(); i++) {
             Comparison.ComparisonResult comparisonResult = comparisonResultList.get(i);
             ConfidenceIntervals confidenceIntervals = confidenceIntervalsList.get(i);
+            MeanStatistics meanStatistics = meanStatisticsList.get(i);
 
-            verificationResults.add(new VerificationResult(
-                    comparisonResult.name,
-                    comparisonResult.responseTimeDiff, confidenceIntervals.getResponseTimeCI(), comparisonResult.responseTimeDiff <= confidenceIntervals.getResponseTimeCI(),
-                    comparisonResult.queueTimeDiff, confidenceIntervals.getQueueTimeCI(), comparisonResult.queueTimeDiff <= confidenceIntervals.getQueueTimeCI(),
-                    comparisonResult.serviceTimeDiff, confidenceIntervals.getServiceTimeCI(), comparisonResult.serviceTimeDiff <= confidenceIntervals.getServiceTimeCI(),
-                    comparisonResult.systemPopulationDiff, confidenceIntervals.getSystemPopulationCI(), comparisonResult.systemPopulationDiff <= confidenceIntervals.getSystemPopulationCI(),
-                    comparisonResult.queuePopulationDiff, confidenceIntervals.getQueuePopulationCI(), comparisonResult.queuePopulationDiff <= confidenceIntervals.getQueuePopulationCI(),
-                    comparisonResult.utilizationDiff, confidenceIntervals.getUtilizationCI(), comparisonResult.utilizationDiff <= confidenceIntervals.getUtilizationCI(),
-                    comparisonResult.lambdaDiff, confidenceIntervals.getLambdaCI(), comparisonResult.lambdaDiff <= confidenceIntervals.getLambdaCI()
-            ));
+            verificationResults.add(new VerificationResult(comparisonResult.name, comparisonResult, confidenceIntervals, meanStatistics));
         }
 
         writeVerificationResults(simulationType, verificationResults);
@@ -109,27 +63,27 @@ public class Verification {
             fileWriter.append("Center, E[Ts]_Diff, E[Ts]_CI, E[Ts]_Within, E[Tq]_Diff, E[Tq]_CI, E[Tq]_Within, E[s]_Diff, E[s]_CI, E[s]_Within, E[Ns]_Diff, E[Ns]_CI, E[Ns]_Within, E[Nq]_Diff, E[Nq]_CI, E[Nq]_Within, ρ_Diff, ρ_CI, ρ_Within, λ_Diff, λ_CI, λ_Within").append(DELIMITER);
             for (VerificationResult verificationResult : verificationResults) {
                 fileWriter.append(verificationResult.name).append(COMMA)
-                        .append(String.valueOf(verificationResult.responseTimeDiff)).append(COMMA)
-                        .append(String.valueOf(verificationResult.responseTimeCI)).append(COMMA)
-                        .append(String.valueOf(verificationResult.responseTimeWithinInterval)).append(COMMA)
-                        .append(String.valueOf(verificationResult.queueTimeDiff)).append(COMMA)
-                        .append(String.valueOf(verificationResult.queueTimeCI)).append(COMMA)
-                        .append(String.valueOf(verificationResult.queueTimeWithinInterval)).append(COMMA)
-                        .append(String.valueOf(verificationResult.serviceTimeDiff)).append(COMMA)
-                        .append(String.valueOf(verificationResult.serviceTimeCI)).append(COMMA)
-                        .append(String.valueOf(verificationResult.serviceTimeWithinInterval)).append(COMMA)
-                        .append(String.valueOf(verificationResult.systemPopulationDiff)).append(COMMA)
-                        .append(String.valueOf(verificationResult.systemPopulationCI)).append(COMMA)
-                        .append(String.valueOf(verificationResult.systemPopulationWithinInterval)).append(COMMA)
-                        .append(String.valueOf(verificationResult.queuePopulationDiff)).append(COMMA)
-                        .append(String.valueOf(verificationResult.queuePopulationCI)).append(COMMA)
-                        .append(String.valueOf(verificationResult.queuePopulationWithinInterval)).append(COMMA)
-                        .append(String.valueOf(verificationResult.utilizationDiff)).append(COMMA)
-                        .append(String.valueOf(verificationResult.utilizationCI)).append(COMMA)
-                        .append(String.valueOf(verificationResult.utilizationWithinInterval)).append(COMMA)
-                        .append(String.valueOf(verificationResult.lambdaDiff)).append(COMMA)
-                        .append(String.valueOf(verificationResult.lambdaCI)).append(COMMA)
-                        .append(String.valueOf(verificationResult.lambdaWithinInterval)).append(DELIMITER);
+                        .append(String.valueOf(verificationResult.comparisonResult.responseTimeDiff)).append(COMMA)
+                        .append(String.valueOf(verificationResult.confidenceIntervals.getResponseTimeCI())).append(COMMA)
+                        .append(String.valueOf(verificationResult.isWithinInterval(verificationResult.comparisonResult.responseTimeDiff, verificationResult.confidenceIntervals.getResponseTimeCI()))).append(COMMA)
+                        .append(String.valueOf(verificationResult.comparisonResult.queueTimeDiff)).append(COMMA)
+                        .append(String.valueOf(verificationResult.confidenceIntervals.getQueueTimeCI())).append(COMMA)
+                        .append(String.valueOf(verificationResult.isWithinInterval(verificationResult.comparisonResult.queueTimeDiff, verificationResult.confidenceIntervals.getQueueTimeCI()))).append(COMMA)
+                        .append(String.valueOf(verificationResult.comparisonResult.serviceTimeDiff)).append(COMMA)
+                        .append(String.valueOf(verificationResult.confidenceIntervals.getServiceTimeCI())).append(COMMA)
+                        .append(String.valueOf(verificationResult.isWithinInterval(verificationResult.comparisonResult.serviceTimeDiff, verificationResult.confidenceIntervals.getServiceTimeCI()))).append(COMMA)
+                        .append(String.valueOf(verificationResult.comparisonResult.systemPopulationDiff)).append(COMMA)
+                        .append(String.valueOf(verificationResult.confidenceIntervals.getSystemPopulationCI())).append(COMMA)
+                        .append(String.valueOf(verificationResult.isWithinInterval(verificationResult.comparisonResult.systemPopulationDiff, verificationResult.confidenceIntervals.getSystemPopulationCI()))).append(COMMA)
+                        .append(String.valueOf(verificationResult.comparisonResult.queuePopulationDiff)).append(COMMA)
+                        .append(String.valueOf(verificationResult.confidenceIntervals.getQueuePopulationCI())).append(COMMA)
+                        .append(String.valueOf(verificationResult.isWithinInterval(verificationResult.comparisonResult.queuePopulationDiff, verificationResult.confidenceIntervals.getQueuePopulationCI()))).append(COMMA)
+                        .append(String.valueOf(verificationResult.comparisonResult.utilizationDiff)).append(COMMA)
+                        .append(String.valueOf(verificationResult.confidenceIntervals.getUtilizationCI())).append(COMMA)
+                        .append(String.valueOf(verificationResult.isWithinInterval(verificationResult.comparisonResult.utilizationDiff, verificationResult.confidenceIntervals.getUtilizationCI()))).append(COMMA)
+                        .append(String.valueOf(verificationResult.comparisonResult.lambdaDiff)).append(COMMA)
+                        .append(String.valueOf(verificationResult.confidenceIntervals.getLambdaCI())).append(COMMA)
+                        .append(String.valueOf(verificationResult.isWithinInterval(verificationResult.comparisonResult.lambdaDiff, verificationResult.confidenceIntervals.getLambdaCI()))).append(DELIMITER);
             }
 
             fileWriter.flush();

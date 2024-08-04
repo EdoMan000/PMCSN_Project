@@ -200,4 +200,12 @@ public class LuggageChecks {
             luggageChecksSingleEntrances[i].updateObservations(observationsList.get(i), run);
         }
     }
+
+    public void stopWarmup() {
+        Arrays.stream(luggageChecksSingleEntrances).forEach(SingleServer::stopWarmup);
+    }
+
+    public boolean isDone() {
+        return Arrays.stream(luggageChecksSingleEntrances).allMatch(SingleServer::isDone);
+    }
 }

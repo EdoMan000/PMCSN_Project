@@ -56,7 +56,6 @@ public class BasicSimulationRunner {
 
     public void runBasicSimulation(boolean approximateServiceAsExponential, boolean shouldTrackObservations) throws Exception {
         initCenters(approximateServiceAsExponential);
-
         String simulationType;
         if(approximateServiceAsExponential){
             simulationType = "BASIC_SIMULATION_EXPONENTIAL";
@@ -267,7 +266,7 @@ public class BasicSimulationRunner {
 
         List<ConfidenceIntervals> confidenceIntervalsList = aggregateConfidenceIntervals();
 
-        List<Verification.VerificationResult> verificationResultList = verifyConfidenceIntervals(simulationType, comparisonResultList, confidenceIntervalsList);
+        List<Verification.VerificationResult> verificationResultList = verifyConfidenceIntervals(simulationType, meanStatisticsList, comparisonResultList, confidenceIntervalsList);
 
         printFinalResults(verificationResultList);
     }
@@ -289,7 +288,6 @@ public class BasicSimulationRunner {
 
     private List<ConfidenceIntervals> aggregateConfidenceIntervals() {
         List<ConfidenceIntervals> confidenceIntervalsList = new ArrayList<>();
-
         confidenceIntervalsList.addAll(createConfidenceIntervalsList(luggageChecks.getStatistics()));
         confidenceIntervalsList.add(createConfidenceIntervals(checkInDesksTarget.getStatistics()));
         confidenceIntervalsList.addAll(createConfidenceIntervalsList(checkInDesksOthers.getStatistics()));
@@ -358,7 +356,6 @@ public class BasicSimulationRunner {
     }
 
     private void initObservations() {
-
         int runsNumber = config.getInt("general", "runsNumber");
         for (int i = 0; i < config.getInt("luggageChecks", "numberOfCenters"); i++) {
             luggageObservations.add(new Observations("%s_%d".formatted(config.getString("luggageChecks", "centerName"), i+1), runsNumber));
@@ -381,7 +378,7 @@ public class BasicSimulationRunner {
         for (int i = 0; i < config.getInt("passportChecks", "serversNumber"); i++) {
             passportCheckObservations.add(new Observations("%s_%d".formatted(config.getString("passportChecks", "centerName"), i+1), runsNumber));
         }
-        stampsCheckObservations = new Observations("STAMPS_CHECK", runsNumber);
+        stampsCheckObservations = new Observations(config.getString("stampsCheck", "centerName"), runsNumber);
         for (int i = 0; i < config.getInt("boardingTarget", "serversNumber"); i++) {
             boardingTargetObservations.add(new Observations("%s_%d".formatted(config.getString("boardingTarget", "centerName"), i+1), runsNumber));
         }

@@ -7,26 +7,8 @@ import org.pmcsn.model.BatchStatistics;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 public class BatchMeans {
-
-    public static List<Double> convertDatFileToList(String filePath) {
-        List<Double> doubleList = new ArrayList<>();
-        try (Scanner scanner = new Scanner(new File(filePath))) {
-            while (scanner.hasNext()) {
-                if (scanner.hasNextDouble()) {
-                    doubleList.add(scanner.nextDouble());
-                } else {
-                    scanner.next(); // Skip non-double tokens
-                }
-            }
-        } catch (FileNotFoundException e) {
-            System.err.println("File not found: " + e.getMessage());
-        }
-        return doubleList;
-    }
-
     public static void main(String[] args) throws Exception {
         Config config = new Config();
         int batchesNumber = config.getInt("general", "numBatches");
@@ -37,35 +19,25 @@ public class BatchMeans {
             BatchSimulationRunner batchRunner = new BatchSimulationRunner(batchesNumber, batchSize, warmup);
             var means = batchRunner.runBatchSimulation(true);
             System.out.println("Means: " + means.size());
-            var results = new ArrayList<AnalyticalComputation.AnalyticalResult>();
-            if (!checkEntrance(means, 0.2)) {
-                return;
+            var acfs = new ArrayList<Double>();
+            for (BatchStatistics m : means) {
+                acfs.add(acf(m.meanSystemPopulationList));
             }
-            batchSize += batchSize / 2;
-
-            if (batchSize > 4096) {
-                System.out.println("BATCH SIZE EXCEEDED... Exiting.");
-                break;
-            }
+            acfs.forEach(System.out::println);
+//            var results = new ArrayList<AnalyticalComputation.AnalyticalResult>();
+//            if (!checkEntrance(means, 0.2)) {
+//                return;
+//            }
+//            batchSize += batchSize / 2;
+//
+//            if (batchSize > 4096) {
+//                System.out.println("BATCH SIZE EXCEEDED... Exiting.");
+//                break;
+//            }
         }
-        System.out.println("\n------------------------------------------------------");
-        System.out.println(" FINAL NUMBER OF BATCHES: " + batchSize);
-        System.out.println("------------------------------------------------------");
-    }
-
-    private static boolean check(List<List<Double>> meanList, double v, int k) {
-        boolean result = true;
-        for (int i = 0; i < meanList.size(); i++) {
-            List<Double> means = meanList.get(i);
-            assert means.size() == k;
-            double acf = acf(means);
-            double acs = acs(means);
-            result = result && Math.abs(acf) <= v;
-            System.out.println("\n------------------------------------------------------");
-            System.out.printf("luggage_check_%d (E[Ts])\t:\t%f\t%f%n", i+1, acf, acs);
-            System.out.println("------------------------------------------------------");
-        }
-        return result;
+//        System.out.println("\n------------------------------------------------------");
+//        System.out.println(" FINAL NUMBER OF BATCHES: " + batchSize);
+//        System.out.println("------------------------------------------------------");
     }
 
     private static boolean checkEntrance(List<BatchStatistics> statisticsList, double v) {
@@ -74,20 +46,20 @@ public class BatchMeans {
         List<BatchStatistics> entrancesStats = statisticsList.stream().filter(x -> x.getCenterName().contains(centerName)).toList();
         boolean result = true;
         for (BatchStatistics entrance : entrancesStats) {
-            double acf = acf(entrance.meanResponseTimeList);
+            double acf = acf(entrance.meanSystemPopulationList);
             // double acs = acs(entrance.meanResponseTimeList);
             result = result && Math.abs(acf) <= v;
             System.out.println("\n------------------------------------------------------");
-            System.out.printf("%s (E[Ts])\t: %f%n", entrance.getCenterName(), acf);
+            System.out.printf("%s (E[Ns])\t: %f%n", entrance.getCenterName(), acf);
             System.out.println("------------------------------------------------------");
-            var s = new StringBuilder()
-                    .append("[");
-            entrance.meanQueueTimeList.forEach(x -> s.append(x).append(", "));
-            s.append("]");
-            System.out.println(s);
-            acf = acf(entrance.meanQueueTimeList);
+            //var s = new StringBuilder()
+            //        .append("[");
+            //entrance.meanQueueTimeList.forEach(x -> s.append(x).append(", "));
+            //s.append("]");
+            //System.out.println(s);
+            acf = acf(entrance.meanQueuePopulationList);
             System.out.println("\n------------------------------------------------------");
-            System.out.printf("%s (E[Tq])\t: %f%n", entrance.getCenterName(), acf);
+            System.out.printf("%s (E[Nq])\t: %f%n", entrance.getCenterName(), acf);
             System.out.println("------------------------------------------------------");
         }
         return result;

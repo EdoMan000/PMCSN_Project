@@ -11,7 +11,7 @@ public class BatchStatistics extends AbstractStatistics {
     private final List<Double> meanSystemPopulationBatch = new ArrayList<>();
     private final List<Double> meanUtilizationBatch = new ArrayList<>();
     private final List<Double> meanQueuePopulationBatch = new ArrayList<>();
-
+    private boolean done = false;
     private final int batchSize;
     private final int batchesNumber;
 
@@ -45,9 +45,17 @@ public class BatchStatistics extends AbstractStatistics {
     }
 
     private void appendToBatchWindow(List<Double> meanStatsList, double value) {
-        meanStatsList.add(value);
-        if (batchesNumber < meanStatsList.size()) {
-            meanStatsList.removeFirst();
+        if (meanStatsList.size() < batchesNumber) {
+            meanStatsList.add(value);
+        } else {
+            if (!done) {
+                System.out.printf("%s has collected %d batches%n%n", getCenterName(), batchesNumber);
+            }
+            done = true;
         }
+    }
+
+    public boolean isDone() {
+        return done;
     }
 }

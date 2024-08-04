@@ -4,6 +4,7 @@ import org.pmcsn.conf.Config;
 import org.pmcsn.controller.BasicSimulationRunner;
 import org.pmcsn.controller.BatchSimulationRunner;
 import org.pmcsn.controller.ImprovedModelSimulationRunner;
+import org.pmcsn.utils.FileUtils;
 
 import java.util.Scanner;
 
@@ -12,6 +13,7 @@ import static org.pmcsn.utils.PrintUtils.*;
 public class MenaraAirportSimulator {
 
     public static void main(String[] args) throws Exception {
+        FileUtils.deleteDirectory("csvFiles");
         Scanner scanner = new Scanner(System.in);
         BasicSimulationRunner basicRunner = new BasicSimulationRunner();
         ImprovedModelSimulationRunner improvedRunner = new ImprovedModelSimulationRunner();

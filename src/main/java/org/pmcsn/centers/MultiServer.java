@@ -30,6 +30,8 @@ public abstract class MultiServer {
     protected BasicStatistics statistics;
     protected BatchStatistics batchStatistics;
 
+    private boolean warmup = true;
+
     public MultiServer(String centerName, double meanServiceTime, int serversNumber, int streamIndex, boolean approximateServiceAsExponential) {
         Config config  = new Config();
         batchSize = config.getInt("general", "batchSize");
@@ -54,6 +56,10 @@ public abstract class MultiServer {
     abstract void spawnNextCenterEvent(MsqTime time, EventQueue queue);
     abstract void spawnCompletionEvent(MsqTime time, EventQueue queue, int serverId);
     abstract double getService(int streamIndex);
+
+    public void stopWarmup() {
+        warmup = false;
+    }
 
     //********************************** CONCRETE METHODS *********************************************
     public void reset(Rngs rngs) {
@@ -124,6 +130,9 @@ public abstract class MultiServer {
         sum[serverId].service += completion.service;
         sum[serverId].served++;
         lastCompletionTime = completion.time;
+        if (!warmup) {
+            saveBatchStats(time);
+        }
         spawnNextCenterEvent(time, queue);
         if (numberOfJobsInNode >= SERVERS) {
             spawnCompletionEvent(time, queue, serverId);
@@ -162,7 +171,7 @@ public abstract class MultiServer {
 
     public void saveBatchStats(MsqTime time) {
         if(getJobsServed() > 0 && getJobsServed() > lastJobsServed ){
-            batchStatistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime, false, currentBatchStartTime);
+            batchStatistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime, true, currentBatchStartTime);
             if(getJobsServed() % batchSize == 0) {
                 lastJobsServed = getJobsServed();
                 resetBatch(time);
@@ -197,5 +206,9 @@ public abstract class MultiServer {
         double meanNodePopulation = area.getNodeArea() / servers[serverId].lastCompletionTime;
         double meanResponseTime = meanNodePopulation / lambda;
         observations.saveObservation(run, Observations.INDEX.RESPONSE_TIME, meanResponseTime);
+    }
+
+    public boolean isDone() {
+        return batchStatistics.isDone();
     }
 }

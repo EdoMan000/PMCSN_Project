@@ -12,8 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class WelchPlot {
-    private final String DELIMITER = "\n";
-    private final String COMMA = ",";
+    private WelchPlot() {}
 
     public static void writeObservations(List<List<Observations>> checkinDeskOthersObservations, String simulationType) {
         for (List<Observations> observations : checkinDeskOthersObservations) {
@@ -21,23 +20,10 @@ public class WelchPlot {
         }
     }
 
-    public static void clearObservationsDirectory(String simulationType) {
-        File root = new File("csvFiles/%s/observations/".formatted(simulationType));
-        if (root.exists() && root.isDirectory() && root.listFiles() != null) {
-            for (File file : root.listFiles()) {
-                file.delete();
-            }
-        }
-    }
-
     public static void writeObservations(String simulationType, List<Observations> observationsList) {
-        String parent = "csvFiles/%s/observations/".formatted(simulationType);
-        File directory = new File(parent);
-        if (!directory.exists()) {
-            directory.mkdirs();
-        } else {
-            clearObservationsDirectory(simulationType);
-        }
+        String path = "csvFiles/%s/observations/".formatted(simulationType);
+        FileUtils.createDirectoryIfNotExists(path);
+        File parent = new File(path);
         for (Observations o : observationsList) {
             File file = new File(parent, "%s.data".formatted(o.getCenterName()));
             try (FileWriter fileWriter = new FileWriter(file, true)) {
@@ -100,7 +86,7 @@ public class WelchPlot {
         return files;
     }
 
-    public static List<Double> welchPlot(List<List<Double>> matrix) throws IOException {
+    public static List<Double> welchPlot(List<List<Double>> matrix) {
         int m = matrix.stream().filter(r -> !r.isEmpty()).mapToInt(List::size).min().orElseThrow();
         List<Double> ensembleAverage = new ArrayList<>(m);
 

@@ -151,4 +151,12 @@ public class BoardingOthers {
             boardingSingleFlightArray[i].updateObservations(observations.get(i), run);
         }
     }
+
+    public void stopWarmup() {
+        Arrays.stream(boardingSingleFlightArray).forEach(MultiServer::stopWarmup);
+    }
+
+    public boolean isDone() {
+        return Arrays.stream(boardingSingleFlightArray).allMatch(MultiServer::isDone);
+    }
 }

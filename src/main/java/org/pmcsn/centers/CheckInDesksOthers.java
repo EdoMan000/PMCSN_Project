@@ -156,4 +156,12 @@ public class CheckInDesksOthers {
             checkInDesksSingleFlightArray[i].updateObservations(observations.get(i), run);
         }
     }
+
+    public void stopWarmup() {
+        Arrays.stream(checkInDesksSingleFlightArray).forEach(MultiServer::stopWarmup);
+    }
+
+    public boolean isDone() {
+        return Arrays.stream(checkInDesksSingleFlightArray).allMatch(MultiServer::isDone);
+    }
 }

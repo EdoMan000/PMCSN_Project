@@ -39,6 +39,7 @@ public abstract class SingleServer {
     private int batchSize;
     private int batchesNumber;
     private double currentBatchStartTime;
+    private boolean warmup = true;
 
     public SingleServer(String centerName, double meanServiceTime, int streamIndex, boolean approximateServiceAsExponential) {
         Config config  = new Config();
@@ -108,9 +109,37 @@ public abstract class SingleServer {
         sum.served++;
         sum.service += completion.service;
         lastCompletionTime = completion.time;
+        if (!warmup) {
+            saveBatchStats(time);
+        }
         spawnNextCenterEvent(time, queue);
         if (numberOfJobsInNode > 0) {
             spawnCompletionEvent(time, queue);
+        }
+    }
+
+    private void saveBatch(MsqTime time) {
+        double lambda = sum.served / (lastCompletionTime - currentBatchStartTime);
+        double rho = area.getServiceArea();
+        double meanSystemPopulation = area.getNodeArea() / (lastCompletionTime - currentBatchStartTime);
+        batchPoints.add(meanSystemPopulation);
+        if (batchPoints.size() == batchSize) {
+            double average = batchPoints.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+            appendToBatch(meanSystemPopulationList, average);
+            testResetBatch(time);
+        }
+    }
+
+    private void testResetBatch(MsqTime time) {
+        batchPoints.clear();
+        area.reset();
+        sum.reset();
+        currentBatchStartTime = time.current;
+    }
+
+    private void appendToBatch(List<Double> batch, double value) {
+        if (batch.size() < batchesNumber) {
+            batch.add(value);
         }
     }
 
@@ -155,16 +184,12 @@ public abstract class SingleServer {
     }
 
     public void saveBatchStats(MsqTime time) {
-        // checking if a batch has ended. If so, resetting batch info
-        if(getJobsServed() > 0 && getJobsServed() > lastJobsServed) {
-            // saving the statistics of the jobs in current batch
-            MsqSum[] s = new MsqSum[1];
-            s[0] = sum;
-            batchStatistics.saveStats(area, s, lastArrivalTime, lastCompletionTime, false, currentBatchStartTime);
-            if (getJobsServed() % batchSize == 0) {
-                lastJobsServed = getJobsServed();
-                resetBatch(time);
-            }
+        MsqSum[] s = new MsqSum[1];
+        s[0] = sum;
+        batchStatistics.saveStats(area, s, lastArrivalTime, lastCompletionTime, false, currentBatchStartTime);
+        if (getJobsServed() > lastJobsServed && getJobsServed() % batchSize == 0) {
+            resetBatch(time);
+            lastJobsServed = getJobsServed();
         }
     }
 
@@ -176,5 +201,13 @@ public abstract class SingleServer {
         double meanNodePopulation = area.getNodeArea() / lastCompletionTime;
         double meanResponseTime = meanNodePopulation / lambda;
         observations.saveObservation(run, Observations.INDEX.RESPONSE_TIME, meanResponseTime);
+    }
+
+    public void stopWarmup() {
+        this.warmup = false;
+    }
+
+    public boolean isDone() {
+        return batchStatistics.isDone();
     }
 }

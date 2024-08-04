@@ -123,7 +123,7 @@ public class PrintUtils {
 
     public static void printAnalyticalResult(AnalyticalComputation.AnalyticalResult analyticalResult) {
         System.out.println(YELLOW + "\n\n*************************************************");
-        System.out.println("Verification results for " + analyticalResult.name.toUpperCase());
+        System.out.println("Analytical results for " + analyticalResult.name.toUpperCase());
         System.out.println("*************************************************" + RESET);
         // Print results
         System.out.println("Lambda: " + analyticalResult.lambda);
@@ -148,11 +148,14 @@ public class PrintUtils {
                 centerIndex = 1;
                 centerName = centerName+"_"+centerIndex;
             }
-            System.out.println(BLUE + "\n\n********************************************");
-            System.out.println("FINAL RESULTS FOR " + centerName);
-            System.out.println("********************************************" + RESET);
+            System.out.println(BLUE + "\n\n*******************************************************************************************************");
+            Config config = new Config();
+            System.out.println("FINAL RESULTS FOR " + centerName +
+                    " with " + (int) (100.0 * config.getDouble("general", "levelOfConfidence") + 0.5) +
+                    "% confidence");
+            System.out.println("*******************************************************************************************************" + RESET);
             printVerificationResult(verificationResult);
-            System.out.println(BLUE + "********************************************" + RESET);
+            System.out.println(BLUE + "*******************************************************************************************************" + RESET);
             alreadyDoneCenterName = verificationResult.name.toUpperCase();
         }
     }
@@ -161,13 +164,36 @@ public class PrintUtils {
         String within = GREEN + "within";
         String outside = RED + "outside";
 
-        System.out.println("E[Ts]: " + getColor(result.responseTimeDiff) + result.responseTimeDiff + RESET + " is " + (result.responseTimeWithinInterval ? within : outside) + " the interval ±" + result.responseTimeCI + RESET);
-        System.out.println("E[Tq]: " + getColor(result.queueTimeDiff) + result.queueTimeDiff + RESET + " is " + (result.queueTimeWithinInterval ? within : outside) + " the interval ±" + result.queueTimeCI + RESET);
-        System.out.println("E[s]: " + getColor(result.serviceTimeDiff) + result.serviceTimeDiff + RESET + " is " + (result.serviceTimeWithinInterval ? within : outside) + " the interval ±" + result.serviceTimeCI + RESET);
-        System.out.println("E[Ns]: " + getColor(result.systemPopulationDiff) + result.systemPopulationDiff + RESET + " is " + (result.systemPopulationWithinInterval ? within : outside) + " the interval ±" + result.systemPopulationCI + RESET);
-        System.out.println("E[Nq]: " + getColor(result.queuePopulationDiff) + result.queuePopulationDiff + RESET + " is " + (result.queuePopulationWithinInterval ? within : outside) + " the interval ±" + result.queuePopulationCI + RESET);
-        System.out.println("ρ: " + getColor(result.utilizationDiff) + result.utilizationDiff + RESET + " is " + (result.utilizationWithinInterval ? within : outside) + " the interval ±" + result.utilizationCI + RESET);
-        System.out.println("λ: " + getColor(result.lambdaDiff) + result.lambdaDiff + RESET + " is " + (result.lambdaWithinInterval ? within : outside) + " the interval ±" + result.lambdaCI + RESET);
+        // Compute the colors and within/outside texts
+        String responseTimeColor = getColor(result.comparisonResult.responseTimeDiff);
+        String responseTimeWithinOutside = result.isWithinInterval(result.comparisonResult.responseTimeDiff, result.confidenceIntervals.getResponseTimeCI()) ? within : outside;
+
+        String queueTimeColor = getColor(result.comparisonResult.queueTimeDiff);
+        String queueTimeWithinOutside = result.isWithinInterval(result.comparisonResult.queueTimeDiff, result.confidenceIntervals.getQueueTimeCI()) ? within : outside;
+
+        String serviceTimeColor = getColor(result.comparisonResult.serviceTimeDiff);
+        String serviceTimeWithinOutside = result.isWithinInterval(result.comparisonResult.serviceTimeDiff, result.confidenceIntervals.getServiceTimeCI()) ? within : outside;
+
+        String systemPopulationColor = getColor(result.comparisonResult.systemPopulationDiff);
+        String systemPopulationWithinOutside = result.isWithinInterval(result.comparisonResult.systemPopulationDiff, result.confidenceIntervals.getSystemPopulationCI()) ? within : outside;
+
+        String queuePopulationColor = getColor(result.comparisonResult.queuePopulationDiff);
+        String queuePopulationWithinOutside = result.isWithinInterval(result.comparisonResult.queuePopulationDiff, result.confidenceIntervals.getQueuePopulationCI()) ? within : outside;
+
+        String utilizationColor = getColor(result.comparisonResult.utilizationDiff);
+        String utilizationWithinOutside = result.isWithinInterval(result.comparisonResult.utilizationDiff, result.confidenceIntervals.getUtilizationCI()) ? within : outside;
+
+        String lambdaColor = getColor(result.comparisonResult.lambdaDiff);
+        String lambdaWithinOutside = result.isWithinInterval(result.comparisonResult.lambdaDiff, result.confidenceIntervals.getLambdaCI()) ? within : outside;
+
+        // Print the results
+        System.out.println("E[Ts]: mean " + BLUE  + result.meanStatistics.meanResponseTime + RESET +  ", diff " + responseTimeColor + result.comparisonResult.responseTimeDiff + RESET + " is " + responseTimeWithinOutside + " the interval ±" + result.confidenceIntervals.getResponseTimeCI() + RESET);
+        System.out.println("E[Tq]: mean " + BLUE  + result.meanStatistics.meanQueueTime + RESET + ", diff " + queueTimeColor + result.comparisonResult.queueTimeDiff + RESET + " is " + queueTimeWithinOutside + " the interval ±" + result.confidenceIntervals.getQueueTimeCI() + RESET);
+        System.out.println("E[s]: mean " + BLUE  + result.meanStatistics.meanServiceTime + RESET + ", diff " + serviceTimeColor + result.comparisonResult.serviceTimeDiff + RESET + " is " + serviceTimeWithinOutside + " the interval ±" + result.confidenceIntervals.getServiceTimeCI() + RESET);
+        System.out.println("E[Ns]: mean " + BLUE  + result.meanStatistics.meanSystemPopulation + RESET + ", diff " + systemPopulationColor + result.comparisonResult.systemPopulationDiff + RESET + " is " + systemPopulationWithinOutside + " the interval ±" + result.confidenceIntervals.getSystemPopulationCI() + RESET);
+        System.out.println("E[Nq]: mean " + BLUE  + result.meanStatistics.meanQueuePopulation + RESET + ", diff " + queuePopulationColor + result.comparisonResult.queuePopulationDiff + RESET + " is " + queuePopulationWithinOutside + " the interval ±" + result.confidenceIntervals.getQueuePopulationCI() + RESET);
+        System.out.println("ρ: mean " + BLUE  + result.meanStatistics.meanUtilization + RESET + ", diff " + utilizationColor + result.comparisonResult.utilizationDiff + RESET + " is " + utilizationWithinOutside + " the interval ±" + result.confidenceIntervals.getUtilizationCI() + RESET);
+        System.out.println("λ: mean " + BLUE  + result.meanStatistics.lambda + RESET + ", diff " + lambdaColor + result.comparisonResult.lambdaDiff + RESET + " is " + lambdaWithinOutside + " the interval ±" + result.confidenceIntervals.getLambdaCI() + RESET);
     }
 
     private static String getColor(double value) {

@@ -48,7 +48,8 @@ public class BatchSimulationRunner {
     private final int batchesNumber;
     private final int warmupThreshold;
     private boolean isWarmingUp = true;
-    private final int[] eventsCounter = new int[6];
+    private final int[] luggagesEventCounter = new int[6];
+
 
     public BatchSimulationRunner() {
         Config config = new Config();
@@ -95,7 +96,7 @@ public class BatchSimulationRunner {
 
         MsqEvent event;
 
-        while(checkEndOfBatchSimulation(((long) batchesNumber * batchSize))) {
+        while(!isDone()) {
             event = events.pop(); // Retrieving next event to be processed
             msqTime.next = event.time;
             updateAreas(msqTime); // Updating areas
@@ -106,10 +107,8 @@ public class BatchSimulationRunner {
             if (getMinimumNumberOfJobsServedByCenters() >= warmupThreshold && isWarmingUp) { // Checking if still in warmup period
                 System.out.println("WARMUP COMPLETED... Starting to collect statistics for centers from now on.");
                 isWarmingUp = false;
-                Arrays.fill(eventsCounter, 0);
-            }
-            if (!isWarmingUp) {
-                saveAllBatchStats(msqTime); // saving the statistics of the batch only after the warm-up time period
+                stopWarmup();
+                Arrays.fill(luggagesEventCounter, 0);
             }
         }
         System.out.println(simulationType + " HAS JUST FINISHED.");
@@ -124,7 +123,32 @@ public class BatchSimulationRunner {
         // controllo di consistenza sul numero di jobs processati
          printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boardingTarget, boardingOthers, false);
 
-        return luggageChecks.getBatchStatistics();
+        return getBatchStatistics();
+        // return luggageChecks.getMeans();
+    }
+
+    private void stopWarmup() {
+        luggageChecks.stopWarmup();
+        checkInDesksTarget.stopWarmup();
+        checkInDesksOthers.stopWarmup();
+        boardingPassScanners.stopWarmup();
+        securityChecks.stopWarmup();
+        passportChecks.stopWarmup();
+        stampsCheck.stopWarmup();
+        boardingTarget.stopWarmup();
+        boardingOthers.stopWarmup();
+    }
+
+    private List<BatchStatistics> getBatchStatistics() {
+        List<BatchStatistics> batchStatistics = new ArrayList<>(luggageChecks.getBatchStatistics());
+        batchStatistics.add(checkInDesksTarget.getBatchStatistics());
+        batchStatistics.addAll(checkInDesksOthers.getBatchStatistics());
+        batchStatistics.add(securityChecks.getBatchStatistics());
+        batchStatistics.add(passportChecks.getBatchStatistics());
+        batchStatistics.add(stampsCheck.getBatchStatistics());
+        batchStatistics.add(boardingTarget.getBatchStatistics());
+        batchStatistics.addAll(boardingOthers.getBatchStatistics());
+        return batchStatistics;
     }
 
 
@@ -158,7 +182,7 @@ public class BatchSimulationRunner {
                 luggageChecks.processArrival(event, msqTime, events);
                 break;
             case LUGGAGE_CHECK_DONE:
-                eventsCounter[event.nodeId-1]++;
+                luggagesEventCounter[event.nodeId-1]++;
                 luggageChecks.processCompletion(event, msqTime, events);
                 break;
             case ARRIVAL_CHECK_IN_TARGET:
@@ -234,7 +258,7 @@ public class BatchSimulationRunner {
 
         List<ConfidenceIntervals> confidenceIntervalsList = aggregateConfidenceIntervals();
 
-        List<Verification.VerificationResult> verificationResultList = verifyConfidenceIntervals(simulationType, comparisonResultList, confidenceIntervalsList);
+        List<Verification.VerificationResult> verificationResultList = verifyConfidenceIntervals(simulationType, batchMeanStatisticsList, comparisonResultList, confidenceIntervalsList);
 
         printFinalResults(verificationResultList);
     }
@@ -257,14 +281,23 @@ public class BatchSimulationRunner {
     private List<ConfidenceIntervals> aggregateConfidenceIntervals() {
         List<ConfidenceIntervals> confidenceIntervalsList = new ArrayList<>();
 
+        System.out.println("-------------------LUGGAGE--------------------------");
         confidenceIntervalsList.addAll(createConfidenceIntervalsList(luggageChecks.getBatchStatistics()));
+        System.out.println("--------------------------CHECKIN------------------------");
         confidenceIntervalsList.add(createConfidenceIntervals(checkInDesksTarget.getBatchStatistics()));
+        System.out.println("-----------------------CHECK IN OTHERS----------------------------");
         confidenceIntervalsList.addAll(createConfidenceIntervalsList(checkInDesksOthers.getBatchStatistics()));
+        System.out.println("-------------------------BOARDING SCANNERS--------------------------");
         confidenceIntervalsList.add(createConfidenceIntervals(boardingPassScanners.getBatchStatistics()));
+        System.out.println("--------------------SECURITY CHECKS----------------------------");
         confidenceIntervalsList.add(createConfidenceIntervals(securityChecks.getBatchStatistics()));
+        System.out.println("-----------------------PASSPORT CHECKS-------------------------");
         confidenceIntervalsList.add(createConfidenceIntervals(passportChecks.getBatchStatistics()));
+        System.out.println("------------------------STAMP CHECKS-----------------------");
         confidenceIntervalsList.add(createConfidenceIntervals(stampsCheck.getBatchStatistics()));
+        System.out.println("---------------------------BOARDING TARGET-----------------------");
         confidenceIntervalsList.add(createConfidenceIntervals(boardingTarget.getBatchStatistics()));
+        System.out.println("---------------------------BOARDING OTHERS---------------------");
         confidenceIntervalsList.addAll(createConfidenceIntervalsList(boardingOthers.getBatchStatistics()));
 
         return confidenceIntervalsList;
@@ -312,28 +345,19 @@ public class BatchSimulationRunner {
         boardingOthers.setAreaForAll(msqTime);
     }
 
-    private long getMinimumNumberOfJobsServedByCenters() { //TODO
-        long minimumLuggageChecks = Arrays.stream(luggageChecks.getNumberOfJobsPerCenter()).min().orElseThrow();
-        // System.out.printf("Luggage checks %d%n", minimumLuggageChecks);
-        long minimumCheckInDeskOthers = Arrays.stream(checkInDesksOthers.getNumberOfJobsPerCenter()).min().orElseThrow();
-        // System.out.printf("Check In Desk Others %d%n", minimumCheckInDeskOthers);
-        long minimumBoardingOthers = Arrays.stream(boardingOthers.getNumberOfJobsPerCenter()).min().orElseThrow();
-        // System.out.printf("Boarding Others %d%n", minimumBoardingOthers);
-//        return Stream.of(
-//                minimumLuggageChecks,
-//                checkInDesksTarget.getJobsServed(),
-//                minimumCheckInDeskOthers,
-//                boardingPassScanners.getJobsServed(),
-//                securityChecks.getJobsServed(),
-//                passportChecks.getJobsServed(),
-//                stampsCheck.getJobsServed(),
-//                boardingTarget.getJobsServed(),
-//                minimumBoardingOthers
-//        ).min(Long::compare).orElseThrow();
-        return Arrays.stream(eventsCounter).min().orElseThrow();
+    private long getMinimumNumberOfJobsServedByCenters() {
+        return Arrays.stream(luggageChecks.getNumberOfJobsPerCenter()).min().orElseThrow();
     }
 
-    private boolean checkEndOfBatchSimulation(long n) {
-        return getMinimumNumberOfJobsServedByCenters() <= n;
+    private boolean isDone() {
+       return luggageChecks.isDone()
+               && checkInDesksTarget.isDone()
+               && checkInDesksOthers.isDone()
+               && boardingOthers.isDone()
+               && securityChecks.isDone()
+               && passportChecks.isDone()
+               && stampsCheck.isDone()
+               && boardingTarget.isDone()
+               && boardingPassScanners.isDone();
     }
 }

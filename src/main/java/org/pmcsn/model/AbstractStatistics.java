@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.pmcsn.utils.PrintUtils.formatList;
-import static org.pmcsn.utils.StatisticsUtils.computeMean;
 
 public abstract class AbstractStatistics {
     public enum Index {
@@ -19,14 +18,14 @@ public abstract class AbstractStatistics {
         Utilization,
         QueuePopulation,
         ResponseTime
-    };
-    public List<Double> meanServiceTimeList = new ArrayList<Double>();
-    public List<Double> meanQueueTimeList = new ArrayList<Double>();
-    public List<Double> lambdaList = new ArrayList<Double>();
-    public List<Double> meanSystemPopulationList = new ArrayList<Double>();
-    public List<Double> meanUtilizationList = new ArrayList<Double>();
-    public List<Double> meanQueuePopulationList = new ArrayList<Double>();
-    public List<Double> meanResponseTimeList = new ArrayList<Double>();
+    }
+    public List<Double> meanServiceTimeList = new ArrayList<>();
+    public List<Double> meanQueueTimeList = new ArrayList<>();
+    public List<Double> lambdaList = new ArrayList<>();
+    public List<Double> meanSystemPopulationList = new ArrayList<>();
+    public List<Double> meanUtilizationList = new ArrayList<>();
+    public List<Double> meanQueuePopulationList = new ArrayList<>();
+    public List<Double> meanResponseTimeList = new ArrayList<>();
 
     private final String centerName;
 
@@ -70,13 +69,12 @@ public abstract class AbstractStatistics {
             meanServiceTime = Arrays.stream(sum)
                     .filter(s -> s.served > 0)
                     .mapToDouble(s -> s.service / s.served)
-                    .average().orElse(0);
-            ;
+                    .average().orElseThrow();
             // mean utilization (ρ)
             utilization = (lambda * meanServiceTime) / sum.length;
         } else {
             // mean service time (E[s])
-            meanServiceTime = area.getServiceArea() / sum[0].served;
+            meanServiceTime = sum[0].service / sum[0].served;
             // mean utilization (ρ)
             utilization = area.getServiceArea() / (lastCompletionTime - currentBatchStartTime);
         }
