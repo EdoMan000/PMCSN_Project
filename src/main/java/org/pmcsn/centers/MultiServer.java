@@ -1,8 +1,8 @@
 package org.pmcsn.centers;
 
+import org.pmcsn.conf.Config;
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.*;
-import org.pmcsn.model.Statistics;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,13 +20,20 @@ public abstract class MultiServer {
     protected boolean approximateServiceAsExponential;
     protected Rngs rngs;
     protected long lastJobsServed = 0;
+    protected int batchSize;
+    protected int batchesNumber;
+    private double currentBatchStartTime;
 
     protected MsqSum[] sum;
     protected MsqServer[] servers;
 
-    protected Statistics statistics;
+    protected BasicStatistics statistics;
+    protected BatchStatistics batchStatistics;
 
     public MultiServer(String centerName, double meanServiceTime, int serversNumber, int streamIndex, boolean approximateServiceAsExponential) {
+        Config config  = new Config();
+        batchSize = config.getInt("general", "batchSize");
+        batchesNumber = config.getInt("general", "numBatches");
         this.centerName = centerName;
         this.meanServiceTime = meanServiceTime;
         this.SERVERS = serversNumber;
@@ -38,7 +45,8 @@ public abstract class MultiServer {
             servers[i] = new MsqServer();
         }
         this.area = new Area();
-        this.statistics = new Statistics(centerName);
+        this.statistics = new BasicStatistics(centerName);
+        this.batchStatistics = new BatchStatistics(centerName, batchSize, batchesNumber);
         this.approximateServiceAsExponential = approximateServiceAsExponential;
     }
 
@@ -63,16 +71,22 @@ public abstract class MultiServer {
         }
     }
 
-    public void resetBatch() {
-        statistics.clear();
+    public void resetBatch(MsqTime time) {
+        area.reset();
+        Arrays.stream(sum).forEach(MsqSum::reset);
+        currentBatchStartTime = time.current;
     }
 
     public long getJobsServed() {
         return Arrays.stream(sum).mapToLong(x -> x.served).sum();
     }
 
-    public Statistics getStatistics(){
-        return this.statistics;
+    public BasicStatistics getStatistics(){
+        return statistics;
+    }
+
+    public BatchStatistics getBatchStatistics() {
+        return batchStatistics;
     }
 
     public long getNumberOfJobsInNode() {
@@ -138,23 +152,27 @@ public abstract class MultiServer {
         statistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime, true);
     }
 
-    public void saveStats(int batchesNumber) {
-        statistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime, true, batchesNumber);
-    }
-
     public void writeStats(String simulationType){
         statistics.writeStats(simulationType);
     }
 
-    public void saveBatchStats(int batchSize, int batchesNumber) {
-        if(getJobsServed() > 0 && getJobsServed() > lastJobsServed && getJobsServed() % batchSize == 0){
-            saveStats(batchesNumber);
-            lastJobsServed = getJobsServed();
+    public void saveBatchStats(MsqTime time) {
+        if(getJobsServed() > 0 && getJobsServed() > lastJobsServed ){
+            batchStatistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime, false, currentBatchStartTime);
+            if(getJobsServed() % batchSize == 0) {
+                lastJobsServed = getJobsServed();
+                resetBatch(time);
+            }
         }
     }
 
-    public Statistics.MeanStatistics getMeanStatistics() {
+
+    public MeanStatistics getMeanStatistics() {
         return statistics.getMeanStatistics();
+    }
+
+    public MeanStatistics getBatchMeanStatistics() {
+        return batchStatistics.getMeanStatistics();
     }
 
     public void updateObservations(List<Observations> observationsList, int run) {

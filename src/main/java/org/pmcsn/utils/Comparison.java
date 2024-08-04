@@ -1,7 +1,7 @@
 package org.pmcsn.utils;
 
-import org.pmcsn.utils.Verification.Result;
-import org.pmcsn.model.Statistics.MeanStatistics;
+import org.pmcsn.model.MeanStatistics;
+import org.pmcsn.utils.AnalyticalComputation.AnalyticalResult;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -35,13 +35,13 @@ public class Comparison {
         }
     }
 
-    public static List<ComparisonResult> compareResults(String simulationType, List<Result> verificationResults, List<MeanStatistics> meanStatisticsList) {
+    public static List<ComparisonResult> compareResults(String simulationType, List<AnalyticalResult> verificationResults, List<MeanStatistics> meanStatisticsList) {
         System.out.println("Starting comparison with analytical results...");
         List<ComparisonResult> comparisonResults = new ArrayList<>();
 
-        for (Result result : verificationResults) {
-            for (MeanStatistics meanStatistics : meanStatisticsList) {
-                if (result.name.equals(meanStatistics.centerName.toUpperCase())) {
+        for (MeanStatistics meanStatistics : meanStatisticsList) {
+            for (AnalyticalResult result : verificationResults) {
+                if (meanStatistics.centerName.contains(result.name)) {
                     double responseTimeDiff = Math.abs(result.Ets - meanStatistics.meanResponseTime);
                     double queueTimeDiff = Math.abs(result.Etq - meanStatistics.meanQueueTime);
                     double serviceTimeDiff = Math.abs(result.Es - meanStatistics.meanServiceTime);
@@ -60,8 +60,8 @@ public class Comparison {
                             utilizationDiff,
                             lambdaDiff
                     );
+
                     comparisonResults.add(comparisonResult);
-                    printComparisonResult(comparisonResult);
                 }
             }
         }

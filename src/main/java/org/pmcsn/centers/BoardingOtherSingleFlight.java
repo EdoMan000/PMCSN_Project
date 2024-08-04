@@ -12,7 +12,7 @@ public class BoardingOtherSingleFlight extends MultiServer {
     private final int nodeId;
 
     public BoardingOtherSingleFlight(String centerName, int nodeId, double meanServiceTime, int serversNum, int streamIndex, boolean approximateServiceAsExponential) {
-        super(centerName + nodeId, meanServiceTime, serversNum, streamIndex, approximateServiceAsExponential);
+        super("%s_%d".formatted(centerName, nodeId), meanServiceTime, serversNum, streamIndex, approximateServiceAsExponential);
         this.nodeId = nodeId;
     }
 

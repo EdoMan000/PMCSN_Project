@@ -14,7 +14,7 @@ class CheckInDesksOtherSingleFlight extends MultiServer {
     private final int nodeId;
 
     public CheckInDesksOtherSingleFlight(String centerName, int nodeId, double meanServiceTime, int numOfServers, int streamIndex, boolean approximateServiceAsExponential) {
-        super(centerName + nodeId, meanServiceTime, numOfServers, streamIndex, approximateServiceAsExponential);
+        super("%s_%d".formatted(centerName, nodeId), meanServiceTime, numOfServers, streamIndex, approximateServiceAsExponential);
         this.nodeId = nodeId;
     }
 

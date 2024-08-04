@@ -3,7 +3,6 @@ package org.pmcsn.centers;
 import org.pmcsn.conf.Config;
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.*;
-import org.pmcsn.model.Statistics.MeanStatistics;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,14 +43,6 @@ public class LuggageChecks {
         for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
             center.reset(rngs);
         }
-    }
-
-    public void resetBatch() {
-        Arrays.stream(luggageChecksSingleEntrances).forEach(SingleServer::resetBatch);
-    }
-
-    public void resetBatch(int center) {
-        luggageChecksSingleEntrances[center].resetBatch();
     }
 
     public void setSTOP(int STOP) {
@@ -118,8 +109,17 @@ public class LuggageChecks {
         }
     }
 
-    public List<Statistics> getStatistics(){
-        List<Statistics> statistics = new ArrayList<>();
+    public List<BatchStatistics> getBatchStatistics(){
+        List<BatchStatistics> statistics = new ArrayList<>();
+        for (LuggageChecksSingleEntrance s : luggageChecksSingleEntrances) {
+            statistics.add(s.getBatchStatistics());
+        }
+        return statistics;
+    }
+
+
+    public List<BasicStatistics> getStatistics(){
+        List<BasicStatistics> statistics = new ArrayList<>();
         for (LuggageChecksSingleEntrance s : luggageChecksSingleEntrances) {
             statistics.add(s.getStatistics());
         }
@@ -132,9 +132,9 @@ public class LuggageChecks {
         }
     }
 
-    public void saveBatchStats(int batchSize, int batchesNumber) {
+    public void saveBatchStats(MsqTime time) {
         for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
-            center.saveBatchStats(batchSize, batchesNumber);
+            center.saveBatchStats(time);
         }
     }
 
@@ -154,7 +154,15 @@ public class LuggageChecks {
         }
     }
 
-    public MeanStatistics getMeanStatistics(){
+    public List<MeanStatistics> getBatchMeanStatistics(){
+        return Arrays.stream(luggageChecksSingleEntrances).map(SingleServer::getBatchMeanStatistics).toList();
+    }
+
+    public List<MeanStatistics> getMeanStatistics() {
+        return Arrays.stream(luggageChecksSingleEntrances).map(SingleServer::getMeanStatistics).toList();
+    }
+
+    private MeanStatistics retrieveMeanStats(List<MeanStatistics> means) {
         List<Double> meanResponseTimeList = new ArrayList<>();
         List<Double> meanServiceTimeList = new ArrayList<Double>();
         List<Double> meanQueueTimeList = new ArrayList<Double>();
@@ -162,10 +170,7 @@ public class LuggageChecks {
         List<Double> meanSystemPopulationList = new ArrayList<Double>();
         List<Double> meanUtilizationList = new ArrayList<Double>();
         List<Double> meanQueuePopulationList = new ArrayList<Double>();
-        MeanStatistics ms;
-        // obtaining the mean for all centers
-        for(LuggageChecksSingleEntrance c : luggageChecksSingleEntrances){
-            ms = c.getMeanStatistics();
+        for (MeanStatistics ms : means) {
             meanResponseTimeList.add(ms.meanResponseTime);
             meanServiceTimeList.add(ms.meanServiceTime);
             meanQueueTimeList.add(ms.meanQueueTime);

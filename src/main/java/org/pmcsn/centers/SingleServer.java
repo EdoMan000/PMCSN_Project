@@ -3,7 +3,6 @@ package org.pmcsn.centers;
 import org.pmcsn.conf.Config;
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.*;
-import org.pmcsn.model.Statistics;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +21,8 @@ public abstract class SingleServer {
 
 
     protected int streamindex;
-    protected Statistics statistics;
+    protected BasicStatistics statistics;
+    protected BatchStatistics batchStatistics;
     protected final Area area = new Area();
     protected double meanServiceTime;
     protected long numberOfJobsInNode = 0;
@@ -47,7 +47,8 @@ public abstract class SingleServer {
         this.centerName = centerName;
         this.meanServiceTime = meanServiceTime;
         this.streamindex = streamIndex;
-        this.statistics = new Statistics(centerName);
+        this.statistics = new BasicStatistics(centerName);
+        this.batchStatistics = new BatchStatistics(centerName, batchSize, batchesNumber);
         this.approximateServiceAsExponential = approximateServiceAsExponential;
     }
 
@@ -68,10 +69,6 @@ public abstract class SingleServer {
         this.firstArrivalTime = Double.NEGATIVE_INFINITY;
         this.lastArrivalTime = 0;
         this.lastCompletionTime = 0;
-    }
-
-    public void resetBatch() {
-        statistics.clear();
     }
 
     public long getNumberOfJobsInNode() {
@@ -111,7 +108,6 @@ public abstract class SingleServer {
         sum.served++;
         sum.service += completion.service;
         lastCompletionTime = completion.time;
-        saveBatch(time);
         spawnNextCenterEvent(time, queue);
         if (numberOfJobsInNode > 0) {
             spawnCompletionEvent(time, queue);
@@ -122,60 +118,49 @@ public abstract class SingleServer {
         return meanSystemPopulationList;
     }
 
-    private void saveBatch(MsqTime time) {
-        double lambda = sum.served / (lastCompletionTime - currentBatchStartTime);
-        double rho = area.getServiceArea();
-        double meanSystemPopulation = area.getNodeArea() / (lastCompletionTime - currentBatchStartTime);
-        if (batchPoints.size() == batchSize) {
-            double average = batchPoints.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
-            appendToBatch(meanSystemPopulationList, average);
-            resetBatch(time);
-        }
-    }
-
-
-
-    private void resetBatch(MsqTime time) {
-        batchPoints.clear();
+    public void resetBatch(MsqTime time) {
         area.reset();
         sum.reset();
         currentBatchStartTime = time.current;
     }
 
-    private void appendToBatch(List<Double> batch, double value) {
-        if (batch.size() < batchesNumber) {
-            batch.add(value);
-        }
-    }
-
-    public void saveStats(int batchesNumber) {
-        MsqSum[] sums = new MsqSum[1];
-        sums[0] = this.sum;
-        statistics.saveStats(area, sums, lastArrivalTime, lastCompletionTime, false, batchesNumber);
-    }
-
     public void saveStats() {
         MsqSum[] sums = new MsqSum[1];
         sums[0] = this.sum;
-        statistics.saveStats(area, sums, lastArrivalTime, lastCompletionTime, false);
+        statistics.saveStats(area, sums, lastArrivalTime, lastCompletionTime, false, currentBatchStartTime);
     }
 
     public void writeStats(String simulationType){
         statistics.writeStats(simulationType);
     }
 
-    public Statistics.MeanStatistics getMeanStatistics() {
+    public MeanStatistics getMeanStatistics() {
         return statistics.getMeanStatistics();
     }
 
-    public Statistics getStatistics(){
+    public MeanStatistics getBatchMeanStatistics() {
+        return batchStatistics.getMeanStatistics();
+    }
+
+    public BasicStatistics getStatistics() {
         return this.statistics;
     }
 
-    public void saveBatchStats(int batchSize, int batchesNumber) {
-        if(getJobsServed() > 0 && getJobsServed() > lastJobsServed && getJobsServed() % batchSize == 0){
-            saveStats(batchesNumber);
-            lastJobsServed = getJobsServed();
+    public BatchStatistics getBatchStatistics() {
+        return batchStatistics;
+    }
+
+    public void saveBatchStats(MsqTime time) {
+        // checking if a batch has ended. If so, resetting batch info
+        if(getJobsServed() > 0 && getJobsServed() > lastJobsServed) {
+            // saving the statistics of the jobs in current batch
+            MsqSum[] s = new MsqSum[1];
+            s[0] = sum;
+            batchStatistics.saveStats(area, s, lastArrivalTime, lastCompletionTime, false, currentBatchStartTime);
+            if (getJobsServed() % batchSize == 0) {
+                lastJobsServed = getJobsServed();
+                resetBatch(time);
+            }
         }
     }
 

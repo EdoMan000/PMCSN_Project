@@ -2,15 +2,12 @@ package org.pmcsn.utils;
 
 import org.pmcsn.conf.Config;
 import org.pmcsn.controller.BatchSimulationRunner;
-import org.pmcsn.model.Statistics;
+import org.pmcsn.model.BatchStatistics;
 
 import java.io.*;
-import java.security.Key;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-
-import static org.pmcsn.utils.StatisticsUtils.computeMean;
 
 public class BatchMeans {
 
@@ -39,8 +36,9 @@ public class BatchMeans {
             System.out.println("Batch size: " + batchSize);
             BatchSimulationRunner batchRunner = new BatchSimulationRunner(batchesNumber, batchSize, warmup);
             var means = batchRunner.runBatchSimulation(true);
-            var results = new ArrayList<Verification.Result>();
-            if (!check(means, 0.2, batchesNumber)) {
+            System.out.println("Means: " + means.size());
+            var results = new ArrayList<AnalyticalComputation.AnalyticalResult>();
+            if (!checkEntrance(means, 0.2)) {
                 return;
             }
             batchSize += batchSize / 2;
@@ -70,17 +68,27 @@ public class BatchMeans {
         return result;
     }
 
-    private static boolean checkEntrance(List<Statistics> statisticsList, double v) {
+    private static boolean checkEntrance(List<BatchStatistics> statisticsList, double v) {
         Config config = new Config();
-        String centerName = config.getString("luggageChecks", "centerName").toLowerCase();
-        List<Statistics> entrancesStats = statisticsList.stream().filter(x -> x.centerName.contains(centerName)).toList();
+        String centerName = config.getString("luggageChecks", "centerName");
+        List<BatchStatistics> entrancesStats = statisticsList.stream().filter(x -> x.getCenterName().contains(centerName)).toList();
         boolean result = true;
-        for (Statistics entrance : entrancesStats) {
+        assert statisticsList.stream().allMatch(x -> x.lambdaList.size() == statisticsList.size());
+        for (BatchStatistics entrance : entrancesStats) {
             double acf = acf(entrance.meanResponseTimeList);
-            double acs = acs(entrance.meanResponseTimeList);
+            // double acs = acs(entrance.meanResponseTimeList);
             result = result && Math.abs(acf) <= v;
             System.out.println("\n------------------------------------------------------");
-            System.out.printf("%s (E[Ts])\t: %f %f%n", entrance.centerName, acf, acs);
+            System.out.printf("%s (E[Ts])\t: %f%n", entrance.getCenterName(), acf);
+            System.out.println("------------------------------------------------------");
+            var s = new StringBuilder()
+                    .append("[");
+            entrance.meanQueueTimeList.forEach(x -> s.append(x).append(", "));
+            s.append("]");
+            System.out.println(s);
+            acf = acf(entrance.meanQueueTimeList);
+            System.out.println("\n------------------------------------------------------");
+            System.out.printf("%s (E[Tq])\t: %f%n", entrance.getCenterName(), acf);
             System.out.println("------------------------------------------------------");
         }
         return result;

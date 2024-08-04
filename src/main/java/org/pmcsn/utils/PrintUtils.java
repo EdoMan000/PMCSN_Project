@@ -121,26 +121,39 @@ public class PrintUtils {
         return sb.toString();
     }
 
-    public static void printResult(Verification.Result result) {
+    public static void printAnalyticalResult(AnalyticalComputation.AnalyticalResult analyticalResult) {
         System.out.println(YELLOW + "\n\n*************************************************");
-        System.out.println("Verification results for " + result.name.toUpperCase());
+        System.out.println("Verification results for " + analyticalResult.name.toUpperCase());
         System.out.println("*************************************************" + RESET);
         // Print results
-        System.out.println("Lambda: " + result.lambda);
-        System.out.println("Rho: " + result.rho);
-        System.out.println("E[Tq]: " + result.Etq);
-        System.out.println("E[Nq]: " + result.Enq);
-        System.out.println("E[Ts]: " + result.Ets);
-        System.out.println("E[Ns]: " + result.Ens);
-        System.out.println("E[s]: " + result.Es);
+        System.out.println("Lambda: " + analyticalResult.lambda);
+        System.out.println("Rho: " + analyticalResult.rho);
+        System.out.println("E[Tq]: " + analyticalResult.Etq);
+        System.out.println("E[Nq]: " + analyticalResult.Enq);
+        System.out.println("E[Ts]: " + analyticalResult.Ets);
+        System.out.println("E[Ns]: " + analyticalResult.Ens);
+        System.out.println("E[s]: " + analyticalResult.Es);
         System.out.println(YELLOW + "*************************************************" + RESET);
     }
 
-    public static void printComparisonResult(Comparison.ComparisonResult comparisonResult) {
-        System.out.println(BLUE + "\n\n********************************************");
-        System.out.println("Comparison results for " + comparisonResult.name.toUpperCase());
-        System.out.println("********************************************" + RESET);
+    public static void printFinalResults(List<Comparison.ComparisonResult> comparisonResultList, List<Verification.VerificationResult> verificationResultList) {
+        for (Comparison.ComparisonResult comparisonResult : comparisonResultList) {
+            for (Verification.VerificationResult verificationResult : verificationResultList) {
+                if (comparisonResult.name.equals(verificationResult.name)) {
+                    System.out.println(BLUE + "\n\n********************************************");
+                    System.out.println("FINAL RESULTS FOR " + comparisonResult.name.toUpperCase()); //TODO aggiungere nome completo
+                    System.out.println("********************************************" + RESET);
 
+                    printComparisonResult(comparisonResult);
+                    printVerificationResult(verificationResult);
+
+                    System.out.println(BLUE + "********************************************" + RESET);
+                }
+            }
+        }
+    }
+
+    public static void printComparisonResult(Comparison.ComparisonResult comparisonResult) {
         // Print results with color based on the value
         System.out.println("E[Ts]_Diff: " + getColor(comparisonResult.responseTimeDiff) + comparisonResult.responseTimeDiff + RESET);
         System.out.println("E[Tq]_Diff: " + getColor(comparisonResult.queueTimeDiff) + comparisonResult.queueTimeDiff + RESET);
@@ -149,8 +162,12 @@ public class PrintUtils {
         System.out.println("E[Nq]_Diff: " + getColor(comparisonResult.queuePopulationDiff) + comparisonResult.queuePopulationDiff + RESET);
         System.out.println("rho_Diff: " + getColor(comparisonResult.utilizationDiff) + comparisonResult.utilizationDiff + RESET);
         System.out.println("lambda_Diff: " + getColor(comparisonResult.lambdaDiff) + comparisonResult.lambdaDiff + RESET);
+    }
 
-        System.out.println(BLUE + "********************************************" + RESET);
+    private static void printVerificationResult(Verification.VerificationResult result) {
+        String withinIntervalText = result.withinInterval ? "within" : "outside";
+        String color = result.withinInterval ? GREEN : RED;
+        System.out.println(result.metric + ": " + color + "ABS[Analytical Value - Mean Value]: " + result.diffValue + " is " + withinIntervalText + " the Confidence Interval: ±" + result.confidenceInterval + RESET);
     }
 
     private static String getColor(double value) {

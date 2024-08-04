@@ -3,19 +3,22 @@ package org.pmcsn.controller;
 
 import org.pmcsn.conf.CenterFactory;
 import org.pmcsn.conf.Config;
+import org.pmcsn.utils.AnalyticalComputation;
+import org.pmcsn.utils.Comparison;
+import org.pmcsn.utils.Verification;
 import org.pmcsn.utils.WelchPlot;
 import org.pmcsn.centers.*;
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.*;
-import org.pmcsn.model.Statistics.MeanStatistics;
-import org.pmcsn.utils.Verification.Result;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.pmcsn.utils.Comparison.compareResults;
+import static org.pmcsn.utils.PrintUtils.printFinalResults;
 import static org.pmcsn.utils.PrintUtils.printJobsServedByNodes;
-import static org.pmcsn.utils.Verification.modelVerification;
+import static org.pmcsn.utils.AnalyticalComputation.computeAnalyticalResults;
+import static org.pmcsn.utils.Verification.verifyConfidenceIntervals;
 
 public class BasicSimulationRunner {
     /*  STATISTICS OF INTEREST :
@@ -135,7 +138,7 @@ public class BasicSimulationRunner {
         writeAllStats(simulationType);
 
         if(approximateServiceAsExponential) {
-            computeVerificationAndCompare(simulationType); // Computing and writing verifications stats csv
+            modelVerification(simulationType); // Computing and writing verifications stats csv
         }
 
         printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boardingTarget, boardingOthers, false);
@@ -254,22 +257,65 @@ public class BasicSimulationRunner {
         boardingOthers.saveStats();
     }
 
-    private void computeVerificationAndCompare(String simulationType) {
-        List<Result> verificationResults = modelVerification(simulationType);
+    private void modelVerification(String simulationType) {
+        List<AnalyticalComputation.AnalyticalResult> analyticalResultList = computeAnalyticalResults(simulationType);
 
         // Compare results and verifications and save comparison result
+        List<MeanStatistics> meanStatisticsList = aggregateMeanStatistics();
+
+        List<Comparison.ComparisonResult> comparisonResultList = compareResults(simulationType, analyticalResultList, meanStatisticsList);
+
+        List<ConfidenceIntervals> confidenceIntervalsList = aggregateConfidenceIntervals();
+
+        List<Verification.VerificationResult> verificationResultList = verifyConfidenceIntervals(simulationType, comparisonResultList, confidenceIntervalsList);
+
+        printFinalResults(comparisonResultList, verificationResultList);
+    }
+
+    private List<MeanStatistics> aggregateMeanStatistics() {
         List<MeanStatistics> meanStatisticsList = new ArrayList<>();
-        meanStatisticsList.add(luggageChecks.getMeanStatistics());
+
+        meanStatisticsList.addAll(luggageChecks.getMeanStatistics());
         meanStatisticsList.add(checkInDesksTarget.getMeanStatistics());
-        meanStatisticsList.add(checkInDesksOthers.getMeanStatistics());
+        meanStatisticsList.addAll(checkInDesksOthers.getMeanStatistics());
         meanStatisticsList.add(boardingPassScanners.getMeanStatistics());
         meanStatisticsList.add(securityChecks.getMeanStatistics());
         meanStatisticsList.add(passportChecks.getMeanStatistics());
         meanStatisticsList.add(stampsCheck.getMeanStatistics());
         meanStatisticsList.add(boardingTarget.getMeanStatistics());
-        meanStatisticsList.add(boardingOthers.getMeanStatistics());
+        meanStatisticsList.addAll(boardingOthers.getMeanStatistics());
+        return meanStatisticsList;
+    }
 
-        compareResults(simulationType, verificationResults, meanStatisticsList);
+    private List<ConfidenceIntervals> aggregateConfidenceIntervals() {
+        List<ConfidenceIntervals> confidenceIntervalsList = new ArrayList<>();
+
+        confidenceIntervalsList.addAll(createConfidenceIntervalsList(luggageChecks.getStatistics()));
+        confidenceIntervalsList.add(createConfidenceIntervals(checkInDesksTarget.getStatistics()));
+        confidenceIntervalsList.addAll(createConfidenceIntervalsList(checkInDesksOthers.getStatistics()));
+        confidenceIntervalsList.add(createConfidenceIntervals(boardingPassScanners.getStatistics()));
+        confidenceIntervalsList.add(createConfidenceIntervals(securityChecks.getStatistics()));
+        confidenceIntervalsList.add(createConfidenceIntervals(passportChecks.getStatistics()));
+        confidenceIntervalsList.add(createConfidenceIntervals(stampsCheck.getStatistics()));
+        confidenceIntervalsList.add(createConfidenceIntervals(boardingTarget.getStatistics()));
+        confidenceIntervalsList.addAll(createConfidenceIntervalsList(boardingOthers.getStatistics()));
+
+        return confidenceIntervalsList;
+    }
+
+    private ConfidenceIntervals createConfidenceIntervals(BasicStatistics stats) {
+        return new ConfidenceIntervals(
+                stats.meanResponseTimeList, stats.meanQueueTimeList, stats.meanServiceTimeList,
+                stats.meanSystemPopulationList, stats.meanQueuePopulationList, stats.meanUtilizationList, stats.lambdaList
+        );
+    }
+
+    private List<ConfidenceIntervals> createConfidenceIntervalsList(List<BasicStatistics> statisticsList) {
+        List<ConfidenceIntervals> confidenceIntervalsList = new ArrayList<>();
+        for (BasicStatistics stats : statisticsList) {
+            confidenceIntervalsList.add(createConfidenceIntervals(stats));
+        }
+        return confidenceIntervalsList;
     }
 
     private void writeAllStats(String simulationType) {
