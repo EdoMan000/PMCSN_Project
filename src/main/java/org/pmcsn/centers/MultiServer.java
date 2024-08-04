@@ -156,6 +156,10 @@ public abstract class MultiServer {
         statistics.writeStats(simulationType);
     }
 
+    public void writeBatchStats(String simulationType){
+        batchStatistics.writeStats(simulationType);
+    }
+
     public void saveBatchStats(MsqTime time) {
         if(getJobsServed() > 0 && getJobsServed() > lastJobsServed ){
             batchStatistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime, false, currentBatchStartTime);

@@ -291,15 +291,15 @@ public class BatchSimulationRunner {
     private void writeAllStats(String simulationType) {
         System.out.println("Writing csv files with stats for all the centers.");
 
-        luggageChecks.writeStats(simulationType);
-        checkInDesksTarget.writeStats(simulationType);
-        checkInDesksOthers.writeStats(simulationType);
-        boardingPassScanners.writeStats(simulationType);
-        securityChecks.writeStats(simulationType);
-        passportChecks.writeStats(simulationType);
-        stampsCheck.writeStats(simulationType);
-        boardingTarget.writeStats(simulationType);
-        boardingOthers.writeStats(simulationType);
+        luggageChecks.writeBatchStats(simulationType);
+        checkInDesksTarget.writeBatchStats(simulationType);
+        checkInDesksOthers.writeBatchStats(simulationType);
+        boardingPassScanners.writeBatchStats(simulationType);
+        securityChecks.writeBatchStats(simulationType);
+        passportChecks.writeBatchStats(simulationType);
+        stampsCheck.writeBatchStats(simulationType);
+        boardingTarget.writeBatchStats(simulationType);
+        boardingOthers.writeBatchStats(simulationType);
     }
 
     private void updateAreas(MsqTime msqTime) {

@@ -154,6 +154,12 @@ public class LuggageChecks {
         }
     }
 
+    public void writeBatchStats(String simulationType){
+        for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
+            center.writeBatchStats(simulationType);
+        }
+    }
+
     public List<MeanStatistics> getBatchMeanStatistics(){
         return Arrays.stream(luggageChecksSingleEntrances).map(SingleServer::getBatchMeanStatistics).toList();
     }

@@ -104,6 +104,12 @@ public class BoardingOthers {
         }
     }
 
+    public void writeBatchStats(String simulationType){
+        for (BoardingOtherSingleFlight s : boardingSingleFlightArray){
+            s.writeBatchStats(simulationType);
+        }
+    }
+
 
     public List<MeanStatistics> getBatchMeanStatistics(){
         return Arrays.stream(boardingSingleFlightArray).map(MultiServer::getBatchMeanStatistics).toList();

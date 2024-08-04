@@ -134,6 +134,10 @@ public abstract class SingleServer {
         statistics.writeStats(simulationType);
     }
 
+    public void writeBatchStats(String simulationType){
+        batchStatistics.writeStats(simulationType);
+    }
+
     public MeanStatistics getMeanStatistics() {
         return statistics.getMeanStatistics();
     }

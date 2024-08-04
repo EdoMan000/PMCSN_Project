@@ -110,6 +110,12 @@ public class CheckInDesksOthers {
         }
     }
 
+    public void writeBatchStats(String simulationType){
+        for (CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray){
+            s.writeBatchStats(simulationType);
+        }
+    }
+
     public List<MeanStatistics> getBatchMeanStatistics() {
         return Arrays.stream(checkInDesksSingleFlightArray).map(MultiServer::getBatchMeanStatistics).toList();
     }
