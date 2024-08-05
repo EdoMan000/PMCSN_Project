@@ -172,10 +172,11 @@ public class AnalyticalComputation {
                 config.getDouble("passportChecks", "meanServiceTime"),
                 config.getInt("passportChecks", "serversNumber")));
 
-        analyticalResults.add(singleServer(
+        analyticalResults.add(multiServer(
                 config.getString("stampsCheck", "centerName"),
                 lambda,
-                config.getDouble("stampsCheck", "meanServiceTime")));
+                config.getDouble("stampsCheck", "meanServiceTime"),
+                config.getInt("stampsCheck", "serversNumber")));
 
         analyticalResults.add(multiServer(
                 config.getString("boardingTarget", "centerName"),

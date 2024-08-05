@@ -47,7 +47,7 @@ public class BasicSimulationRunner {
     private final List<Observations> securityCheckObservations = new ArrayList<>();
     private final List<Observations> passportCheckObservations = new ArrayList<>();
     private final List<Observations> boardingTargetObservations = new ArrayList<>();
-    private Observations stampsCheckObservations;
+    private final List<Observations> stampsCheckObservations = new ArrayList<>();
     private final List<List<Observations>> boardingOthersObservations = new ArrayList<>();
 
     public void runBasicSimulation(boolean approximateServiceAsExponential) throws Exception {
@@ -378,7 +378,6 @@ public class BasicSimulationRunner {
         for (int i = 0; i < config.getInt("passportChecks", "serversNumber"); i++) {
             passportCheckObservations.add(new Observations("%s_%d".formatted(config.getString("passportChecks", "centerName"), i+1), runsNumber));
         }
-        stampsCheckObservations = new Observations(config.getString("stampsCheck", "centerName"), runsNumber);
         for (int i = 0; i < config.getInt("boardingTarget", "serversNumber"); i++) {
             boardingTargetObservations.add(new Observations("%s_%d".formatted(config.getString("boardingTarget", "centerName"), i+1), runsNumber));
         }
@@ -397,7 +396,7 @@ public class BasicSimulationRunner {
         boardingPassScannerObservations.forEach(Observations::reset);
         securityCheckObservations.forEach(Observations::reset);
         passportCheckObservations.forEach(Observations::reset);
-        stampsCheckObservations.reset();
+        stampsCheckObservations.forEach(Observations::reset);
         boardingTargetObservations.forEach(Observations::reset);
         boardingOthersObservations.forEach(x -> x.forEach(Observations::reset));
     }
@@ -412,6 +411,6 @@ public class BasicSimulationRunner {
         WelchPlot.writeObservations(simulationType, boardingPassScannerObservations);
         WelchPlot.writeObservations(simulationType, securityCheckObservations);
         WelchPlot.writeObservations(simulationType, passportCheckObservations);
-        WelchPlot.writeObservations(simulationType, List.of(stampsCheckObservations));
+        WelchPlot.writeObservations(simulationType, stampsCheckObservations);
     }
 }

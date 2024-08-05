@@ -32,7 +32,7 @@ public class LuggageChecks {
             luggageChecksSingleEntrances[i] = new LuggageChecksSingleEntrance(centerName, i + 1, streamIndex, meanServiceTime, approximateServiceAsExponential);
         }
         Config config = new Config();
-        STOP = config.getInt("general", "observationTime");
+        STOP = config.getInt("general", "duration");
     }
 
     public void reset(Rngs rngs, double sarrival) {

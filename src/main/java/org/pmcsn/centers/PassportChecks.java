@@ -13,8 +13,7 @@ public class PassportChecks extends MultiServer {
 
     @Override
     public void spawnNextCenterEvent(MsqTime time, EventQueue queue) {
-        double walkingTime = getWalkingTime(rngs);
-        MsqEvent next_center_event = new MsqEvent(EventType.ARRIVAL_STAMP_CHECK, time.current + walkingTime);
+        MsqEvent next_center_event = new MsqEvent(EventType.ARRIVAL_STAMP_CHECK, time.current);
         queue.add(next_center_event);
     }
 

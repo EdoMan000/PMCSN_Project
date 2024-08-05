@@ -23,8 +23,7 @@ class CheckInDesksOtherSingleFlight extends MultiServer {
 
     @Override
     public void spawnNextCenterEvent(MsqTime time, EventQueue queue) {
-        double walkingTime = getWalkingTime(rngs);
-        MsqEvent event = new MsqEvent(EventType.ARRIVAL_BOARDING_PASS_SCANNERS, time.current + walkingTime);
+        MsqEvent event = new MsqEvent(EventType.ARRIVAL_BOARDING_PASS_SCANNERS, time.current);
         queue.add(event);
     }
 

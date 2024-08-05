@@ -77,6 +77,7 @@ public class CenterFactory {
         return new StampsCheck(
                 config.getString("stampsCheck", "centerName"),
                 config.getDouble("stampsCheck", "meanServiceTime"),
+                config.getInt("stampsCheck", "serversNumber"),
                 config.getInt("stampsCheck", "streamIndex"),
                 approximateServiceAsExponential
         );

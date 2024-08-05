@@ -10,22 +10,23 @@ import static org.pmcsn.utils.Distributions.uniform;
 import static org.pmcsn.utils.Probabilities.isPriority;
 import static org.pmcsn.utils.Probabilities.isTargetFlight;
 
-public class StampsCheck extends SingleServer{
+public class StampsCheck extends MultiServer{
 
-    public StampsCheck(String centerName, double meanServiceTime, int streamIndex, boolean approximateServiceAsExponential) {
-        super(centerName, meanServiceTime, streamIndex, approximateServiceAsExponential);
+    public StampsCheck(String centerName, double meanServiceTime, int serverNumber, int streamIndex, boolean approximateServiceAsExponential) {
+        super(centerName, meanServiceTime, serverNumber, streamIndex, approximateServiceAsExponential);
     }
 
 
     public void spawnNextCenterEvent(MsqTime time, EventQueue queue){
-        boolean isPriority = isPriority(rngs, streamindex + 1);
-        EventType type = isTargetFlight(rngs, streamindex + 2) ? EventType.ARRIVAL_BOARDING_TARGET : EventType.ARRIVAL_BOARDING_OTHERS;
+        boolean isPriority = isPriority(rngs, streamIndex + 1);
+        EventType type = isTargetFlight(rngs, streamIndex + 2) ? EventType.ARRIVAL_BOARDING_TARGET : EventType.ARRIVAL_BOARDING_OTHERS;
         queue.addPriority(new MsqEvent(type, time.current, isPriority));
     }
 
-    public void spawnCompletionEvent(MsqTime time, EventQueue queue) {
-        double service = getService(streamindex);
-        MsqEvent event = new MsqEvent(EventType.STAMP_CHECK_DONE, time.current + service, service);
+    @Override
+    void spawnCompletionEvent(MsqTime time, EventQueue queue, int serverId) {
+        double service = getService(streamIndex);
+        MsqEvent event = new MsqEvent(EventType.STAMP_CHECK_DONE, time.current + service, service, serverId);
         queue.add(event);
     }
 
