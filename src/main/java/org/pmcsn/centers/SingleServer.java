@@ -4,9 +4,6 @@ import org.pmcsn.conf.Config;
 import org.pmcsn.libraries.Rngs;
 import org.pmcsn.model.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public abstract class SingleServer {
 
     /*  STATISTICS OF INTEREST :
@@ -178,7 +175,7 @@ public abstract class SingleServer {
         observations.saveObservation(run, Observations.INDEX.RESPONSE_TIME, meanResponseTime);
     }
 
-    public void stopWarmup() {
+    public void stopWarmup(MsqTime time) {
         this.warmup = false;
     }
 

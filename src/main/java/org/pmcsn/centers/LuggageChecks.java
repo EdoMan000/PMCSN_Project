@@ -149,8 +149,8 @@ public class LuggageChecks {
         }
     }
 
-    public void stopWarmup() {
-        Arrays.stream(luggageChecksSingleEntrances).forEach(SingleServer::stopWarmup);
+    public void stopWarmup(MsqTime time) {
+        Arrays.stream(luggageChecksSingleEntrances).forEach(s -> s.stopWarmup(time));
     }
 
     public boolean isDone() {

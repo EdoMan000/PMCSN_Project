@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.pmcsn.utils.Probabilities.getRandomValueUpToMax;
-import static org.pmcsn.utils.StatisticsUtils.computeMean;
 
 public class BoardingOthers {
     Rngs rngs;
@@ -97,7 +96,6 @@ public class BoardingOthers {
         }
     }
 
-
     public List<MeanStatistics> getBatchMeanStatistics(){
         return Arrays.stream(boardingSingleFlightArray).map(MultiServer::getBatchMeanStatistics).toList();
     }
@@ -106,41 +104,14 @@ public class BoardingOthers {
         return Arrays.stream(boardingSingleFlightArray).map(MultiServer::getMeanStatistics).toList();
     }
 
-    private MeanStatistics retrieveMeanStats(List<MeanStatistics> means) {
-        List<Double> meanResponseTimeList = new ArrayList<>();
-        List<Double> meanServiceTimeList = new ArrayList<Double>();
-        List<Double> meanQueueTimeList = new ArrayList<Double>();
-        List<Double> lambdaList = new ArrayList<Double>();
-        List<Double> meanSystemPopulationList = new ArrayList<Double>();
-        List<Double> meanUtilizationList = new ArrayList<Double>();
-        List<Double> meanQueuePopulationList = new ArrayList<Double>();
-        for (MeanStatistics ms : means) {
-            meanResponseTimeList.add(ms.meanResponseTime);
-            meanServiceTimeList.add(ms.meanServiceTime);
-            meanQueueTimeList.add(ms.meanQueueTime);
-            lambdaList.add(ms.lambda);
-            meanSystemPopulationList.add(ms.meanSystemPopulation);
-            meanUtilizationList.add(ms.meanUtilization);
-            meanQueuePopulationList.add(ms.meanQueuePopulation);
-        }
-        double meanResponseTime = computeMean(meanResponseTimeList);
-        double meanServiceTime = computeMean(meanServiceTimeList);
-        double meanQueueTime = computeMean(meanQueueTimeList);
-        double lambda = computeMean(lambdaList);
-        double meanSystemPopulation = computeMean(meanSystemPopulationList);
-        double meanUtilization = computeMean(meanUtilizationList);
-        double meanQueuePopulation = computeMean(meanQueuePopulationList);
-        return new MeanStatistics(centerName, meanResponseTime, meanServiceTime, meanQueueTime, lambda, meanSystemPopulation, meanUtilization, meanQueuePopulation);
-    }
-
     public void updateObservations(List<List<Observations>> observations, int run) {
         for (int i = 0; i < observations.size(); i++) {
             boardingSingleFlightArray[i].updateObservations(observations.get(i), run);
         }
     }
 
-    public void stopWarmup() {
-        Arrays.stream(boardingSingleFlightArray).forEach(MultiServer::stopWarmup);
+    public void stopWarmup(MsqTime time) {
+        Arrays.stream(boardingSingleFlightArray).forEach(boardingOtherSingleFlight -> boardingOtherSingleFlight.stopWarmup(time));
     }
 
     public boolean isDone() {

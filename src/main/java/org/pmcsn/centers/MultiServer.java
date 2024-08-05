@@ -57,8 +57,9 @@ public abstract class MultiServer {
     abstract void spawnCompletionEvent(MsqTime time, EventQueue queue, int serverId);
     abstract double getService(int streamIndex);
 
-    public void stopWarmup() {
+    public void stopWarmup(MsqTime time) {
         warmup = false;
+        resetBatch(time);
     }
 
     //********************************** CONCRETE METHODS *********************************************

@@ -106,7 +106,7 @@ public class BatchSimulationRunner {
             if (getMinimumNumberOfJobsServedByCenters() >= warmupThreshold && isWarmingUp) { // Checking if still in warmup period
                 System.out.println("WARMUP COMPLETED... Starting to collect statistics for centers from now on.");
                 isWarmingUp = false;
-                stopWarmup();
+                stopWarmup(msqTime);
             }
         }
         System.out.println(simulationType + " HAS JUST FINISHED.");
@@ -126,16 +126,16 @@ public class BatchSimulationRunner {
         // return luggageChecks.getMeans();
     }
 
-    private void stopWarmup() {
-        luggageChecks.stopWarmup();
-        checkInDesksTarget.stopWarmup();
-        checkInDesksOthers.stopWarmup();
-        boardingPassScanners.stopWarmup();
-        securityChecks.stopWarmup();
-        passportChecks.stopWarmup();
-        stampsCheck.stopWarmup();
-        boardingTarget.stopWarmup();
-        boardingOthers.stopWarmup();
+    private void stopWarmup(MsqTime time) {
+        luggageChecks.stopWarmup(time);
+        checkInDesksTarget.stopWarmup(time);
+        checkInDesksOthers.stopWarmup(time);
+        boardingPassScanners.stopWarmup(time);
+        securityChecks.stopWarmup(time);
+        passportChecks.stopWarmup(time);
+        stampsCheck.stopWarmup(time);
+        boardingTarget.stopWarmup(time);
+        boardingOthers.stopWarmup(time);
     }
 
     private List<BatchStatistics> getBatchStatistics() {

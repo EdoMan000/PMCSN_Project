@@ -139,8 +139,8 @@ public class CheckInDesksOthers {
         }
     }
 
-    public void stopWarmup() {
-        Arrays.stream(checkInDesksSingleFlightArray).forEach(MultiServer::stopWarmup);
+    public void stopWarmup(MsqTime time) {
+        Arrays.stream(checkInDesksSingleFlightArray).forEach(checkInDesksOtherSingleFlight -> checkInDesksOtherSingleFlight.stopWarmup(time));
     }
 
     public boolean isDone() {
