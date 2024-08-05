@@ -177,6 +177,7 @@ public abstract class SingleServer {
 
     public void stopWarmup(MsqTime time) {
         this.warmup = false;
+        resetBatch(time);
     }
 
     public boolean isDone() {
