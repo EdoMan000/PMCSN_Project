@@ -5,6 +5,7 @@ import org.pmcsn.controller.BasicSimulationRunner;
 import org.pmcsn.controller.BatchSimulationRunner;
 import org.pmcsn.controller.ImprovedModelSimulationRunner;
 import org.pmcsn.utils.FileUtils;
+import org.pmcsn.utils.Probabilities;
 
 import java.util.Scanner;
 
@@ -13,7 +14,7 @@ import static org.pmcsn.utils.PrintUtils.*;
 public class MenaraAirportSimulator {
 
     public static void main(String[] args) throws Exception {
-        FileUtils.deleteDirectory("csvFiles");
+        start();
         Scanner scanner = new Scanner(System.in);
         BasicSimulationRunner basicRunner = new BasicSimulationRunner();
         ImprovedModelSimulationRunner improvedRunner = new ImprovedModelSimulationRunner();
@@ -22,6 +23,12 @@ public class MenaraAirportSimulator {
         while (true) {
             mainMenu(scanner, basicRunner, improvedRunner, batchRunner);
         }
+    }
+
+    private static void start() {
+        FileUtils.deleteDirectory("csvFiles");
+        Config config = new Config();
+        Probabilities.init(config.getDouble("general", "pCitizen"), config.getDouble("general", "pTarget"), config.getDouble("general", "pPriority"));
     }
 
     private static void mainMenu(Scanner scanner, BasicSimulationRunner basicRunner, ImprovedModelSimulationRunner improvedRunner, BatchSimulationRunner batchRunner) throws Exception {

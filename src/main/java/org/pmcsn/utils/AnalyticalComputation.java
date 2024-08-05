@@ -58,6 +58,27 @@ public class AnalyticalComputation {
         return (numerator / denominator) * p0;
     }
 
+    public static AnalyticalResult infiniteServer(String centerName, double lambda, double Es) {
+        double rho = lambda * Es;
+        double Etq, Enq, Ets, Ens;
+
+        if (rho >= 1) {
+            Etq = Double.POSITIVE_INFINITY;
+            Enq = Double.POSITIVE_INFINITY;
+            Ets = Double.POSITIVE_INFINITY;
+            Ens = Double.POSITIVE_INFINITY;
+        } else {
+            Etq = 0;
+            Enq = 0;
+            Ets = Es;
+            Ens = Ets * lambda;
+        }
+
+        AnalyticalResult analyticalResult = new AnalyticalResult(lambda, rho, Etq, Enq, Ets, Ens, centerName, Es);
+        //printResult(analyticalResult);
+        return analyticalResult;
+    }
+
     public static AnalyticalResult singleServer(String centerName, double lambda, double Es) {
         double rho = lambda * Es;
         double Etq, Enq, Ets, Ens;
@@ -106,14 +127,18 @@ public class AnalyticalComputation {
         System.out.println("Computing analytical results for simulation...");
         List<AnalyticalResult> analyticalResults = new ArrayList<>();
 
-        double lambda = 1.0/config.getDouble("luggageChecks", "interArrivalTime");
+        double numberOfPassengers = config.getDouble("general", "numberOfPassengers");
+        double observationTime = config.getDouble("general", "observationTime");
+        double numberOfFlights = config.getDouble("general", "numberOfFlights");
+
+        double lambda =  (numberOfPassengers * numberOfFlights) / observationTime;
 
         analyticalResults.add(singleServer(
                 config.getString("luggageChecks", "centerName"),
-                lambda / 6,
+                lambda / config.getInt("luggageChecks", "numberOfCenters"),
                 config.getDouble("luggageChecks", "meanServiceTime")));
 
-        double pTarget = 0.0159;
+        double pTarget = config.getDouble("general", "pTarget");
         analyticalResults.add(multiServer(
                 config.getString("checkInDeskTarget", "centerName"),
                 lambda * pTarget,
@@ -132,13 +157,15 @@ public class AnalyticalComputation {
                 config.getDouble("boardingPassScanners", "meanServiceTime"),
                 config.getInt("boardingPassScanners", "serversNumber")));
 
+
+
         analyticalResults.add(multiServer(
                 config.getString("securityChecks", "centerName"),
                 lambda,
                 config.getDouble("securityChecks", "meanServiceTime"),
                 config.getInt("securityChecks", "serversNumber")));
 
-        double pCitizen = 0.2;
+        double pCitizen = config.getDouble("general", "pCitizen");
         analyticalResults.add(multiServer(
                 config.getString("passportChecks", "centerName"),
                 lambda * (1 - pCitizen),
@@ -147,7 +174,7 @@ public class AnalyticalComputation {
 
         analyticalResults.add(singleServer(
                 config.getString("stampsCheck", "centerName"),
-                lambda * (1 - pCitizen),
+                lambda,
                 config.getDouble("stampsCheck", "meanServiceTime")));
 
         analyticalResults.add(multiServer(
@@ -197,6 +224,12 @@ public class AnalyticalComputation {
         } catch (IOException e) {
             //ignore
         }
+    }
+
+    public static void main(String[] args) {
+        FileUtils.deleteDirectory("csvFiles");
+        String simulationType = "ANALYTICAL";
+        writeAnalyticalResults(simulationType, computeAnalyticalResults(simulationType));
     }
 
 }

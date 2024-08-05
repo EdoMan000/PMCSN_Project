@@ -33,10 +33,6 @@ public class CheckInDesksOthers {
         }
     }
 
-    public void resetBatch(MsqTime time) {
-        Arrays.stream(checkInDesksSingleFlightArray).forEach(x -> x.resetBatch(time));
-    }
-
     public void processArrival(MsqEvent arrival, MsqTime time, EventQueue queue) {
         int index = getRandomValueUpToMax(rngs, streamIndex, checkInDesksSingleFlightArray.length);
         if (index < 1 || index > checkInDesksSingleFlightArray.length) {
@@ -58,12 +54,8 @@ public class CheckInDesksOthers {
         return Arrays.stream(checkInDesksSingleFlightArray).mapToLong(MultiServer::getNumberOfJobsInNode).sum();
     }
 
-    public long[] getNumberOfJobsPerCenter() {
-        return Arrays.stream(checkInDesksSingleFlightArray).mapToLong(MultiServer::getJobsServed).toArray();
-    }
-
-    public long getJobsServed(int center){
-        return checkInDesksSingleFlightArray[center].getCompletions();
+    public long[] getTotalNumberOfJobsServed() {
+        return Arrays.stream(checkInDesksSingleFlightArray).mapToLong(MultiServer::getTotalNumberOfJobsServed).toArray();
     }
 
     public List<BasicStatistics> getStatistics(){
@@ -82,20 +74,10 @@ public class CheckInDesksOthers {
         return statistics;
     }
 
-    public void saveBatchStats(MsqTime time) {
-        for(CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray){
-            s.saveBatchStats(time);
-        }
-    }
-
     public void saveStats() {
         for (CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray){
             s.saveStats();
         }
-    }
-
-    public void saveStats(int center) {
-        checkInDesksSingleFlightArray[center].saveStats();
     }
 
     public void setAreaForAll(MsqTime time){

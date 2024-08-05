@@ -5,8 +5,7 @@ import org.pmcsn.model.EventType;
 import org.pmcsn.model.MsqEvent;
 import org.pmcsn.model.MsqTime;
 
-import static org.pmcsn.utils.Distributions.exponential;
-import static org.pmcsn.utils.Distributions.logNormal;
+import static org.pmcsn.utils.Distributions.*;
 
 public class CheckInDesksTarget extends MultiServer {
     public CheckInDesksTarget(String centerName, double meanServiceTime, int numOfServers, int streamIndex, boolean approximateServiceAsExponential) {
@@ -15,7 +14,8 @@ public class CheckInDesksTarget extends MultiServer {
 
     @Override
     public void spawnNextCenterEvent(MsqTime time, EventQueue queue) {
-        MsqEvent event = new MsqEvent(EventType.ARRIVAL_BOARDING_PASS_SCANNERS, time.current);
+        double walkingTime = getWalkingTime(rngs);
+        MsqEvent event = new MsqEvent(EventType.ARRIVAL_BOARDING_PASS_SCANNERS, time.current + walkingTime);
         queue.add(event);
     }
 

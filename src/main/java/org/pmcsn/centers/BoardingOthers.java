@@ -30,14 +30,9 @@ public class BoardingOthers {
         Arrays.stream(boardingSingleFlightArray).forEach(s -> s.setArea(time));
     }
 
-    public void saveBatchStats(MsqTime time) {
-        for(BoardingOtherSingleFlight other : boardingSingleFlightArray){
-            other.saveBatchStats(time);
-        }
-    }
 
-    public long[] getNumberOfJobsPerCenter() {
-        return Arrays.stream(boardingSingleFlightArray).mapToLong(MultiServer::getJobsServed).toArray();
+    public long[] getTotalNumberOfJobsServed() {
+        return Arrays.stream(boardingSingleFlightArray).mapToLong(MultiServer::getTotalNumberOfJobsServed).toArray();
     }
 
     public void reset(Rngs rngs) {
@@ -66,14 +61,6 @@ public class BoardingOthers {
 
     public long getTotalNumberOfJobsInNode() {
         return Arrays.stream(boardingSingleFlightArray).mapToLong(MultiServer::getNumberOfJobsInNode).sum();
-    }
-
-    public void resetBatch(MsqTime time) {
-        Arrays.stream(boardingSingleFlightArray).forEach(x -> x.resetBatch(time));;
-    }
-
-    public long getJobsServed(int center){
-        return boardingSingleFlightArray[center].getJobsServed();
     }
 
     public List<BasicStatistics> getStatistics(){

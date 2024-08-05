@@ -10,7 +10,6 @@ import java.util.List;
 
 import static org.pmcsn.utils.Distributions.exponential;
 import static org.pmcsn.utils.Probabilities.getRandomValueUpToMax;
-import static org.pmcsn.utils.StatisticsUtils.computeMean;
 
 public class LuggageChecks {
     private final String centerName;
@@ -91,16 +90,8 @@ public class LuggageChecks {
         return Arrays.stream(luggageChecksSingleEntrances).mapToLong(c -> c.numberOfJobsInNode).sum();
     }
 
-    public long[] getNumberOfJobsPerCenter() {
-        return Arrays.stream(luggageChecksSingleEntrances).mapToLong(SingleServer::getJobsServed).toArray();
-    }
-
-    public long getTotalNumberOfJobsServed() {
-        return Arrays.stream(luggageChecksSingleEntrances).mapToLong(LuggageChecksSingleEntrance::getJobsServed).sum();
-    }
-
-    public int getJobsServed(int center){
-        return (int) luggageChecksSingleEntrances[center].getJobsServed();
+    public long[] getTotalNumberOfJobsServed() {
+        return Arrays.stream(luggageChecksSingleEntrances).mapToLong(SingleServer::getTotalNumberOfJobsServed).toArray();
     }
 
     public void setAreaForAll(MsqTime time){
@@ -132,22 +123,6 @@ public class LuggageChecks {
         }
     }
 
-    public void saveBatchStats(MsqTime time) {
-        for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
-            center.saveBatchStats(time);
-        }
-    }
-
-    public List<List<Double>> getMeans() {
-        List<List<Double>> means = new ArrayList<>();
-        Arrays.stream(luggageChecksSingleEntrances).forEach(s -> means.add(s.getMeanSystemPopulationList()));
-        return means;
-    }
-
-    public void saveStats(int center) {
-        luggageChecksSingleEntrances[center].saveStats();
-    }
-
     public void writeStats(String simulationType){
         for (LuggageChecksSingleEntrance center : luggageChecksSingleEntrances) {
             center.writeStats(simulationType);
@@ -166,33 +141,6 @@ public class LuggageChecks {
 
     public List<MeanStatistics> getMeanStatistics() {
         return Arrays.stream(luggageChecksSingleEntrances).map(SingleServer::getMeanStatistics).toList();
-    }
-
-    private MeanStatistics retrieveMeanStats(List<MeanStatistics> means) {
-        List<Double> meanResponseTimeList = new ArrayList<>();
-        List<Double> meanServiceTimeList = new ArrayList<Double>();
-        List<Double> meanQueueTimeList = new ArrayList<Double>();
-        List<Double> lambdaList = new ArrayList<Double>();
-        List<Double> meanSystemPopulationList = new ArrayList<Double>();
-        List<Double> meanUtilizationList = new ArrayList<Double>();
-        List<Double> meanQueuePopulationList = new ArrayList<Double>();
-        for (MeanStatistics ms : means) {
-            meanResponseTimeList.add(ms.meanResponseTime);
-            meanServiceTimeList.add(ms.meanServiceTime);
-            meanQueueTimeList.add(ms.meanQueueTime);
-            lambdaList.add(ms.lambda);
-            meanSystemPopulationList.add(ms.meanSystemPopulation);
-            meanUtilizationList.add(ms.meanUtilization);
-            meanQueuePopulationList.add(ms.meanQueuePopulation);
-        }
-        double meanResponseTime = computeMean(meanResponseTimeList);
-        double meanServiceTime = computeMean(meanServiceTimeList);
-        double meanQueueTime = computeMean(meanQueueTimeList);
-        double lambda = computeMean(lambdaList);
-        double meanSystemPopulation = computeMean(meanSystemPopulationList);
-        double meanUtilization = computeMean(meanUtilizationList);
-        double meanQueuePopulation = computeMean(meanQueuePopulationList);
-        return new MeanStatistics(centerName, meanResponseTime, meanServiceTime, meanQueueTime, lambda, meanSystemPopulation, meanUtilization, meanQueuePopulation);
     }
 
     public void updateObservations(List<Observations> observationsList, int run) {

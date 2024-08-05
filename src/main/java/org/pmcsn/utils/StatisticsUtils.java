@@ -10,18 +10,18 @@ public class StatisticsUtils {
     private static final Logger logger = Logger.getLogger(StatisticsUtils.class.getName());
 
     public static double computeMean(List<Double> values) {
-        return values.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+        return values.stream().mapToDouble(Double::doubleValue).average().orElseThrow();
     }
 
     private static double getStandardDeviation(List<Double> values) {
         double mean = computeMean(values);
-        double variance = values.stream().mapToDouble(v -> Math.pow(v - mean, 2)).sum() / (values.size() -1 );
+        double variance = values.stream().mapToDouble(v -> Math.pow(v - mean, 2)).sum() / values.size();
         return Math.sqrt(variance);
     }
 
     public static double computeConfidenceInterval(List<Double> values) {
         int K = values.size();
-        System.out.println("K :"+K);
+        // System.out.println("K :"+K);
         // Compute confidence intervals
         Rvms rvms = new Rvms();
 

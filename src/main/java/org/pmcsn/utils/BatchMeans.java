@@ -2,67 +2,31 @@ package org.pmcsn.utils;
 
 import org.pmcsn.conf.Config;
 import org.pmcsn.controller.BatchSimulationRunner;
-import org.pmcsn.model.BatchStatistics;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public class BatchMeans {
     public static void main(String[] args) throws Exception {
         Config config = new Config();
+        final int MAX_BATCH_SIZE = 4096;
         int batchesNumber = config.getInt("general", "numBatches");
         int batchSize = config.getInt("general", "batchSize");
         int warmup = config.getInt("general", "warmup");
-        while (true) {
+        while (batchSize < MAX_BATCH_SIZE) {
             System.out.println("Batch size: " + batchSize);
             BatchSimulationRunner batchRunner = new BatchSimulationRunner(batchesNumber, batchSize, warmup);
             var means = batchRunner.runBatchSimulation(true);
-            System.out.println("Means: " + means.size());
-            var acfs = new ArrayList<Double>();
-            for (BatchStatistics m : means) {
-                acfs.add(acf(m.meanSystemPopulationList));
+            var values = means.stream().map(x -> acf(x.meanSystemPopulationList)).toList();
+            if (values.stream().allMatch(x -> x <= 0.2)) {
+                values.forEach(System.out::println);
+                break;
             }
-            acfs.forEach(System.out::println);
-//            var results = new ArrayList<AnalyticalComputation.AnalyticalResult>();
-//            if (!checkEntrance(means, 0.2)) {
-//                return;
-//            }
-//            batchSize += batchSize / 2;
-//
-//            if (batchSize > 4096) {
-//                System.out.println("BATCH SIZE EXCEEDED... Exiting.");
-//                break;
-//            }
+            batchSize *= 2;
         }
-//        System.out.println("\n------------------------------------------------------");
-//        System.out.println(" FINAL NUMBER OF BATCHES: " + batchSize);
-//        System.out.println("------------------------------------------------------");
-    }
-
-    private static boolean checkEntrance(List<BatchStatistics> statisticsList, double v) {
-        Config config = new Config();
-        String centerName = config.getString("luggageChecks", "centerName");
-        List<BatchStatistics> entrancesStats = statisticsList.stream().filter(x -> x.getCenterName().contains(centerName)).toList();
-        boolean result = true;
-        for (BatchStatistics entrance : entrancesStats) {
-            double acf = acf(entrance.meanSystemPopulationList);
-            // double acs = acs(entrance.meanResponseTimeList);
-            result = result && Math.abs(acf) <= v;
-            System.out.println("\n------------------------------------------------------");
-            System.out.printf("%s (E[Ns])\t: %f%n", entrance.getCenterName(), acf);
-            System.out.println("------------------------------------------------------");
-            //var s = new StringBuilder()
-            //        .append("[");
-            //entrance.meanQueueTimeList.forEach(x -> s.append(x).append(", "));
-            //s.append("]");
-            //System.out.println(s);
-            acf = acf(entrance.meanQueuePopulationList);
-            System.out.println("\n------------------------------------------------------");
-            System.out.printf("%s (E[Nq])\t: %f%n", entrance.getCenterName(), acf);
-            System.out.println("------------------------------------------------------");
+        if (batchSize == MAX_BATCH_SIZE) {
+            System.out.println("Batch size exceeded MAX_BATCH_SIZE.");
         }
-        return result;
     }
 
     public static double acf(List<Double> data) {

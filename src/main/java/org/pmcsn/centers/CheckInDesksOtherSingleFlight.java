@@ -7,8 +7,7 @@ import org.pmcsn.model.MsqTime;
 
 import java.util.Arrays;
 
-import static org.pmcsn.utils.Distributions.exponential;
-import static org.pmcsn.utils.Distributions.logNormal;
+import static org.pmcsn.utils.Distributions.*;
 
 class CheckInDesksOtherSingleFlight extends MultiServer {
     private final int nodeId;
@@ -24,7 +23,8 @@ class CheckInDesksOtherSingleFlight extends MultiServer {
 
     @Override
     public void spawnNextCenterEvent(MsqTime time, EventQueue queue) {
-        MsqEvent event = new MsqEvent(EventType.ARRIVAL_BOARDING_PASS_SCANNERS, time.current);
+        double walkingTime = getWalkingTime(rngs);
+        MsqEvent event = new MsqEvent(EventType.ARRIVAL_BOARDING_PASS_SCANNERS, time.current + walkingTime);
         queue.add(event);
     }
 

@@ -28,7 +28,7 @@ public class PrintUtils {
         // Luggage Checks
         long jobServedEntrances = 0;
         int i = 1;
-        for (long l : luggageChecks.getNumberOfJobsPerCenter()) {
+        for (long l : luggageChecks.getTotalNumberOfJobsServed()) {
             jobServedEntrances += l;
             if(includePartialValues) {
                 System.out.printf(BLUE + "Luggage Checks Center " + i + ": " + RESET + "%d", l);
@@ -38,12 +38,12 @@ public class PrintUtils {
         System.out.printf(YELLOW + "TOT Luggage Checks Jobs Served: " + RESET + "%d\n", jobServedEntrances);
 
         // Check-In Desks
-        long jobServedCheckIns = checkInDesksTarget.getJobsServed();
+        long jobServedCheckIns = checkInDesksTarget.getTotalNumberOfJobsServed();
         if(includePartialValues) {
             System.out.printf(BLUE + "Check-In Desks Target: " + RESET + "%d", jobServedCheckIns);
         }
         i = 1;
-        for (long l : checkInDesksOthers.getNumberOfJobsPerCenter()) {
+        for (long l : checkInDesksOthers.getTotalNumberOfJobsServed()) {
             jobServedCheckIns += l;
             if (includePartialValues) {
                 System.out.printf(BLUE + "Check-In Desks Others Center " + i + ": " + RESET + "%d", l);
@@ -53,29 +53,29 @@ public class PrintUtils {
         System.out.printf(YELLOW + "TOT Check-In Desks Jobs Served: " + RESET + "%d\n", jobServedCheckIns);
 
         // Boarding Pass Scanners
-        long boardingPassScannersJobsServed = boardingPassScanners.getJobsServed();
+        long boardingPassScannersJobsServed = boardingPassScanners.getTotalNumberOfJobsServed();
         System.out.printf(BLUE + "Boarding Pass Scanners: " + RESET + "%d\n", boardingPassScannersJobsServed);
 
         // Security Checks
-        long securityChecksJobsServed = securityChecks.getJobsServed();
+        long securityChecksJobsServed = securityChecks.getTotalNumberOfJobsServed();
         System.out.printf(BLUE + "Security Checks: " + RESET + "%d\n", securityChecksJobsServed);
 
         // Passport Checks
-        long passportChecksJobsServed = passportChecks.getJobsServed();
+        long passportChecksJobsServed = passportChecks.getTotalNumberOfJobsServed();
         System.out.printf(BLUE + "Passport Checks: " + RESET + "%d\n", passportChecksJobsServed);
 
         // Stamps Check
-        long stampsCheckJobsServed = stampsCheck.getJobsServed();
+        long stampsCheckJobsServed = stampsCheck.getTotalNumberOfJobsServed();
         System.out.printf(BLUE + "Stamps Check: " + RESET + "%d\n", stampsCheckJobsServed);
 
         // Boarding
-        long jobServedBoarding = boardingTarget.getJobsServed();
+        long jobServedBoarding = boardingTarget.getTotalNumberOfJobsServed();
         if (includePartialValues) {
             System.out.printf(BLUE + "BoardingTarget: " + RESET + "%d", jobServedBoarding);
         }
 
         i = 1;
-        for (long l : boardingOthers.getNumberOfJobsPerCenter()) {
+        for (long l : boardingOthers.getTotalNumberOfJobsServed()) {
             jobServedBoarding += l;
             if (includePartialValues) {
                 System.out.printf(BLUE + "Boarding Others Center " + i + ": " + RESET + "%d", l);

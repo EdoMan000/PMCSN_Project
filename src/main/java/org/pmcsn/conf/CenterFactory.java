@@ -9,10 +9,15 @@ public class CenterFactory {
     }
 
     public LuggageChecks createLuggageChecks(boolean approximateServiceAsExponential) {
+        double passengersNumber = config.getDouble("general", "numberOfPassengers");
+        double flightsNumber = config.getDouble("general", "numberOfFlights");
+        double observationTime = config.getDouble("general", "observationTime");
+        double interArrivalTime = observationTime / (passengersNumber * flightsNumber);
+
         return new LuggageChecks(
                 config.getString("luggageChecks", "centerName"),
                 config.getInt("luggageChecks", "numberOfCenters"),
-                config.getDouble("luggageChecks", "interArrivalTime"),
+                interArrivalTime,
                 config.getDouble("luggageChecks", "meanServiceTime"),
                 config.getInt("luggageChecks", "streamIndex"),
                 approximateServiceAsExponential);

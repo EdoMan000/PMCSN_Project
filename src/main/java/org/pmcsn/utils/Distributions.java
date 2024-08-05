@@ -5,8 +5,11 @@ import org.pmcsn.libraries.Rngs;
 import java.rmi.server.RMIClassLoader;
 
 public class Distributions {
-    private final int EXPONENTIAL_STREAM_INDEX = 1;
 
+    public static double getWalkingTime(Rngs rngs){
+        rngs.selectStream(239);
+        return uniform(5, 10, rngs);
+    }
 
     public static double erlang(long k, double b, Rngs rngs)
         /* ==================================================

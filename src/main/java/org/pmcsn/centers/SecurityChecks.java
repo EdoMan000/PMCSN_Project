@@ -5,8 +5,7 @@ import org.pmcsn.model.EventType;
 import org.pmcsn.model.MsqEvent;
 import org.pmcsn.model.MsqTime;
 
-import static org.pmcsn.utils.Distributions.exponential;
-import static org.pmcsn.utils.Distributions.logNormal;
+import static org.pmcsn.utils.Distributions.*;
 import static org.pmcsn.utils.Probabilities.*;
 
 public class SecurityChecks extends MultiServer {
@@ -17,9 +16,13 @@ public class SecurityChecks extends MultiServer {
     @Override
     public void spawnNextCenterEvent(MsqTime time, EventQueue queue) {
         if (isCitizen(rngs, streamIndex + 1)) {
+            /*
             boolean priority = isPriority(rngs, streamIndex + 3);
             EventType type = isTargetFlight(rngs, streamIndex + 2) ? EventType.ARRIVAL_BOARDING_TARGET : EventType.ARRIVAL_BOARDING_OTHERS;
             queue.addPriority(new MsqEvent(type, time.current, priority));
+             */
+            double walkingTime = getWalkingTime(rngs);
+            queue.add(new MsqEvent(EventType.ARRIVAL_STAMP_CHECK, time.current + walkingTime));
         } else {
             MsqEvent event = new MsqEvent(EventType.ARRIVAL_PASSPORT_CHECK, time.current);
             queue.add(event);

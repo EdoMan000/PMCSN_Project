@@ -9,6 +9,7 @@ import java.util.List;
 
 public abstract class MultiServer {
     protected long numberOfJobsInNode = 0;
+    protected long totalNumberOfJobsServed = 0;
     protected int SERVERS;
     protected int streamIndex;
     protected Area area;
@@ -19,7 +20,6 @@ public abstract class MultiServer {
     protected String centerName;
     protected boolean approximateServiceAsExponential;
     protected Rngs rngs;
-    protected long lastJobsServed = 0;
     protected int batchSize;
     protected int batchesNumber;
     private double currentBatchStartTime;
@@ -65,7 +65,6 @@ public abstract class MultiServer {
     public void reset(Rngs rngs) {
         this.rngs = rngs;
         // resetting variables
-        lastJobsServed = 0;
         this.numberOfJobsInNode =0;
         area.reset();
         this.firstArrivalTime = Double.NEGATIVE_INFINITY;
@@ -85,6 +84,10 @@ public abstract class MultiServer {
 
     public long getJobsServed() {
         return Arrays.stream(sum).mapToLong(x -> x.served).sum();
+    }
+
+    public long getTotalNumberOfJobsServed(){
+        return totalNumberOfJobsServed;
     }
 
     public BasicStatistics getStatistics(){
@@ -126,6 +129,9 @@ public abstract class MultiServer {
 
     public void processCompletion(MsqEvent completion, MsqTime time, EventQueue queue) {
         numberOfJobsInNode--;
+
+        if(!isDone()) totalNumberOfJobsServed++;
+
         int serverId = completion.serverId;
         sum[serverId].service += completion.service;
         sum[serverId].served++;
@@ -170,12 +176,10 @@ public abstract class MultiServer {
     }
 
     public void saveBatchStats(MsqTime time) {
-        if(getJobsServed() > 0 && getJobsServed() > lastJobsServed ){
-            batchStatistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime, true, currentBatchStartTime);
-            if(getJobsServed() % batchSize == 0) {
-                lastJobsServed = getJobsServed();
-                resetBatch(time);
-            }
+        // the number of jobs served cannot be 0 since the method is invoked in processCompletion()
+        batchStatistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime, true, currentBatchStartTime);
+        if(getJobsServed() % batchSize == 0) {
+            resetBatch(time);
         }
     }
 

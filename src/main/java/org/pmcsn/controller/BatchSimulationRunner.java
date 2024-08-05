@@ -48,7 +48,6 @@ public class BatchSimulationRunner {
     private final int batchesNumber;
     private final int warmupThreshold;
     private boolean isWarmingUp = true;
-    private final int[] luggagesEventCounter = new int[6];
 
 
     public BatchSimulationRunner() {
@@ -92,7 +91,7 @@ public class BatchSimulationRunner {
         double time = luggageChecks.getArrival();
         events.add(new MsqEvent(EventType.ARRIVAL_LUGGAGE_CHECK, time));
 
-        resetOtherCenters(rngs); // Reset other centers
+        resetCenters(rngs); // Reset other centers
 
         MsqEvent event;
 
@@ -108,10 +107,10 @@ public class BatchSimulationRunner {
                 System.out.println("WARMUP COMPLETED... Starting to collect statistics for centers from now on.");
                 isWarmingUp = false;
                 stopWarmup();
-                Arrays.fill(luggagesEventCounter, 0);
             }
         }
         System.out.println(simulationType + " HAS JUST FINISHED.");
+        System.out.printf("Events queue size %d%n", events.size());
 
         // Writing statistics csv with data from all batches
         writeAllStats(simulationType);
@@ -165,7 +164,7 @@ public class BatchSimulationRunner {
         boardingOthers = factory.createBoardingOthers(approximateServiceAsExponential);
     }
 
-    private void resetOtherCenters(Rngs rngs) {
+    private void resetCenters(Rngs rngs) {
         checkInDesksTarget.reset(rngs);
         checkInDesksOthers.reset(rngs);
         boardingPassScanners.reset(rngs);
@@ -182,7 +181,6 @@ public class BatchSimulationRunner {
                 luggageChecks.processArrival(event, msqTime, events);
                 break;
             case LUGGAGE_CHECK_DONE:
-                luggagesEventCounter[event.nodeId-1]++;
                 luggageChecks.processCompletion(event, msqTime, events);
                 break;
             case ARRIVAL_CHECK_IN_TARGET:
@@ -234,18 +232,6 @@ public class BatchSimulationRunner {
                 boardingOthers.processCompletion(event, msqTime, events);
                 break;
         }
-    }
-
-    private void saveAllBatchStats(MsqTime time) {
-        luggageChecks.saveBatchStats(time);
-        checkInDesksTarget.saveBatchStats(time);
-        checkInDesksOthers.saveBatchStats(time);
-        boardingPassScanners.saveBatchStats(time);
-        securityChecks.saveBatchStats(time);
-        passportChecks.saveBatchStats(time);
-        stampsCheck.saveBatchStats(time);
-        boardingTarget.saveBatchStats(time);
-        boardingOthers.saveBatchStats(time);
     }
 
     private void modelVerification(String simulationType) {
@@ -346,7 +332,7 @@ public class BatchSimulationRunner {
     }
 
     private long getMinimumNumberOfJobsServedByCenters() {
-        return Arrays.stream(luggageChecks.getNumberOfJobsPerCenter()).min().orElseThrow();
+        return Arrays.stream(luggageChecks.getTotalNumberOfJobsServed()).min().orElseThrow();
     }
 
     private boolean isDone() {

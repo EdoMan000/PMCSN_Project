@@ -27,6 +27,10 @@ public class EventQueue {
         return noPriority.isEmpty() && priority.stream().allMatch(AbstractCollection::isEmpty);
     }
 
+    public int size() {
+        return noPriority.size() + priority.stream().mapToInt(AbstractCollection::size).sum();
+    }
+
     // returns the event with the smallest time among ALL queues and removes it
     public MsqEvent pop() throws Exception {
         MsqEvent e1 = noPriority.peek();

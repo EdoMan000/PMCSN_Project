@@ -9,6 +9,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.pmcsn.utils.AnalyticalComputation.computeAnalyticalResults;
+import static org.pmcsn.utils.Comparison.compareResults;
+import static org.pmcsn.utils.PrintUtils.printFinalResults;
+
 public class Verification {
 
     public static class VerificationResult {

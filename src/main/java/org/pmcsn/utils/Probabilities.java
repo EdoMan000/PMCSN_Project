@@ -3,17 +3,26 @@ package org.pmcsn.utils;
 import org.pmcsn.libraries.Rngs;
 
 public class Probabilities {
+    private static double pCitizen;
+    private static double pTarget;
+    private static double pPriority;
 
-    public static boolean isCitizen(Rngs rngs, int streamIndex){
-        return generateProbability(0.2, rngs, streamIndex);
+    public static void init(double pCitizen, double pTarget, double pPriority) {
+        Probabilities.pCitizen = pCitizen;
+        Probabilities.pTarget = pTarget;
+        Probabilities.pPriority = pPriority;
     }
 
-    public static boolean isTargetFlight(Rngs rngs, int streamIndex){
-        return generateProbability(0.0159, rngs, streamIndex);
+    public static boolean isCitizen(Rngs rngs, int streamIndex){
+        return generateProbability(pCitizen, rngs, streamIndex);
+    }
+
+    public static boolean isTargetFlight(Rngs rngs, int streamIndex) {
+        return generateProbability(pTarget, rngs, streamIndex);
     }
 
     public static boolean isPriority(Rngs rngs, int streamIndex){
-        return generateProbability(0.4, rngs, streamIndex);
+        return generateProbability(pPriority, rngs, streamIndex);
     }
 
     public static int getRandomValueUpToMax(Rngs rngs, int streamIndex, int maxValue) {

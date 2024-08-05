@@ -4,6 +4,7 @@ package org.pmcsn.centers;
 import org.pmcsn.model.*;
 
 import static org.pmcsn.utils.Distributions.exponential;
+import static org.pmcsn.utils.Distributions.getWalkingTime;
 
 public class PassportChecks extends MultiServer {
     public PassportChecks(String centerName, double meanServiceTime, int serversNumber, int streamIndex, boolean approximateServiceAsExponential) {
@@ -12,7 +13,8 @@ public class PassportChecks extends MultiServer {
 
     @Override
     public void spawnNextCenterEvent(MsqTime time, EventQueue queue) {
-        MsqEvent next_center_event = new MsqEvent(EventType.ARRIVAL_STAMP_CHECK, time.current);
+        double walkingTime = getWalkingTime(rngs);
+        MsqEvent next_center_event = new MsqEvent(EventType.ARRIVAL_STAMP_CHECK, time.current + walkingTime);
         queue.add(next_center_event);
     }
 
