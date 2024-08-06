@@ -241,6 +241,8 @@ public class BasicSimulationRunner {
                 if (shouldTrackObservations && eventCount % skip == 0)
                     boardingOthers.updateObservations(boardingOthersObservations, i);
                 break;
+
+                 */
         }
     }
 

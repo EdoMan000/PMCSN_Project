@@ -47,7 +47,7 @@ public abstract class AbstractStatistics {
 
     public void saveStats(Area area, MsqSum[] sum, double lastArrivalTime, double lastCompletionTime, boolean isMultiServer, double currentBatchStartTime) {
 
-        //if(lastArrivalTime < currentBatchStartTime) return;
+        if(lastArrivalTime < currentBatchStartTime) return;
 
         long numberOfJobsServed = Arrays.stream(sum).mapToLong(s -> s.served).sum();
         // inter-arrival
@@ -74,7 +74,7 @@ public abstract class AbstractStatistics {
             meanServiceTime = Arrays.stream(sum)
                     .filter(s -> s.served > 0)
                     .mapToDouble(s -> s.service / s.served)
-                    .average().orElseThrow();
+                    .average().orElse(0); //TODO
             // mean utilization (ρ)
             utilization = (lambda * meanServiceTime) / sum.length;
         } else {

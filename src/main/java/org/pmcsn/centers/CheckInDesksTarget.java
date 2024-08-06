@@ -14,8 +14,11 @@ public class CheckInDesksTarget extends MultiServer {
 
     @Override
     public void spawnNextCenterEvent(MsqTime time, EventQueue queue) {
+        /*
         MsqEvent event = new MsqEvent(EventType.ARRIVAL_BOARDING_PASS_SCANNERS, time.current);
         queue.add(event);
+
+         */
     }
 
     @Override
