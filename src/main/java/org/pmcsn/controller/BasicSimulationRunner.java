@@ -193,6 +193,7 @@ public class BasicSimulationRunner {
                 if (shouldTrackObservations && eventCount % skip == 0)
                     checkInDesksOthers.updateObservations(checkinDeskOthersObservations, i);
                 break;
+                /*
             case ARRIVAL_BOARDING_PASS_SCANNERS:
                 boardingPassScanners.processArrival(event, msqTime, queue);
                 break;
@@ -256,6 +257,7 @@ public class BasicSimulationRunner {
         stampsCheck.saveStats();
         boardingTarget.saveStats();
         boardingOthers.saveStats();
+
     }
 
     private void modelVerification(String simulationType) {
