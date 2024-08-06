@@ -46,6 +46,9 @@ public abstract class AbstractStatistics {
     }
 
     public void saveStats(Area area, MsqSum[] sum, double lastArrivalTime, double lastCompletionTime, boolean isMultiServer, double currentBatchStartTime) {
+
+        //if(lastArrivalTime < currentBatchStartTime) return;
+
         long numberOfJobsServed = Arrays.stream(sum).mapToLong(s -> s.served).sum();
         // inter-arrival
         // TODO: lastArrivalTime - currentBatchStartTime potrebbe essere minore di 0 se l'ultimo arrivo al server

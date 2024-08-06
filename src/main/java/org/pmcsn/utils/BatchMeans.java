@@ -18,6 +18,7 @@ public class BatchMeans {
             BatchSimulationRunner batchRunner = new BatchSimulationRunner(batchesNumber, batchSize, warmup);
             var means = batchRunner.runBatchSimulation(true);
             var values = means.stream().map(x -> acf(x.meanSystemPopulationList)).toList();
+            values.forEach(System.out::println);
             if (values.stream().allMatch(x -> x <= 0.2)) {
                 values.forEach(System.out::println);
                 break;

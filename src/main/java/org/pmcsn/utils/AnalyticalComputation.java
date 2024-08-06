@@ -132,13 +132,14 @@ public class AnalyticalComputation {
         double numberOfFlights = config.getDouble("general", "numberOfFlights");
 
         double lambda =  (numberOfPassengers * numberOfFlights) / observationTime;
+        double pTarget = numberOfPassengers / (numberOfPassengers * numberOfFlights);
 
         analyticalResults.add(singleServer(
                 config.getString("luggageChecks", "centerName"),
                 lambda / config.getInt("luggageChecks", "numberOfCenters"),
                 config.getDouble("luggageChecks", "meanServiceTime")));
 
-        double pTarget = config.getDouble("general", "pTarget");
+
         analyticalResults.add(multiServer(
                 config.getString("checkInDeskTarget", "centerName"),
                 lambda * pTarget,

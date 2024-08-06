@@ -28,7 +28,10 @@ public class MenaraAirportSimulator {
     private static void start() {
         FileUtils.deleteDirectory("csvFiles");
         Config config = new Config();
-        Probabilities.init(config.getDouble("general", "pCitizen"), config.getDouble("general", "pTarget"), config.getDouble("general", "pPriority"));
+        double numberOfPassengers = config.getDouble("general", "numberOfPassengers");
+        double numberOfFlights = config.getDouble("general", "numberOfFlights");
+        double pTarget = numberOfPassengers / (numberOfPassengers * numberOfFlights);
+        Probabilities.init(config.getDouble("general", "pCitizen"), pTarget, config.getDouble("general", "pPriority"));
     }
 
     private static void mainMenu(Scanner scanner, BasicSimulationRunner basicRunner, ImprovedModelSimulationRunner improvedRunner, BatchSimulationRunner batchRunner) throws Exception {

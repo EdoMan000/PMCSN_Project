@@ -26,7 +26,7 @@ public class StatisticsUtils {
         Rvms rvms = new Rvms();
 
         Config config = new Config();
-        double alpha = config.getDouble("general", "alpha");
+        double alpha = 1 - config.getDouble("general", "levelOfConfidence");
         // t* in the formula
         double criticalValue = rvms.idfStudent(K - 1, 1 - alpha / 2);
 
