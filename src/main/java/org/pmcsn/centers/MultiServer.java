@@ -23,6 +23,7 @@ public abstract class MultiServer {
     protected int batchSize;
     protected int batchesNumber;
     private double currentBatchStartTime;
+    protected long jobServedPerBatch = 0;
 
     protected MsqSum[] sum;
     protected MsqServer[] servers;
@@ -80,6 +81,7 @@ public abstract class MultiServer {
     public void resetBatch(MsqTime time) {
         area.reset();
         Arrays.stream(sum).forEach(MsqSum::reset);
+        jobServedPerBatch = 0;
         currentBatchStartTime = time.current;
     }
 
@@ -130,6 +132,7 @@ public abstract class MultiServer {
 
     public void processCompletion(MsqEvent completion, MsqTime time, EventQueue queue) {
         numberOfJobsInNode--;
+        jobServedPerBatch++;
 
         if(!isDone()) totalNumberOfJobsServed++;
 
@@ -137,7 +140,7 @@ public abstract class MultiServer {
         sum[serverId].service += completion.service;
         sum[serverId].served++;
         lastCompletionTime = completion.time;
-        if (!warmup) {
+        if (!warmup && jobServedPerBatch == batchSize) {
             saveBatchStats(time);
         }
         spawnNextCenterEvent(time, queue);
@@ -179,10 +182,10 @@ public abstract class MultiServer {
     public void saveBatchStats(MsqTime time) {
         // the number of jobs served cannot be 0 since the method is invoked in processCompletion()
         batchStatistics.saveStats(area, sum, lastArrivalTime, lastCompletionTime, true, currentBatchStartTime);
-        if(getJobsServed() % batchSize == 0) {
+
             resetBatch(time);
         }
-    }
+
 
 
     public MeanStatistics getMeanStatistics() {

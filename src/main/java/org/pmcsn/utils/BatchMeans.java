@@ -15,7 +15,7 @@ public class BatchMeans {
         int warmup = config.getInt("general", "warmup");
         while (batchSize < MAX_BATCH_SIZE) {
             System.out.println("Batch size: " + batchSize);
-            BatchSimulationRunner batchRunner = new BatchSimulationRunner(batchesNumber, batchSize, warmup);
+            BatchSimulationRunner batchRunner = new BatchSimulationRunner(batchesNumber, batchSize);
             var means = batchRunner.runBatchSimulation(true);
             var values = means.stream().map(x -> acf(x.meanSystemPopulationList)).toList();
             values.forEach(System.out::println);

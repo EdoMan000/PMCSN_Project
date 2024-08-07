@@ -36,6 +36,8 @@ public abstract class SingleServer {
     private double currentBatchStartTime;
     private boolean warmup = true;
 
+    protected long jobServedPerBatch = 0;
+
     public SingleServer(String centerName, double meanServiceTime, int streamIndex, boolean approximateServiceAsExponential) {
         Config config  = new Config();
         batchSize = config.getInt("general", "batchSize");
@@ -104,13 +106,14 @@ public abstract class SingleServer {
 
     public void processCompletion(MsqEvent completion, MsqTime time, EventQueue queue) {
         numberOfJobsInNode--;
+        jobServedPerBatch++;
 
         if(!isDone()) totalNumberOfJobsServed++;
 
         sum.served++;
         sum.service += completion.service;
         lastCompletionTime = completion.time;
-        if (!warmup) {
+        if (!warmup && jobServedPerBatch == batchSize) {
             saveBatchStats(time);
         }
         spawnNextCenterEvent(time, queue);
@@ -122,6 +125,7 @@ public abstract class SingleServer {
     public void resetBatch(MsqTime time) {
         area.reset();
         sum.reset();
+        jobServedPerBatch = 0;
         currentBatchStartTime = time.current;
     }
 
@@ -160,9 +164,8 @@ public abstract class SingleServer {
         MsqSum[] s = new MsqSum[1];
         s[0] = sum;
         batchStatistics.saveStats(area, s, lastArrivalTime, lastCompletionTime, false, currentBatchStartTime);
-        if (getJobsServed() % batchSize == 0) {
-            resetBatch(time);
-        }
+        resetBatch(time);
+
     }
 
     public void updateObservations(Observations observations, int run) {

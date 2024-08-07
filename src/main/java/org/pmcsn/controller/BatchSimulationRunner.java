@@ -54,13 +54,13 @@ public class BatchSimulationRunner {
         Config config = new Config();
         batchSize = config.getInt("general", "batchSize");
         batchesNumber = config.getInt("general", "numBatches");
-        warmupThreshold = config.getInt("general", "warmup");
+        warmupThreshold = (int) ((batchSize*batchesNumber)*0.2);
     }
 
-    public BatchSimulationRunner(int batchesNumber, int batchSize, int warmupThreshold) {
+    public BatchSimulationRunner(int batchesNumber, int batchSize) {
         this.batchSize = batchSize;
         this.batchesNumber = batchesNumber;
-        this.warmupThreshold = warmupThreshold;
+        warmupThreshold = (int) ((batchSize*batchesNumber)*0.2);
     }
 
     public List<BatchStatistics> runBatchSimulation(boolean approximateServiceAsExponential) throws Exception {
@@ -103,7 +103,7 @@ public class BatchSimulationRunner {
 
             processCurrentEvent(event, msqTime, events); // Processing the event based on its type
 
-            if (getMinimumNumberOfJobsServedByCenters() >= warmupThreshold && isWarmingUp) { // Checking if still in warmup period
+            if ( isWarmingUp && getMinimumNumberOfJobsServedByCenters() >= warmupThreshold ) { // Checking if still in warmup period
                 System.out.println("WARMUP COMPLETED... Starting to collect statistics for centers from now on.");
                 isWarmingUp = false;
                 stopWarmup(msqTime);
@@ -339,11 +339,10 @@ public class BatchSimulationRunner {
        return luggageChecks.isDone()
                && checkInDesksTarget.isDone()
                && checkInDesksOthers.isDone()
-               && boardingOthers.isDone()
                && securityChecks.isDone()
                && passportChecks.isDone()
                && stampsCheck.isDone()
-               && boardingTarget.isDone()
                && boardingPassScanners.isDone();
+
     }
 }
