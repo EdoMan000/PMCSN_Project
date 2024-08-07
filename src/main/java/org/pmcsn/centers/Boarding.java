@@ -9,19 +9,19 @@ import java.util.List;
 
 import static org.pmcsn.utils.Probabilities.getRandomValueUpToMax;
 
-public class BoardingOthers {
+public class Boarding {
     Rngs rngs;
     private final String centerName;
     private final int streamIndex;
-    BoardingOtherSingleFlight[] boardingSingleFlightArray;
+    BoardingSingleFlight[] boardingSingleFlightArray;
 
-    public BoardingOthers(String name, int numberOfCenters, int serversNumber, double meanServiceTime, int streamIndex, boolean approximateServiceAsExponential) {
+    public Boarding(String name, int numberOfCenters, int serversNumber, double meanServiceTime, int streamIndex, boolean approximateServiceAsExponential) {
         this.centerName = name;
-        this.boardingSingleFlightArray = new BoardingOtherSingleFlight[numberOfCenters];
+        this.boardingSingleFlightArray = new BoardingSingleFlight[numberOfCenters];
         this.streamIndex = streamIndex;
         streamIndex++; // General class uses 1
         for (int i = 0; i < boardingSingleFlightArray.length; i++) {
-            boardingSingleFlightArray[i] = new BoardingOtherSingleFlight(name,i + 1, meanServiceTime, serversNumber, streamIndex, approximateServiceAsExponential);
+            boardingSingleFlightArray[i] = new BoardingSingleFlight(name,i + 1, meanServiceTime, serversNumber, streamIndex, approximateServiceAsExponential);
         }
     }
 
@@ -36,7 +36,7 @@ public class BoardingOthers {
 
     public void reset(Rngs rngs) {
         this.rngs = rngs;
-        for (BoardingOtherSingleFlight other : boardingSingleFlightArray) {
+        for (BoardingSingleFlight other : boardingSingleFlightArray) {
             other.reset(rngs);
         }
     }
@@ -64,7 +64,7 @@ public class BoardingOthers {
 
     public List<BasicStatistics> getStatistics(){
         List<BasicStatistics> statistics = new ArrayList<>();
-        for (BoardingOtherSingleFlight s : boardingSingleFlightArray) {
+        for (BoardingSingleFlight s : boardingSingleFlightArray) {
             statistics.add(s.getStatistics());
         }
         return statistics;
@@ -72,26 +72,26 @@ public class BoardingOthers {
 
     public List<BatchStatistics> getBatchStatistics() {
         List<BatchStatistics> statistics = new ArrayList<>();
-        for (BoardingOtherSingleFlight s : boardingSingleFlightArray) {
+        for (BoardingSingleFlight s : boardingSingleFlightArray) {
             statistics.add(s.getBatchStatistics());
         }
         return statistics;
     }
 
     public void saveStats() {
-        for(BoardingOtherSingleFlight s : boardingSingleFlightArray){
+        for(BoardingSingleFlight s : boardingSingleFlightArray){
             s.saveStats();
         }
     }
 
     public void writeStats(String simulationType){
-        for (BoardingOtherSingleFlight s : boardingSingleFlightArray){
+        for (BoardingSingleFlight s : boardingSingleFlightArray){
             s.writeStats(simulationType);
         }
     }
 
     public void writeBatchStats(String simulationType){
-        for (BoardingOtherSingleFlight s : boardingSingleFlightArray){
+        for (BoardingSingleFlight s : boardingSingleFlightArray){
             s.writeBatchStats(simulationType);
         }
     }
@@ -111,7 +111,7 @@ public class BoardingOthers {
     }
 
     public void stopWarmup(MsqTime time) {
-        Arrays.stream(boardingSingleFlightArray).forEach(boardingOtherSingleFlight -> boardingOtherSingleFlight.stopWarmup(time));
+        Arrays.stream(boardingSingleFlightArray).forEach(boardingSingleFlight -> boardingSingleFlight.stopWarmup(time));
     }
 
     public boolean isDone() {

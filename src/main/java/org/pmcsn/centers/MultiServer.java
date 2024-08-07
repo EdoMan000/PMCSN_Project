@@ -32,6 +32,7 @@ public abstract class MultiServer {
     protected BatchStatistics batchStatistics;
 
     private boolean warmup = true;
+    private boolean stamped = false;
 
     public MultiServer(String centerName, double meanServiceTime, int serversNumber, int streamIndex, boolean approximateServiceAsExponential) {
         Config config  = new Config();
@@ -132,9 +133,11 @@ public abstract class MultiServer {
 
     public void processCompletion(MsqEvent completion, MsqTime time, EventQueue queue) {
         numberOfJobsInNode--;
-        jobServedPerBatch++;
 
-        if(!isDone()) totalNumberOfJobsServed++;
+        if(!isDone()){
+            totalNumberOfJobsServed++;
+            jobServedPerBatch++;
+        }
 
         int serverId = completion.serverId;
         sum[serverId].service += completion.service;
@@ -217,6 +220,10 @@ public abstract class MultiServer {
     }
 
     public boolean isDone() {
+        if(!stamped && batchStatistics.isDone()){
+            stamped = true;
+            System.out.println(centerName+" has done");
+        }
         return batchStatistics.isDone();
     }
 }

@@ -2,6 +2,7 @@ package org.pmcsn.utils;
 
 import org.pmcsn.centers.*;
 import org.pmcsn.conf.Config;
+import org.pmcsn.model.BatchMetric;
 import org.pmcsn.model.MsqSum;
 
 import java.util.List;
@@ -20,7 +21,7 @@ public class PrintUtils {
         System.out.println("╩ ╩└─┘┘└┘┴ ┴┴└─┴ ┴╩ ╩┴┴└─┴  └─┘┴└─ ┴   ╚═╝┴┴ ┴└─┘┴─┘┴ ┴ ┴ └─┘┴└─" + RESET);
     }
 
-    public static void printJobsServedByNodes(LuggageChecks luggageChecks, CheckInDesksTarget checkInDesksTarget, CheckInDesksOthers checkInDesksOthers, BoardingPassScanners boardingPassScanners, SecurityChecks securityChecks, PassportChecks passportChecks, StampsCheck stampsCheck, BoardingTarget boardingTarget, BoardingOthers boardingOthers, boolean includePartialValues) {
+    public static void printJobsServedByNodes(LuggageChecks luggageChecks, CheckInDesks checkInDesks, BoardingPassScanners boardingPassScanners, SecurityChecks securityChecks, PassportChecks passportChecks, StampsCheck stampsCheck,  Boarding boarding, boolean includePartialValues) {
         System.out.println(BLUE + "\n\n*************************************************");
         System.out.println("Jobs Served by Nodes");
         System.out.println("*************************************************" + RESET);
@@ -38,12 +39,12 @@ public class PrintUtils {
         System.out.printf(YELLOW + "TOT Luggage Checks Jobs Served: " + RESET + "%d\n", jobServedEntrances);
 
         // Check-In Desks
-        long jobServedCheckIns = checkInDesksTarget.getTotalNumberOfJobsServed();
+        long jobServedCheckIns = 0;
         if(includePartialValues) {
             System.out.printf(BLUE + "Check-In Desks Target: " + RESET + "%d", jobServedCheckIns);
         }
         i = 1;
-        for (long l : checkInDesksOthers.getTotalNumberOfJobsServed()) {
+        for (long l : checkInDesks.getTotalNumberOfJobsServed()) {
             jobServedCheckIns += l;
             if (includePartialValues) {
                 System.out.printf(BLUE + "Check-In Desks Others Center " + i + ": " + RESET + "%d", l);
@@ -69,13 +70,13 @@ public class PrintUtils {
         System.out.printf(BLUE + "Stamps Check: " + RESET + "%d\n", stampsCheckJobsServed);
 
         // Boarding
-        long jobServedBoarding = boardingTarget.getTotalNumberOfJobsServed();
+        long jobServedBoarding = 0;
         if (includePartialValues) {
             System.out.printf(BLUE + "BoardingTarget: " + RESET + "%d", jobServedBoarding);
         }
 
         i = 1;
-        for (long l : boardingOthers.getTotalNumberOfJobsServed()) {
+        for (long l : boarding.getTotalNumberOfJobsServed()) {
             jobServedBoarding += l;
             if (includePartialValues) {
                 System.out.printf(BLUE + "Boarding Others Center " + i + ": " + RESET + "%d", l);
@@ -222,6 +223,7 @@ public class PrintUtils {
         System.out.println(BLUE + "3" + RESET + ". Batch Simulation");
         System.out.println(BLUE + "4" + RESET  + ". Basic Simulation with Exponential Distributions");
         System.out.println(BLUE + "5" + RESET + ". Batch Simulation with Exponential Distributions");
+        System.out.println(BLUE + "6" + RESET + ". Batch Simulation with Exponential Distributions And Auto-correlation");
 
         System.out.print(BLUE + "Enter the simulation type number: " + RESET);
     }
@@ -255,6 +257,28 @@ public class PrintUtils {
         Config config = new Config();
         if(config.getBoolean("general", "debugInfo")){
             System.out.println(string);
+        }
+    }
+
+    public static void printBatchStatisticsResult(String centerName, List<BatchMetric> batchMetrics) {
+        Config configurationManager = new Config();
+        int batchSize = configurationManager.getInt("general", "batchSize");
+        int numBatches = configurationManager.getInt("general", "numBatches");
+        System.out.println(BLUE + "\n\n*******************************************************************************************************");
+        System.out.println("AUTOCORRELATION VALUES FOR " + centerName + " WITH [B:"+batchSize+"|K:"+numBatches+"]");
+        System.out.println("*******************************************************************************************************" + RESET);
+        for (BatchMetric batchMetric : batchMetrics) {
+            String color = getAcfColor(batchMetric.acfValue);
+            System.out.printf("%s: %s%.4f%s%n", batchMetric.name, color, batchMetric.acfValue, RESET);
+        }
+        System.out.println(BLUE + "*******************************************************************************************************" + RESET);
+    }
+
+    private static String getAcfColor(double value) {
+        if (value > 0.2) {
+            return RED;
+        } else {
+            return GREEN;
         }
     }
 

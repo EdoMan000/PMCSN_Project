@@ -38,11 +38,16 @@ public class Verification {
 
         if (comparisonResultList.size() != confidenceIntervalsList.size() || comparisonResultList.size() != meanStatisticsList.size()) {
             System.out.println("Mismatch in the size of comparison results, confidence intervals, and mean statistics lists");
-            return verificationResults;
+            System.out.println(comparisonResultList.size());
+            System.out.println(confidenceIntervalsList.size());
+            System.out.println(meanStatisticsList.size());
+            //return verificationResults;
+
         }
 
         for (int i = 0; i < comparisonResultList.size(); i++) {
             Comparison.ComparisonResult comparisonResult = comparisonResultList.get(i);
+            System.out.println(comparisonResult.name);
             ConfidenceIntervals confidenceIntervals = confidenceIntervalsList.get(i);
             MeanStatistics meanStatistics = meanStatisticsList.get(i);
 

@@ -132,33 +132,23 @@ public class AnalyticalComputation {
         double numberOfFlights = config.getDouble("general", "numberOfFlights");
 
         double lambda =  (numberOfPassengers * numberOfFlights) / observationTime;
-        double pTarget = numberOfPassengers / (numberOfPassengers * numberOfFlights);
 
         analyticalResults.add(singleServer(
                 config.getString("luggageChecks", "centerName"),
                 lambda / config.getInt("luggageChecks", "numberOfCenters"),
                 config.getDouble("luggageChecks", "meanServiceTime")));
 
-
         analyticalResults.add(multiServer(
-                config.getString("checkInDeskTarget", "centerName"),
-                lambda * pTarget,
-                config.getDouble("checkInDeskTarget", "meanServiceTime"),
-                config.getInt("checkInDeskTarget", "serversNumber")));
-
-        analyticalResults.add(multiServer(
-                config.getString("checkInDeskOthers", "centerName"),
-                (lambda * (1 - pTarget)) / config.getInt("checkInDeskOthers", "numberOfCenters"),
-                config.getDouble("checkInDeskOthers", "meanServiceTime"),
-                config.getInt("checkInDeskOthers", "serversNumber")));
+                config.getString("checkInDesk", "centerName"),
+                lambda  / config.getInt("checkInDesk", "numberOfCenters"),
+                config.getDouble("checkInDesk", "meanServiceTime"),
+                config.getInt("checkInDesk", "serversNumber")));
 
         analyticalResults.add(multiServer(
                 config.getString("boardingPassScanners", "centerName"),
                 lambda,
                 config.getDouble("boardingPassScanners", "meanServiceTime"),
                 config.getInt("boardingPassScanners", "serversNumber")));
-
-
 
         analyticalResults.add(multiServer(
                 config.getString("securityChecks", "centerName"),
@@ -180,16 +170,10 @@ public class AnalyticalComputation {
                 config.getInt("stampsCheck", "serversNumber")));
 
         analyticalResults.add(multiServer(
-                config.getString("boardingTarget", "centerName"),
-                lambda * pTarget,
-                config.getDouble("boardingTarget", "meanServiceTime"),
-                config.getInt("boardingTarget", "serversNumber")));
-
-        analyticalResults.add(multiServer(
-                config.getString("boardingOthers", "centerName"),
-                (lambda * (1 - pTarget)) / config.getInt("checkInDeskOthers", "numberOfCenters"),
-                config.getDouble("boardingOthers", "meanServiceTime"),
-                config.getInt("boardingOthers", "serversNumber")));
+                config.getString("boarding", "centerName"),
+                lambda / config.getInt("boarding", "numberOfCenters"),
+                config.getDouble("boarding", "meanServiceTime"),
+                config.getInt("boarding", "serversNumber")));
 
         writeAnalyticalResults(simulationType, analyticalResults);
 

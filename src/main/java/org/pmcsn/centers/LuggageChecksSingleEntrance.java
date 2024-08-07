@@ -5,10 +5,7 @@ import org.pmcsn.model.EventType;
 import org.pmcsn.model.MsqEvent;
 import org.pmcsn.model.MsqTime;
 
-import java.util.logging.*;
-
 import static org.pmcsn.utils.Distributions.exponential;
-import static org.pmcsn.utils.Probabilities.isTargetFlight;
 
 public class LuggageChecksSingleEntrance extends SingleServer {
     int centerID;
@@ -20,11 +17,7 @@ public class LuggageChecksSingleEntrance extends SingleServer {
 
     @Override
     public void spawnNextCenterEvent(MsqTime time, EventQueue queue) {
-        EventType type = EventType.ARRIVAL_CHECK_IN_OTHERS;
-        if(isTargetFlight(rngs, streamindex + 1)){
-            type = EventType.ARRIVAL_CHECK_IN_TARGET;
-        }
-        MsqEvent event = new MsqEvent(type, time.current);
+        MsqEvent event = new MsqEvent(EventType.ARRIVAL_CHECK_IN, time.current);
         queue.add(event);
     }
 

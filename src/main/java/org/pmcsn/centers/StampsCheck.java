@@ -8,7 +8,6 @@ import org.pmcsn.model.MsqTime;
 import static org.pmcsn.utils.Distributions.exponential;
 import static org.pmcsn.utils.Distributions.uniform;
 import static org.pmcsn.utils.Probabilities.isPriority;
-import static org.pmcsn.utils.Probabilities.isTargetFlight;
 
 public class StampsCheck extends MultiServer{
 
@@ -19,8 +18,7 @@ public class StampsCheck extends MultiServer{
 
     public void spawnNextCenterEvent(MsqTime time, EventQueue queue){
         boolean isPriority = isPriority(rngs, streamIndex + 1);
-        EventType type = isTargetFlight(rngs, streamIndex + 2) ? EventType.ARRIVAL_BOARDING_TARGET : EventType.ARRIVAL_BOARDING_OTHERS;
-        queue.addPriority(new MsqEvent(type, time.current, isPriority));
+        queue.addPriority(new MsqEvent(EventType.ARRIVAL_BOARDING, time.current, isPriority));
     }
 
     @Override

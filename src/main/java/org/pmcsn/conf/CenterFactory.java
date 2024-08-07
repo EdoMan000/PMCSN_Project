@@ -23,23 +23,14 @@ public class CenterFactory {
                 approximateServiceAsExponential);
     }
 
-    public CheckInDesksTarget createCheckinDeskTarget(boolean approximateServiceAsExponential) {
-        return new CheckInDesksTarget(
-                config.getString("checkInDeskTarget", "centerName"),
-                config.getDouble("checkInDeskTarget", "meanServiceTime"),
-                config.getInt("checkInDeskTarget", "serversNumber"),
-                config.getInt("checkInDeskTarget", "streamIndex"),
-                approximateServiceAsExponential);
-    }
 
-
-    public CheckInDesksOthers createCheckinDeskOthers(boolean approximateServiceAsExponential) {
-        return new CheckInDesksOthers(
-                config.getString("checkInDeskOthers", "centerName"),
-                config.getInt("checkInDeskOthers", "numberOfCenters"),
-                config.getInt("checkInDeskOthers", "serversNumber"),
-                config.getDouble("checkInDeskOthers", "meanServiceTime"),
-                config.getInt("checkInDeskOthers", "streamIndex"),
+    public CheckInDesks createCheckinDeskOthers(boolean approximateServiceAsExponential) {
+        return new CheckInDesks(
+                config.getString("checkInDesk", "centerName"),
+                config.getInt("checkInDesk", "numberOfCenters"),
+                config.getInt("checkInDesk", "serversNumber"),
+                config.getDouble("checkInDesk", "meanServiceTime"),
+                config.getInt("checkInDesk", "streamIndex"),
                 approximateServiceAsExponential);
     }
 
@@ -83,23 +74,13 @@ public class CenterFactory {
         );
     }
 
-    public BoardingTarget createBoardingTarget(boolean approximateServiceAsExponential) {
-        return new BoardingTarget(
-                config.getString("boardingTarget", "centerName"),
-                config.getDouble("boardingTarget", "meanServiceTime"),
-                config.getInt("boardingTarget", "serversNumber"),
-                config.getInt("boardingTarget", "streamIndex"),
-                approximateServiceAsExponential
-        );
-    }
-
-    public BoardingOthers createBoardingOthers(boolean approximateServiceAsExponential) {
-        return new BoardingOthers(
-                config.getString("boardingOthers", "centerName"),
-                config.getInt("boardingOthers", "numberOfCenters"),
-                config.getInt("boardingOthers", "serversNumber"),
-                config.getDouble("boardingOthers", "meanServiceTime"),
-                config.getInt("boardingOthers", "streamIndex"),
+    public Boarding createBoardingOthers(boolean approximateServiceAsExponential) {
+        return new Boarding(
+                config.getString("boarding", "centerName"),
+                config.getInt("boarding", "numberOfCenters"),
+                config.getInt("boarding", "serversNumber"),
+                config.getDouble("boarding", "meanServiceTime"),
+                config.getInt("boarding", "streamIndex"),
                 approximateServiceAsExponential
         );
     }

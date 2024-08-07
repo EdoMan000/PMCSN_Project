@@ -8,10 +8,10 @@ import org.pmcsn.model.MsqTime;
 import static org.pmcsn.utils.Distributions.exponential;
 import static org.pmcsn.utils.Distributions.logNormal;
 
-public class BoardingOtherSingleFlight extends MultiServer {
+public class BoardingSingleFlight extends MultiServer {
     private final int nodeId;
 
-    public BoardingOtherSingleFlight(String centerName, int nodeId, double meanServiceTime, int serversNum, int streamIndex, boolean approximateServiceAsExponential) {
+    public BoardingSingleFlight(String centerName, int nodeId, double meanServiceTime, int serversNum, int streamIndex, boolean approximateServiceAsExponential) {
         super("%s_%d".formatted(centerName, nodeId), meanServiceTime, serversNum, streamIndex, approximateServiceAsExponential);
         this.nodeId = nodeId;
     }
@@ -19,12 +19,13 @@ public class BoardingOtherSingleFlight extends MultiServer {
     @Override
     void spawnCompletionEvent(MsqTime time, EventQueue queue, int serverId) {
         double service = getService(streamIndex);
-        MsqEvent event = new MsqEvent(EventType.BOARDING_OTHERS_DONE, time.current + service, service, serverId, nodeId);
+        MsqEvent event = new MsqEvent(EventType.BOARDING_DONE, time.current + service, service, serverId, nodeId);
         queue.add(event);
     }
 
     @Override
     void spawnNextCenterEvent(MsqTime time, EventQueue events) {
+        // no events generated since it's the last center
     }
 
     @Override

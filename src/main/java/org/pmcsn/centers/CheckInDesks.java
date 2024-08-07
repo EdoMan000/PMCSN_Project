@@ -10,25 +10,25 @@ import java.util.List;
 import static org.pmcsn.utils.Probabilities.getRandomValueUpToMax;
 import static org.pmcsn.utils.StatisticsUtils.computeMean;
 
-public class CheckInDesksOthers {
+public class CheckInDesks {
     Rngs rngs;
     private final String centerName;
     private final int streamIndex;
-    CheckInDesksOtherSingleFlight[] checkInDesksSingleFlightArray;
+    CheckInDesksSingleFlight[] checkInDesksSingleFlightArray;
 
-    public CheckInDesksOthers(String name, int numberOfCenters, int serversNumber, double meanServiceTime, int streamIndex, boolean approximateServiceAsExponential) {
+    public CheckInDesks(String name, int numberOfCenters, int serversNumber, double meanServiceTime, int streamIndex, boolean approximateServiceAsExponential) {
         this.centerName = name;
-        this.checkInDesksSingleFlightArray = new CheckInDesksOtherSingleFlight[numberOfCenters];
+        this.checkInDesksSingleFlightArray = new CheckInDesksSingleFlight[numberOfCenters];
         this.streamIndex = streamIndex;
         streamIndex++; // General class uses one
         for (int i = 0; i < checkInDesksSingleFlightArray.length; i++) {
-            checkInDesksSingleFlightArray[i] = new CheckInDesksOtherSingleFlight(name,i + 1, meanServiceTime, serversNumber, streamIndex, approximateServiceAsExponential);
+            checkInDesksSingleFlightArray[i] = new CheckInDesksSingleFlight(name,i + 1, meanServiceTime, serversNumber, streamIndex, approximateServiceAsExponential);
         }
     }
 
     public void reset(Rngs rngs) {
         this.rngs = rngs;
-        for (CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray) {
+        for (CheckInDesksSingleFlight s : checkInDesksSingleFlightArray) {
             s.reset(rngs);
         }
     }
@@ -60,7 +60,7 @@ public class CheckInDesksOthers {
 
     public List<BasicStatistics> getStatistics(){
         List<BasicStatistics> statistics = new ArrayList<>();
-        for (CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray) {
+        for (CheckInDesksSingleFlight s : checkInDesksSingleFlightArray) {
             statistics.add(s.getStatistics());
         }
         return statistics;
@@ -68,32 +68,32 @@ public class CheckInDesksOthers {
 
     public List<BatchStatistics> getBatchStatistics() {
         List<BatchStatistics> statistics = new ArrayList<>();
-        for (CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray) {
+        for (CheckInDesksSingleFlight s : checkInDesksSingleFlightArray) {
             statistics.add(s.getBatchStatistics());
         }
         return statistics;
     }
 
     public void saveStats() {
-        for (CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray){
+        for (CheckInDesksSingleFlight s : checkInDesksSingleFlightArray){
             s.saveStats();
         }
     }
 
     public void setAreaForAll(MsqTime time){
-        for(CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray){
+        for(CheckInDesksSingleFlight s : checkInDesksSingleFlightArray){
             s.setArea(time);
         }
     }
 
     public void writeStats(String simulationType){
-        for (CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray){
+        for (CheckInDesksSingleFlight s : checkInDesksSingleFlightArray){
             s.writeStats(simulationType);
         }
     }
 
     public void writeBatchStats(String simulationType){
-        for (CheckInDesksOtherSingleFlight s : checkInDesksSingleFlightArray){
+        for (CheckInDesksSingleFlight s : checkInDesksSingleFlightArray){
             s.writeBatchStats(simulationType);
         }
     }
@@ -140,7 +140,7 @@ public class CheckInDesksOthers {
     }
 
     public void stopWarmup(MsqTime time) {
-        Arrays.stream(checkInDesksSingleFlightArray).forEach(checkInDesksOtherSingleFlight -> checkInDesksOtherSingleFlight.stopWarmup(time));
+        Arrays.stream(checkInDesksSingleFlightArray).forEach(checkInDesksSingleFlight -> checkInDesksSingleFlight.stopWarmup(time));
     }
 
     public boolean isDone() {

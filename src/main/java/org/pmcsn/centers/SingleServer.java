@@ -35,6 +35,7 @@ public abstract class SingleServer {
     private int batchesNumber;
     private double currentBatchStartTime;
     private boolean warmup = true;
+    private boolean stamped = false;
 
     protected long jobServedPerBatch = 0;
 
@@ -106,9 +107,11 @@ public abstract class SingleServer {
 
     public void processCompletion(MsqEvent completion, MsqTime time, EventQueue queue) {
         numberOfJobsInNode--;
-        jobServedPerBatch++;
 
-        if(!isDone()) totalNumberOfJobsServed++;
+        if(!isDone()){
+            totalNumberOfJobsServed++;
+            jobServedPerBatch++;
+        }
 
         sum.served++;
         sum.service += completion.service;
@@ -184,6 +187,10 @@ public abstract class SingleServer {
     }
 
     public boolean isDone() {
+        if(!stamped && batchStatistics.isDone()){
+            stamped = true;
+            System.out.println(centerName+" has done");
+        }
         return batchStatistics.isDone();
     }
 }

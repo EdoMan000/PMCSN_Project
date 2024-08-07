@@ -4,21 +4,15 @@ import org.pmcsn.libraries.Rngs;
 
 public class Probabilities {
     private static double pCitizen;
-    private static double pTarget;
     private static double pPriority;
 
-    public static void init(double pCitizen, double pTarget, double pPriority) {
+    public static void init(double pCitizen, double pPriority) {
         Probabilities.pCitizen = pCitizen;
-        Probabilities.pTarget = pTarget;
         Probabilities.pPriority = pPriority;
     }
 
     public static boolean isCitizen(Rngs rngs, int streamIndex){
         return generateProbability(pCitizen, rngs, streamIndex);
-    }
-
-    public static boolean isTargetFlight(Rngs rngs, int streamIndex) {
-        return generateProbability(pTarget, rngs, streamIndex);
     }
 
     public static boolean isPriority(Rngs rngs, int streamIndex){

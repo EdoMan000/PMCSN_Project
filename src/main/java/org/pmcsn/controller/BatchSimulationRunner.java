@@ -32,14 +32,12 @@ public class BatchSimulationRunner {
     private static final int START = 0;
     private static final long SEED = 123456789L;
     private LuggageChecks luggageChecks;
-    private CheckInDesksTarget checkInDesksTarget;
-    private CheckInDesksOthers checkInDesksOthers;
+    private CheckInDesks checkInDesks;
     private BoardingPassScanners boardingPassScanners;
     private SecurityChecks securityChecks;
     private PassportChecks passportChecks;
     private StampsCheck stampsCheck;
-    private BoardingTarget boardingTarget;
-    private BoardingOthers boardingOthers;
+    private Boarding boarding;
 
     // We need to compute autocorrelation on the series
     // Number of jobs in single batch (B)
@@ -120,33 +118,28 @@ public class BatchSimulationRunner {
         }
 
         // controllo di consistenza sul numero di jobs processati
-         printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boardingTarget, boardingOthers, false);
+         printJobsServedByNodes(luggageChecks, checkInDesks, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boarding, false);
 
         return getBatchStatistics();
-        // return luggageChecks.getMeans();
     }
 
     private void stopWarmup(MsqTime time) {
         luggageChecks.stopWarmup(time);
-        checkInDesksTarget.stopWarmup(time);
-        checkInDesksOthers.stopWarmup(time);
+        checkInDesks.stopWarmup(time);
         boardingPassScanners.stopWarmup(time);
         securityChecks.stopWarmup(time);
         passportChecks.stopWarmup(time);
         stampsCheck.stopWarmup(time);
-        boardingTarget.stopWarmup(time);
-        boardingOthers.stopWarmup(time);
+        boarding.stopWarmup(time);
     }
 
     private List<BatchStatistics> getBatchStatistics() {
         List<BatchStatistics> batchStatistics = new ArrayList<>(luggageChecks.getBatchStatistics());
-        batchStatistics.add(checkInDesksTarget.getBatchStatistics());
-        batchStatistics.addAll(checkInDesksOthers.getBatchStatistics());
+        batchStatistics.addAll(checkInDesks.getBatchStatistics());
         batchStatistics.add(securityChecks.getBatchStatistics());
         batchStatistics.add(passportChecks.getBatchStatistics());
         batchStatistics.add(stampsCheck.getBatchStatistics());
-        batchStatistics.add(boardingTarget.getBatchStatistics());
-        batchStatistics.addAll(boardingOthers.getBatchStatistics());
+        batchStatistics.addAll(boarding.getBatchStatistics());
         return batchStatistics;
     }
 
@@ -154,25 +147,21 @@ public class BatchSimulationRunner {
     private void initCenters(boolean approximateServiceAsExponential) {
         CenterFactory factory = new CenterFactory();
         luggageChecks = factory.createLuggageChecks(approximateServiceAsExponential);
-        checkInDesksTarget = factory.createCheckinDeskTarget(approximateServiceAsExponential);
-        checkInDesksOthers = factory.createCheckinDeskOthers(approximateServiceAsExponential);
+        checkInDesks = factory.createCheckinDeskOthers(approximateServiceAsExponential);
         boardingPassScanners = factory.createBoardingPassScanners(approximateServiceAsExponential);
         securityChecks = factory.createSecurityChecks(approximateServiceAsExponential);
         passportChecks = factory.createPassportChecks(approximateServiceAsExponential);
         stampsCheck = factory.createStampsCheck(approximateServiceAsExponential);
-        boardingTarget = factory.createBoardingTarget(approximateServiceAsExponential);
-        boardingOthers = factory.createBoardingOthers(approximateServiceAsExponential);
+        boarding = factory.createBoardingOthers(approximateServiceAsExponential);
     }
 
     private void resetCenters(Rngs rngs) {
-        checkInDesksTarget.reset(rngs);
-        checkInDesksOthers.reset(rngs);
+        checkInDesks.reset(rngs);
         boardingPassScanners.reset(rngs);
         securityChecks.reset(rngs);
         passportChecks.reset(rngs);
         stampsCheck.reset(rngs);
-        boardingTarget.reset(rngs);
-        boardingOthers.reset(rngs);
+        boarding.reset(rngs);
     }
 
     private void processCurrentEvent(MsqEvent event, MsqTime msqTime, EventQueue events) {
@@ -183,17 +172,11 @@ public class BatchSimulationRunner {
             case LUGGAGE_CHECK_DONE:
                 luggageChecks.processCompletion(event, msqTime, events);
                 break;
-            case ARRIVAL_CHECK_IN_TARGET:
-                checkInDesksTarget.processArrival(event, msqTime, events);
+            case ARRIVAL_CHECK_IN:
+                checkInDesks.processArrival(event, msqTime, events);
                 break;
-            case CHECK_IN_TARGET_DONE:
-                checkInDesksTarget.processCompletion(event, msqTime, events);
-                break;
-            case ARRIVAL_CHECK_IN_OTHERS:
-                checkInDesksOthers.processArrival(event, msqTime, events);
-                break;
-            case CHECK_IN_OTHERS_DONE:
-                checkInDesksOthers.processCompletion(event, msqTime, events);
+            case CHECK_IN_DONE:
+                checkInDesks.processCompletion(event, msqTime, events);
                 break;
             case ARRIVAL_BOARDING_PASS_SCANNERS:
                 boardingPassScanners.processArrival(event, msqTime, events);
@@ -219,26 +202,22 @@ public class BatchSimulationRunner {
             case STAMP_CHECK_DONE:
                 stampsCheck.processCompletion(event, msqTime, events);
                 break;
-            case ARRIVAL_BOARDING_TARGET:
-                boardingTarget.processArrival(event, msqTime, events);
+            case ARRIVAL_BOARDING:
+                boarding.processArrival(event, msqTime, events);
                 break;
-            case BOARDING_TARGET_DONE:
-                boardingTarget.processCompletion(event, msqTime, events);
-                break;
-            case ARRIVAL_BOARDING_OTHERS:
-                boardingOthers.processArrival(event, msqTime, events);
-                break;
-            case BOARDING_OTHERS_DONE:
-                boardingOthers.processCompletion(event, msqTime, events);
+            case BOARDING_DONE:
+                boarding.processCompletion(event, msqTime, events);
                 break;
         }
     }
 
     private void modelVerification(String simulationType) {
         List<AnalyticalComputation.AnalyticalResult> analyticalResultList = computeAnalyticalResults(simulationType);
+        System.out.println("an res size: "+ analyticalResultList.size());
 
         // Compare results and verifications and save comparison result
         List<MeanStatistics> batchMeanStatisticsList = aggregateBatchMeanStatistics();
+        System.out.println("batch mean statistics: "+ batchMeanStatisticsList.size());
 
         List<Comparison.ComparisonResult> comparisonResultList = compareResults(simulationType, analyticalResultList, batchMeanStatisticsList);
 
@@ -253,38 +232,25 @@ public class BatchSimulationRunner {
         List<MeanStatistics> batchMeanStatisticsList = new ArrayList<>();
 
         batchMeanStatisticsList.addAll(luggageChecks.getBatchMeanStatistics());
-        batchMeanStatisticsList.add(checkInDesksTarget.getBatchMeanStatistics());
-        batchMeanStatisticsList.addAll(checkInDesksOthers.getBatchMeanStatistics());
+        batchMeanStatisticsList.addAll(checkInDesks.getBatchMeanStatistics());
         batchMeanStatisticsList.add(boardingPassScanners.getBatchMeanStatistics());
         batchMeanStatisticsList.add(securityChecks.getBatchMeanStatistics());
         batchMeanStatisticsList.add(passportChecks.getBatchMeanStatistics());
         batchMeanStatisticsList.add(stampsCheck.getBatchMeanStatistics());
-        batchMeanStatisticsList.add(boardingTarget.getBatchMeanStatistics());
-        batchMeanStatisticsList.addAll(boardingOthers.getBatchMeanStatistics());
+        batchMeanStatisticsList.addAll(boarding.getBatchMeanStatistics());
         return batchMeanStatisticsList;
     }
 
     private List<ConfidenceIntervals> aggregateConfidenceIntervals() {
         List<ConfidenceIntervals> confidenceIntervalsList = new ArrayList<>();
 
-        System.out.println("-------------------LUGGAGE--------------------------");
         confidenceIntervalsList.addAll(createConfidenceIntervalsList(luggageChecks.getBatchStatistics()));
-        System.out.println("--------------------------CHECKIN------------------------");
-        confidenceIntervalsList.add(createConfidenceIntervals(checkInDesksTarget.getBatchStatistics()));
-        System.out.println("-----------------------CHECK IN OTHERS----------------------------");
-        confidenceIntervalsList.addAll(createConfidenceIntervalsList(checkInDesksOthers.getBatchStatistics()));
-        System.out.println("-------------------------BOARDING SCANNERS--------------------------");
+        confidenceIntervalsList.addAll(createConfidenceIntervalsList(checkInDesks.getBatchStatistics()));
         confidenceIntervalsList.add(createConfidenceIntervals(boardingPassScanners.getBatchStatistics()));
-        System.out.println("--------------------SECURITY CHECKS----------------------------");
         confidenceIntervalsList.add(createConfidenceIntervals(securityChecks.getBatchStatistics()));
-        System.out.println("-----------------------PASSPORT CHECKS-------------------------");
         confidenceIntervalsList.add(createConfidenceIntervals(passportChecks.getBatchStatistics()));
-        System.out.println("------------------------STAMP CHECKS-----------------------");
         confidenceIntervalsList.add(createConfidenceIntervals(stampsCheck.getBatchStatistics()));
-        System.out.println("---------------------------BOARDING TARGET-----------------------");
-        confidenceIntervalsList.add(createConfidenceIntervals(boardingTarget.getBatchStatistics()));
-        System.out.println("---------------------------BOARDING OTHERS---------------------");
-        confidenceIntervalsList.addAll(createConfidenceIntervalsList(boardingOthers.getBatchStatistics()));
+        confidenceIntervalsList.addAll(createConfidenceIntervalsList(boarding.getBatchStatistics()));
 
         return confidenceIntervalsList;
     }
@@ -309,26 +275,22 @@ public class BatchSimulationRunner {
         System.out.println("Writing csv files with stats for all the centers.");
 
         luggageChecks.writeBatchStats(simulationType);
-        checkInDesksTarget.writeBatchStats(simulationType);
-        checkInDesksOthers.writeBatchStats(simulationType);
+        checkInDesks.writeBatchStats(simulationType);
         boardingPassScanners.writeBatchStats(simulationType);
         securityChecks.writeBatchStats(simulationType);
         passportChecks.writeBatchStats(simulationType);
         stampsCheck.writeBatchStats(simulationType);
-        boardingTarget.writeBatchStats(simulationType);
-        boardingOthers.writeBatchStats(simulationType);
+        boarding.writeBatchStats(simulationType);
     }
 
     private void updateAreas(MsqTime msqTime) {
         luggageChecks.setAreaForAll(msqTime);
-        checkInDesksTarget.setArea(msqTime);
-        checkInDesksOthers.setAreaForAll(msqTime);
+        checkInDesks.setAreaForAll(msqTime);
         boardingPassScanners.setArea(msqTime);
         securityChecks.setArea(msqTime);
         passportChecks.setArea(msqTime);
         stampsCheck.setArea(msqTime);
-        boardingTarget.setArea(msqTime);
-        boardingOthers.setAreaForAll(msqTime);
+        boarding.setAreaForAll(msqTime);
     }
 
     private long getMinimumNumberOfJobsServedByCenters() {
@@ -337,12 +299,11 @@ public class BatchSimulationRunner {
 
     private boolean isDone() {
        return luggageChecks.isDone()
-               && checkInDesksTarget.isDone()
-               && checkInDesksOthers.isDone()
+               && checkInDesks.isDone()
                && securityChecks.isDone()
                && passportChecks.isDone()
                && stampsCheck.isDone()
-               && boardingPassScanners.isDone();
-
+               && boardingPassScanners.isDone()
+               && boarding.isDone();
     }
 }

@@ -32,23 +32,19 @@ public class BasicSimulationRunner {
 
     private final Config config = new Config();
     private LuggageChecks luggageChecks;
-    private CheckInDesksTarget checkInDesksTarget;
-    private CheckInDesksOthers checkInDesksOthers;
+    private CheckInDesks checkInDesks;
     private BoardingPassScanners boardingPassScanners;
     private SecurityChecks securityChecks;
     private PassportChecks passportChecks;
     private StampsCheck stampsCheck;
-    private BoardingTarget boardingTarget;
-    private BoardingOthers boardingOthers;
+    private Boarding boarding;
     private final List<Observations> luggageObservations = new ArrayList<>();
-    private final List<Observations> checkInDeskTargetObservations = new ArrayList<>();
-    private final List<List<Observations>> checkinDeskOthersObservations = new ArrayList<>();
+    private final List<List<Observations>> checkinDeskObservations = new ArrayList<>();
     private final List<Observations> boardingPassScannerObservations = new ArrayList<>();
     private final List<Observations> securityCheckObservations = new ArrayList<>();
     private final List<Observations> passportCheckObservations = new ArrayList<>();
-    private final List<Observations> boardingTargetObservations = new ArrayList<>();
     private final List<Observations> stampsCheckObservations = new ArrayList<>();
-    private final List<List<Observations>> boardingOthersObservations = new ArrayList<>();
+    private final List<List<Observations>> boardingObservations = new ArrayList<>();
 
     public void runBasicSimulation(boolean approximateServiceAsExponential) throws Exception {
         runBasicSimulation(approximateServiceAsExponential, true);
@@ -140,31 +136,27 @@ public class BasicSimulationRunner {
             modelVerification(simulationType); // Computing and writing verifications stats csv
         }
 
-        printJobsServedByNodes(luggageChecks, checkInDesksTarget, checkInDesksOthers, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boardingTarget, boardingOthers, false);
+        printJobsServedByNodes(luggageChecks, checkInDesks, boardingPassScanners, securityChecks, passportChecks, stampsCheck, boarding, false);
     }
 
     private void initCenters(boolean approximateServiceAsExponential) {
         CenterFactory factory = new CenterFactory();
         luggageChecks = factory.createLuggageChecks(approximateServiceAsExponential);
-        checkInDesksTarget = factory.createCheckinDeskTarget(approximateServiceAsExponential);
-        checkInDesksOthers = factory.createCheckinDeskOthers(approximateServiceAsExponential);
+        checkInDesks = factory.createCheckinDeskOthers(approximateServiceAsExponential);
         boardingPassScanners = factory.createBoardingPassScanners(approximateServiceAsExponential);
         securityChecks = factory.createSecurityChecks(approximateServiceAsExponential);
         passportChecks = factory.createPassportChecks(approximateServiceAsExponential);
         stampsCheck = factory.createStampsCheck(approximateServiceAsExponential);
-        boardingTarget = factory.createBoardingTarget(approximateServiceAsExponential);
-        boardingOthers = factory.createBoardingOthers(approximateServiceAsExponential);
+        boarding = factory.createBoardingOthers(approximateServiceAsExponential);
     }
 
     private void resetCenters(Rngs rngs) {
-        checkInDesksTarget.reset(rngs);
-        checkInDesksOthers.reset(rngs);
+        checkInDesks.reset(rngs);
         boardingPassScanners.reset(rngs);
         securityChecks.reset(rngs);
         passportChecks.reset(rngs);
         stampsCheck.reset(rngs);
-        boardingTarget.reset(rngs);
-        boardingOthers.reset(rngs);
+        boarding.reset(rngs);
     }
 
     private void processCurrentEvent(boolean shouldTrackObservations, MsqEvent event, MsqTime msqTime, EventQueue queue, int eventCount, int skip, int i) {
@@ -177,23 +169,14 @@ public class BasicSimulationRunner {
                 if (shouldTrackObservations && eventCount % skip == 0)
                     luggageChecks.updateObservations(luggageObservations, i);
                 break;
-            case ARRIVAL_CHECK_IN_TARGET:
-                checkInDesksTarget.processArrival(event, msqTime, queue);
+            case ARRIVAL_CHECK_IN:
+                checkInDesks.processArrival(event, msqTime, queue);
                 break;
-            case CHECK_IN_TARGET_DONE:
-                checkInDesksTarget.processCompletion(event, msqTime, queue);
+            case CHECK_IN_DONE:
+                checkInDesks.processCompletion(event, msqTime, queue);
                 if (shouldTrackObservations && eventCount % skip == 0)
-                    checkInDesksTarget.updateObservations(checkInDeskTargetObservations, i);
+                    checkInDesks.updateObservations(checkinDeskObservations, i);
                 break;
-            case ARRIVAL_CHECK_IN_OTHERS:
-                checkInDesksOthers.processArrival(event, msqTime, queue);
-                break;
-            case CHECK_IN_OTHERS_DONE:
-                checkInDesksOthers.processCompletion(event, msqTime, queue);
-                if (shouldTrackObservations && eventCount % skip == 0)
-                    checkInDesksOthers.updateObservations(checkinDeskOthersObservations, i);
-                break;
-                /*
             case ARRIVAL_BOARDING_PASS_SCANNERS:
                 boardingPassScanners.processArrival(event, msqTime, queue);
                 break;
@@ -226,37 +209,27 @@ public class BasicSimulationRunner {
                 if (shouldTrackObservations && eventCount % skip == 0)
                     stampsCheck.updateObservations(stampsCheckObservations, i);
                 break;
-            case ARRIVAL_BOARDING_TARGET:
-                boardingTarget.processArrival(event, msqTime, queue);
+            case ARRIVAL_BOARDING:
+                boarding.processArrival(event, msqTime, queue);
                 break;
-            case BOARDING_TARGET_DONE:
-                boardingTarget.processCompletion(event, msqTime, queue);
+            case BOARDING_DONE:
+                boarding.processCompletion(event, msqTime, queue);
                 if (shouldTrackObservations && eventCount % skip == 0)
-                    boardingTarget.updateObservations(boardingTargetObservations, i);
-                break;
-            case ARRIVAL_BOARDING_OTHERS:
-                boardingOthers.processArrival(event, msqTime, queue);
-                break;
-            case BOARDING_OTHERS_DONE:
-                boardingOthers.processCompletion(event, msqTime, queue);
-                if (shouldTrackObservations && eventCount % skip == 0)
-                    boardingOthers.updateObservations(boardingOthersObservations, i);
+                    boarding.updateObservations(boardingObservations, i);
                 break;
 
-                 */
+
         }
     }
 
     private void saveAllStats() {
         luggageChecks.saveStats();
-        checkInDesksTarget.saveStats();
-        checkInDesksOthers.saveStats();
+        checkInDesks.saveStats();
         boardingPassScanners.saveStats();
         securityChecks.saveStats();
         passportChecks.saveStats();
         stampsCheck.saveStats();
-        boardingTarget.saveStats();
-        boardingOthers.saveStats();
+        boarding.saveStats();
 
     }
 
@@ -279,28 +252,24 @@ public class BasicSimulationRunner {
         List<MeanStatistics> meanStatisticsList = new ArrayList<>();
 
         meanStatisticsList.addAll(luggageChecks.getMeanStatistics());
-        meanStatisticsList.add(checkInDesksTarget.getMeanStatistics());
-        meanStatisticsList.addAll(checkInDesksOthers.getMeanStatistics());
+        meanStatisticsList.addAll(checkInDesks.getMeanStatistics());
         meanStatisticsList.add(boardingPassScanners.getMeanStatistics());
         meanStatisticsList.add(securityChecks.getMeanStatistics());
         meanStatisticsList.add(passportChecks.getMeanStatistics());
         meanStatisticsList.add(stampsCheck.getMeanStatistics());
-        meanStatisticsList.add(boardingTarget.getMeanStatistics());
-        meanStatisticsList.addAll(boardingOthers.getMeanStatistics());
+        meanStatisticsList.addAll(boarding.getMeanStatistics());
         return meanStatisticsList;
     }
 
     private List<ConfidenceIntervals> aggregateConfidenceIntervals() {
         List<ConfidenceIntervals> confidenceIntervalsList = new ArrayList<>();
         confidenceIntervalsList.addAll(createConfidenceIntervalsList(luggageChecks.getStatistics()));
-        confidenceIntervalsList.add(createConfidenceIntervals(checkInDesksTarget.getStatistics()));
-        confidenceIntervalsList.addAll(createConfidenceIntervalsList(checkInDesksOthers.getStatistics()));
+        confidenceIntervalsList.addAll(createConfidenceIntervalsList(checkInDesks.getStatistics()));
         confidenceIntervalsList.add(createConfidenceIntervals(boardingPassScanners.getStatistics()));
         confidenceIntervalsList.add(createConfidenceIntervals(securityChecks.getStatistics()));
         confidenceIntervalsList.add(createConfidenceIntervals(passportChecks.getStatistics()));
         confidenceIntervalsList.add(createConfidenceIntervals(stampsCheck.getStatistics()));
-        confidenceIntervalsList.add(createConfidenceIntervals(boardingTarget.getStatistics()));
-        confidenceIntervalsList.addAll(createConfidenceIntervalsList(boardingOthers.getStatistics()));
+        confidenceIntervalsList.addAll(createConfidenceIntervalsList(boarding.getStatistics()));
 
         return confidenceIntervalsList;
     }
@@ -324,39 +293,33 @@ public class BasicSimulationRunner {
         System.out.println("Writing csv files with stats for all the centers.");
 
         luggageChecks.writeStats(simulationType);
-        checkInDesksTarget.writeStats(simulationType);
-        checkInDesksOthers.writeStats(simulationType);
+        checkInDesks.writeStats(simulationType);
         boardingPassScanners.writeStats(simulationType);
         securityChecks.writeStats(simulationType);
         passportChecks.writeStats(simulationType);
         stampsCheck.writeStats(simulationType);
-        boardingTarget.writeStats(simulationType);
-        boardingOthers.writeStats(simulationType);
+        boarding.writeStats(simulationType);
     }
 
     private long getTotalNumberOfJobsInSystem() {
         return luggageChecks.getTotalNumberOfJobsInNode() +
-                checkInDesksTarget.getNumberOfJobsInNode() +
-                checkInDesksOthers.getTotalNumberOfJobsInNode() +
+                checkInDesks.getTotalNumberOfJobsInNode() +
                 boardingPassScanners.getNumberOfJobsInNode() +
                 securityChecks.getNumberOfJobsInNode() +
                 passportChecks.getNumberOfJobsInNode() +
                 stampsCheck.getNumberOfJobsInNode() +
-                boardingTarget.getNumberOfJobsInNode() +
-                boardingOthers.getTotalNumberOfJobsInNode();
+                boarding.getTotalNumberOfJobsInNode();
     }
 
     private void updateAreas(MsqTime msqTime) {
         // Updating the areas
         luggageChecks.setAreaForAll(msqTime);
-        checkInDesksTarget.setArea(msqTime);
-        checkInDesksOthers.setAreaForAll(msqTime);
+        checkInDesks.setAreaForAll(msqTime);
         boardingPassScanners.setArea(msqTime);
         securityChecks.setArea(msqTime);
         passportChecks.setArea(msqTime);
         stampsCheck.setArea(msqTime);
-        boardingTarget.setArea(msqTime);
-        boardingOthers.setAreaForAll(msqTime);
+        boarding.setAreaForAll(msqTime);
     }
 
     private void initObservations() {
@@ -364,13 +327,11 @@ public class BasicSimulationRunner {
         for (int i = 0; i < config.getInt("luggageChecks", "numberOfCenters"); i++) {
             luggageObservations.add(new Observations("%s_%d".formatted(config.getString("luggageChecks", "centerName"), i+1), runsNumber));
         }
-        for (int i = 0; i < config.getInt("checkInDeskTarget", "serversNumber"); i++) {
-            checkInDeskTargetObservations.add(new Observations("%s_%d".formatted(config.getString("checkInDeskTarget", "centerName"), i+1), runsNumber));
-        }
+
         for (int i = 0; i < config.getInt("checkInDeskOthers", "numberOfCenters"); i++) {
-            checkinDeskOthersObservations.add(new ArrayList<>());
+            checkinDeskObservations.add(new ArrayList<>());
             for (int j = 0; j < config.getInt("checkInDeskOthers", "serversNumber"); j++) {
-                checkinDeskOthersObservations.get(i).add(new Observations("%s_%d_%d".formatted(config.getString("checkInDeskOthers", "centerName"), i+1, j+1), runsNumber));
+                checkinDeskObservations.get(i).add(new Observations("%s_%d_%d".formatted(config.getString("checkInDeskOthers", "centerName"), i+1, j+1), runsNumber));
             }
         }
         for (int i = 0; i < config.getInt("boardingPassScanners", "serversNumber"); i++) {
@@ -382,36 +343,30 @@ public class BasicSimulationRunner {
         for (int i = 0; i < config.getInt("passportChecks", "serversNumber"); i++) {
             passportCheckObservations.add(new Observations("%s_%d".formatted(config.getString("passportChecks", "centerName"), i+1), runsNumber));
         }
-        for (int i = 0; i < config.getInt("boardingTarget", "serversNumber"); i++) {
-            boardingTargetObservations.add(new Observations("%s_%d".formatted(config.getString("boardingTarget", "centerName"), i+1), runsNumber));
-        }
-        for (int i = 0; i < config.getInt("boardingOthers", "numberOfCenters"); i++) {
-            boardingOthersObservations.add(new ArrayList<>());
-            for (int j = 0; j < config.getInt("boardingOthers", "serversNumber"); j++) {
-                boardingOthersObservations.get(i).add(new Observations("%s_%d_%d".formatted(config.getString("boardingOthers", "centerName"), i+1, j+1), runsNumber));
+
+        for (int i = 0; i < config.getInt("boarding", "numberOfCenters"); i++) {
+            boardingObservations.add(new ArrayList<>());
+            for (int j = 0; j < config.getInt("boarding", "serversNumber"); j++) {
+                boardingObservations.get(i).add(new Observations("%s_%d_%d".formatted(config.getString("boarding", "centerName"), i+1, j+1), runsNumber));
             }
         }
     }
 
     private void resetObservations() {
         luggageObservations.forEach(Observations::reset);
-        checkInDeskTargetObservations.forEach(Observations::reset);
-        checkinDeskOthersObservations.forEach(x -> x.forEach(Observations::reset));
+        checkinDeskObservations.forEach(x -> x.forEach(Observations::reset));
         boardingPassScannerObservations.forEach(Observations::reset);
         securityCheckObservations.forEach(Observations::reset);
         passportCheckObservations.forEach(Observations::reset);
         stampsCheckObservations.forEach(Observations::reset);
-        boardingTargetObservations.forEach(Observations::reset);
-        boardingOthersObservations.forEach(x -> x.forEach(Observations::reset));
+        boardingObservations.forEach(x -> x.forEach(Observations::reset));
     }
 
     private void writeObservations(String simulationType) {
         // Computing warm up period boundaries
         WelchPlot.writeObservations(simulationType, luggageObservations);
-        WelchPlot.writeObservations(simulationType, checkInDeskTargetObservations);
-        WelchPlot.writeObservations(checkinDeskOthersObservations, simulationType);
-        WelchPlot.writeObservations(boardingOthersObservations, simulationType);
-        WelchPlot.writeObservations(simulationType, boardingTargetObservations);
+        WelchPlot.writeObservations(checkinDeskObservations, simulationType);
+        WelchPlot.writeObservations(boardingObservations, simulationType);
         WelchPlot.writeObservations(simulationType, boardingPassScannerObservations);
         WelchPlot.writeObservations(simulationType, securityCheckObservations);
         WelchPlot.writeObservations(simulationType, passportCheckObservations);

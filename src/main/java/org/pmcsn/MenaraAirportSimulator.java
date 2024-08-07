@@ -4,6 +4,7 @@ import org.pmcsn.conf.Config;
 import org.pmcsn.controller.BasicSimulationRunner;
 import org.pmcsn.controller.BatchSimulationRunner;
 import org.pmcsn.controller.ImprovedModelSimulationRunner;
+import org.pmcsn.controller.ModelVerificationBatchMeans;
 import org.pmcsn.utils.FileUtils;
 import org.pmcsn.utils.Probabilities;
 
@@ -30,8 +31,7 @@ public class MenaraAirportSimulator {
         Config config = new Config();
         double numberOfPassengers = config.getDouble("general", "numberOfPassengers");
         double numberOfFlights = config.getDouble("general", "numberOfFlights");
-        double pTarget = numberOfPassengers / (numberOfPassengers * numberOfFlights);
-        Probabilities.init(config.getDouble("general", "pCitizen"), pTarget, config.getDouble("general", "pPriority"));
+        Probabilities.init(config.getDouble("general", "pCitizen"), config.getDouble("general", "pPriority"));
     }
 
     private static void mainMenu(Scanner scanner, BasicSimulationRunner basicRunner, ImprovedModelSimulationRunner improvedRunner, BatchSimulationRunner batchRunner) throws Exception {
@@ -76,6 +76,9 @@ public class MenaraAirportSimulator {
                 break;
             case 5:
                 batchRunner.runBatchSimulation(true);
+                break;
+            case 6:
+                ModelVerificationBatchMeans.runModelVerificationWithBatchMeansMethod(); // Call BatchMeans main method
                 break;
             default:
                 printError("Invalid simulation type '" + simulationType + "'.");

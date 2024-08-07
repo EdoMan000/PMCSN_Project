@@ -5,35 +5,37 @@ import org.pmcsn.model.EventType;
 import org.pmcsn.model.MsqEvent;
 import org.pmcsn.model.MsqTime;
 
+import java.util.Arrays;
+
 import static org.pmcsn.utils.Distributions.*;
 
-public class CheckInDesksTarget extends MultiServer {
-    public CheckInDesksTarget(String centerName, double meanServiceTime, int numOfServers, int streamIndex, boolean approximateServiceAsExponential) {
-        super(centerName, meanServiceTime, numOfServers, streamIndex, approximateServiceAsExponential);
+class CheckInDesksSingleFlight extends MultiServer {
+    private final int nodeId;
+
+    public CheckInDesksSingleFlight(String centerName, int nodeId, double meanServiceTime, int numOfServers, int streamIndex, boolean approximateServiceAsExponential) {
+        super("%s_%d".formatted(centerName, nodeId), meanServiceTime, numOfServers, streamIndex, approximateServiceAsExponential);
+        this.nodeId = nodeId;
+    }
+
+    public long getCompletions() {
+        return Arrays.stream(sum).mapToLong(s -> s.served).sum();
     }
 
     @Override
     public void spawnNextCenterEvent(MsqTime time, EventQueue queue) {
-
         MsqEvent event = new MsqEvent(EventType.ARRIVAL_BOARDING_PASS_SCANNERS, time.current);
         queue.add(event);
-
-
     }
 
-    @Override
     public void spawnCompletionEvent(MsqTime time, EventQueue queue, int serverId) {
         double service = getService(streamIndex);
-        MsqEvent event = new MsqEvent(EventType.CHECK_IN_TARGET_DONE, time.current + service, service, serverId);
+        MsqEvent event = new MsqEvent(EventType.CHECK_IN_DONE, time.current + service, service, serverId, nodeId);
         queue.add(event);
     }
 
-
-    @Override
-    public double getService(int streamIndex)
-    {
+    public double getService(int streamIndex) {
         rngs.selectStream(streamIndex);
-        if (approximateServiceAsExponential) {
+        if(approximateServiceAsExponential){
             return exponential(meanServiceTime, rngs);
         }
         return logNormal(meanServiceTime, meanServiceTime*0.2, rngs);
