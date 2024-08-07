@@ -13,6 +13,7 @@ public class CenterFactory {
         double flightsNumber = config.getDouble("general", "numberOfFlights");
         double observationTime = config.getDouble("general", "observationTime");
         double interArrivalTime = observationTime / (passengersNumber * flightsNumber);
+        //double interArrivalTime = 1;
 
         return new LuggageChecks(
                 config.getString("luggageChecks", "centerName"),

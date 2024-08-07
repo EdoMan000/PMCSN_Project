@@ -52,7 +52,7 @@ public class BatchSimulationRunner {
         Config config = new Config();
         batchSize = config.getInt("general", "batchSize");
         batchesNumber = config.getInt("general", "numBatches");
-        warmupThreshold = (int) ((batchSize*batchesNumber)*0.2);
+        warmupThreshold = (int) ((batchSize*batchesNumber)*0.3);
     }
 
     public BatchSimulationRunner(int batchesNumber, int batchSize) {

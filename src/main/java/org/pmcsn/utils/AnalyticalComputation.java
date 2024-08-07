@@ -132,6 +132,7 @@ public class AnalyticalComputation {
         double numberOfFlights = config.getDouble("general", "numberOfFlights");
 
         double lambda =  (numberOfPassengers * numberOfFlights) / observationTime;
+        //double lambda = 1;
 
         analyticalResults.add(singleServer(
                 config.getString("luggageChecks", "centerName"),
